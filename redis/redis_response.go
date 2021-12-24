@@ -80,3 +80,24 @@ func MakeNumberResponse(number int) response.Response {
 		Number: number,
 	}
 }
+
+///////
+type RedisArrayResponse struct {
+	Content [][]byte
+}
+
+//*3\r\n$3\r\nSET\r\n$3\r\nkey\r\n$5\r\nvalue\r\n
+func (rar RedisArrayResponse) ToContentByte() []byte {
+
+	var builder strings.Builder
+	builder.WriteString(fmt.Sprintf("*%d%s", len(rar.Content), CRLF)) //*3\r\n*3\r\n
+
+	for _, v := range rar.Content {
+		builder.WriteString(fmt.Sprintf("$%d%s%s%s", len(v), CRLF, string(v), CRLF)) // $3\r\nSET\r\n
+	}
+	return []byte(builder.String())
+}
+
+func (rar RedisArrayResponse) ToErrorByte() []byte {
+	return []byte{}
+}
