@@ -1,3 +1,3 @@
-module github.com/chenjiayao/go-redis-training
+module github.com/chenjiayao/goredistraning
 
 go 1.16

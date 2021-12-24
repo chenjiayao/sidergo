@@ -15,3 +15,5 @@
 # vendor/
 
 logs/
+example/
+go-redis-training
