@@ -101,7 +101,7 @@ func parseCmdArgsCount(header []byte) (int, error) {
 
 	argsCountAsStr := string(argsCountAsByte)
 	argsCount, err := strconv.Atoi(argsCountAsStr)
-	return int(argsCount), err
+	return argsCount, err
 }
 
 //$3\r\n
@@ -109,5 +109,5 @@ func parseOneCmdArgsLen(cmd []byte) (int, error) {
 	cmdLenAsByte := cmd[1 : len(cmd)-2]
 	cmdLenAsStr := string(cmdLenAsByte)
 	argsCount, err := strconv.Atoi(cmdLenAsStr)
-	return int(argsCount), err
+	return argsCount, err
 }
