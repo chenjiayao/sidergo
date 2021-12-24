@@ -16,8 +16,7 @@ func (rr RedisRequet) ToStrings() string {
 	for _, v := range rr.Args {
 		builder.Write(append(v, ' '))
 	}
-
-	return builder.String()
+	return strings.TrimSpace(builder.String())
 }
 
 var (
