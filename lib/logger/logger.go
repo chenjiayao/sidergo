@@ -40,7 +40,7 @@ func Setting() {
 	}
 
 	mw := io.MultiWriter(file, os.Stdout)
-	logger = log.New(mw, "", log.LstdFlags|log.Lshortfile)
+	logger = log.New(mw, "", log.LstdFlags)
 }
 
 func setPrefix(level logLevel) {
