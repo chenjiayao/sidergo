@@ -53,7 +53,7 @@ func MakeSimpleResponse(content [][]byte) response.Response {
 
 	var builder strings.Builder
 	for _, b := range content {
-		builder.Write(b)
+		builder.Write(append(b, ' '))
 	}
 
 	return RedisSimpleResponse{
