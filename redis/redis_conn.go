@@ -4,6 +4,7 @@ import (
 	"net"
 	"sync"
 
+	"github.com/chenjiayao/goredistraning/db"
 	"github.com/chenjiayao/goredistraning/interface/conn"
 )
 
@@ -15,6 +16,17 @@ type RedisConn struct {
 	SelectedDB int
 	Password   string
 	Mu         sync.Mutex
+	db         *db.RedisDBs
+}
+
+func MakeRedisConn(conn net.Conn) *RedisConn {
+	rc := &RedisConn{
+		Conn:       conn,
+		SelectedDB: 0,
+		Password:   "",
+		db:         db.NewDBs(),
+	}
+	return rc
 }
 
 func (rc *RedisConn) Close() {

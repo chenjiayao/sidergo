@@ -25,7 +25,7 @@ func (rh RedisHandler) Handle(conn net.Conn) {
 		conn.Close()
 	}
 
-	client := &redis.RedisConn{Conn: conn}
+	client := redis.MakeRedisConn(conn)
 
 	ch := parser.ReadCommand(conn)
 	//chan close 掉之后， range 直接退出
