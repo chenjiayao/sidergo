@@ -4,7 +4,6 @@ import (
 	"net"
 	"sync"
 
-	"github.com/chenjiayao/goredistraning/db"
 	"github.com/chenjiayao/goredistraning/interface/conn"
 )
 
@@ -13,18 +12,18 @@ var _ conn.Conn = &RedisConn{}
 //每个连接需要保存的信息
 type RedisConn struct {
 	conn       net.Conn
-	SelectedDB int
+	selectedDB int
 	Password   string
 	Mu         sync.Mutex
-	db         *db.RedisDBs
+	db         *RedisDBs
 }
 
 func MakeRedisConn(conn net.Conn) *RedisConn {
 	rc := &RedisConn{
 		conn:       conn,
-		SelectedDB: 0,
+		selectedDB: 0,
 		Password:   "",
-		db:         db.NewDBs(),
+		db:         NewDBs(),
 	}
 	return rc
 }
@@ -40,4 +39,9 @@ func (rc *RedisConn) Write(data []byte) error {
 
 func (rc *RedisConn) RemoteAddress() string {
 	return rc.conn.RemoteAddr().String()
+}
+
+func (rc *RedisConn) GetSelectedRedisDB() *RedisDB {
+	db := rc.db.DBs[rc.selectedDB]
+	return db
 }
