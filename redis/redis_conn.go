@@ -12,7 +12,7 @@ var _ conn.Conn = &RedisConn{}
 
 //每个连接需要保存的信息
 type RedisConn struct {
-	Conn       net.Conn
+	conn       net.Conn
 	SelectedDB int
 	Password   string
 	Mu         sync.Mutex
@@ -21,7 +21,7 @@ type RedisConn struct {
 
 func MakeRedisConn(conn net.Conn) *RedisConn {
 	rc := &RedisConn{
-		Conn:       conn,
+		conn:       conn,
 		SelectedDB: 0,
 		Password:   "",
 		db:         db.NewDBs(),
@@ -30,5 +30,14 @@ func MakeRedisConn(conn net.Conn) *RedisConn {
 }
 
 func (rc *RedisConn) Close() {
-	rc.Conn.Close()
+	rc.conn.Close()
+}
+
+func (rc *RedisConn) Write(data []byte) error {
+	_, err := rc.conn.Write(data)
+	return err
+}
+
+func (rc *RedisConn) RemoteAddress() string {
+	return rc.conn.RemoteAddr().String()
 }
