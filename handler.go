@@ -25,7 +25,7 @@ func (rh RedisHandler) Handle(conn net.Conn) {
 		conn.Close()
 	}
 
-	client := redis.MakeRedisConn(conn)
+	redisClient := redis.MakeRedisConn(conn)
 
 	ch := parser.ReadCommand(conn)
 	//chan close 掉之后， range 直接退出
@@ -33,15 +33,15 @@ func (rh RedisHandler) Handle(conn net.Conn) {
 		if request.Err != nil {
 			if request.Err == io.EOF {
 				//关闭客户端，这个
-				rh.colseClient(client)
+				rh.colseClient(redisClient)
 				return
 			}
 
 			errResponse := redis.MakeErrorResponse(request.Err.Error())
-			_, err := client.Conn.Write(errResponse.ToErrorByte()) //写 error 失败，close client
+			err := redisClient.Write(errResponse.ToErrorByte()) //返回执行命令失败，close client
 			if err != nil {
-				logger.Info("response failed: " + client.Conn.LocalAddr().String())
-				rh.colseClient(client)
+				logger.Info("response failed: " + redisClient.RemoteAddress())
+				rh.colseClient(redisClient)
 				return
 			}
 		}
@@ -50,14 +50,16 @@ func (rh RedisHandler) Handle(conn net.Conn) {
 
 		cmds := request.Args
 		//TODO 执行命令
+
 		sr := redis.MakeSimpleResponse(cmds)
-		client.Conn.Write(sr.ToContentByte())
+		redisClient.Write(sr.ToContentByte())
 	}
 
 }
 
+// colseClient
 func (rh RedisHandler) colseClient(client *redis.RedisConn) {
-	logger.Info(fmt.Sprintf("client %s closed", client.Conn.LocalAddr().String()))
+	logger.Info(fmt.Sprintf("client %s closed", client.RemoteAddress()))
 	client.Close()
 }
 
