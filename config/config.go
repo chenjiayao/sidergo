@@ -10,13 +10,12 @@ import (
 )
 
 type ServerConfig struct {
-	Bind        string
-	Port        int
-	Databases   int
-	RequirePass string
-	Appendonly  bool //是否开启 aof
-
-	AppendFilename string //aof 文件名称
+	Bind           string `config:"bind"`
+	Port           int    `config:"port"`
+	Databases      int    `config:"databases"`
+	RequirePass    string `config:"require_pass"`
+	Appendonly     bool   `config:"appendonly"`      //是否开启 aof
+	AppendFilename string `config:"append_filename"` //aof 文件名称
 }
 
 // golang 的 code style：如果一个变量是全局单例，直接设为全局变量
