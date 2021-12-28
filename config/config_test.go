@@ -9,8 +9,7 @@ func Test_parseConfig(t *testing.T) {
 	config := `
 
 bind 0.0.0.0
-port 6399
-maxclients 128
+port 3101
 
 appendonly yes
 appendfilename appendonly.aof 

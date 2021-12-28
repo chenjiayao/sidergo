@@ -1,12 +1,11 @@
 package redis
 
 import (
-	"strings"
+	"fmt"
 
 	"github.com/chenjiayao/goredistraning/interface/db"
 	"github.com/chenjiayao/goredistraning/interface/response"
 	"github.com/chenjiayao/goredistraning/lib/dict"
-	"github.com/chenjiayao/goredistraning/lib/logger"
 )
 
 var _ db.DB = &RedisDB{}
@@ -24,15 +23,27 @@ func NewDBInstance(index int) *RedisDB {
 	return rd
 }
 
-func (rd *RedisDB) Exec(cmd [][]byte) response.Response {
-	cmdName := rd.parseCommand(cmd)
-	logger.Info(cmdName)
-	return MakeNumberResponse(1)
+func (rd *RedisDB) Exec(cmdName string, args [][]byte) response.Response {
+	return rd.ExecNormal(cmdName, args)
 }
 
-func (rd *RedisDB) parseCommand(cmd [][]byte) string {
-	cmdName := string(cmd[0])
-	return strings.ToLower(cmdName)
+func (rd *RedisDB) ExecNormal(cmdName string, args [][]byte) response.Response {
+	command, ok := CommandTables[cmdName]
+	if !ok {
+		return MakeErrorResponse(fmt.Sprintf("ERR unknown command '%s'", cmdName))
+	}
+
+	//参数校验
+	validate := command.ValidateFunc
+	ok = validate(args)
+	if !ok {
+		return MakeErrorResponse(fmt.Sprintf("ERR wrong number of arguments for '%s' command", cmdName))
+	}
+
+	//执行命令
+	execFunc := command.ExecFunc
+	resp := execFunc(rd, args)
+	return resp
 }
 
 ////////////////

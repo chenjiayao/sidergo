@@ -1,16 +1,16 @@
 package redis
 
-import (
-	"github.com/chenjiayao/goredistraning/interface/response"
-)
+import "github.com/chenjiayao/goredistraning/interface/response"
 
-/////// redis string 支持的命令
+func init() {
+	registerCommand(set, ExecSet, ValidateSet)
+	registerCommand(get, ExecGet, ValidateGet)
+}
 
-func (db *RedisDB) ExecGet(key string) response.Response {
-	val, ok := db.dataset.Get(key)
-	if !ok {
-		return MakeErrorResponse("nil")
-	}
-	v, _ := val.(string)
-	return MakeSimpleResponse(v)
+func ExecSet(db *RedisDB, args [][]byte) response.Response {
+	return MakeSimpleResponse("return exec set")
+}
+
+func ExecGet(db *RedisDB, args [][]byte) response.Response {
+	return MakeSimpleResponse("return exec get")
 }
