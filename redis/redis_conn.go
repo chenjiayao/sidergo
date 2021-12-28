@@ -15,7 +15,6 @@ type RedisConn struct {
 	selectedDB int
 	Password   string
 	Mu         sync.Mutex
-	db         *RedisDBs
 }
 
 func MakeRedisConn(conn net.Conn) *RedisConn {
@@ -23,7 +22,6 @@ func MakeRedisConn(conn net.Conn) *RedisConn {
 		conn:       conn,
 		selectedDB: 0,
 		Password:   "",
-		db:         NewDBs(),
 	}
 	return rc
 }
@@ -41,7 +39,6 @@ func (rc *RedisConn) RemoteAddress() string {
 	return rc.conn.RemoteAddr().String()
 }
 
-func (rc *RedisConn) GetSelectedRedisDB() *RedisDB {
-	db := rc.db.DBs[rc.selectedDB]
-	return db
+func (rc *RedisConn) GetSelectedDBIndex() int {
+	return rc.selectedDB
 }

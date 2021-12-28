@@ -13,7 +13,7 @@ var _ db.DB = &RedisDB{}
 
 type RedisDB struct {
 	dataset *dict.ConcurrentDict
-	index   int // 数据库 db
+	index   int // 数据库 db 编号
 }
 
 func NewDBInstance(index int) *RedisDB {

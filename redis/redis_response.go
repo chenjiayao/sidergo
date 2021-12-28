@@ -49,16 +49,12 @@ func (rsr RedisSimpleResponse) ToErrorByte() []byte {
 	return []byte{}
 }
 
-func MakeSimpleResponse(content [][]byte) response.Response {
-
-	var builder strings.Builder
-	for _, b := range content {
-		builder.Write(append(b, ' '))
-	}
+func MakeSimpleResponse(content string) response.Response {
 
 	return RedisSimpleResponse{
-		Content: builder.String(),
+		Content: content,
 	}
+
 }
 
 /////整数：以":"开始，如：":1\r\n"

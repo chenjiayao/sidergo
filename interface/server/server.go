@@ -1,8 +1,8 @@
-package handler
+package server
 
 import "net"
 
-type Handler interface {
+type Server interface {
 	Handle(conn net.Conn)
 	Close() error
 }
