@@ -6,6 +6,7 @@ import (
 	"net"
 	"sync"
 
+	"github.com/chenjiayao/goredistraning/config"
 	"github.com/chenjiayao/goredistraning/interface/server"
 	"github.com/chenjiayao/goredistraning/lib/atomic"
 	"github.com/chenjiayao/goredistraning/lib/logger"
@@ -32,7 +33,7 @@ func MakeRedisServer() *RedisServer {
 
 func ListenAndServe(server server.Server) {
 
-	listener, err := net.Listen("tcp", ":8101")
+	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", config.Config.Bind, config.Config.Port))
 	if err != nil {
 		logger.Fatal("start listen failed : ", err)
 	}
