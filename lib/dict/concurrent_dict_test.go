@@ -64,3 +64,24 @@ func TestConcurrentDict_Clear(t *testing.T) {
 		t.Errorf("d len want 0. but got = %d", got)
 	}
 }
+
+func TestConcurrentDict_Put(t *testing.T) {
+	d := NewDict(6)
+	for i := 0; i < 100; i++ {
+		d.Put(fmt.Sprintf("test_%d", i), i)
+	}
+	if d.count != 100 {
+		t.Errorf("d.count = %d, want %d", d.count, 100)
+	}
+
+	for i := 0; i < 100; i++ {
+		val, has := d.Get(fmt.Sprintf("test_%d", i))
+		if !has {
+			t.Errorf("d.Get should have ,but not")
+			continue
+		}
+		if v, ok := val.(int); !ok || v != i {
+			t.Errorf("d.Get = %d  ,want %d", v, i)
+		}
+	}
+}

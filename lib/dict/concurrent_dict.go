@@ -3,6 +3,8 @@ package dict
 import (
 	"sync"
 	"sync/atomic"
+
+	"github.com/chenjiayao/goredistraning/lib/logger"
 )
 
 const prime32 = uint32(16777619)
@@ -32,6 +34,7 @@ func (d *ConcurrentDict) Get(key string) (interface{}, bool) {
 	fragment.lock.RLock()
 	defer fragment.lock.RUnlock()
 
+	logger.Info(fragment.data, key)
 	val, exists := fragment.data[key]
 	return val, exists
 }
@@ -65,6 +68,34 @@ func (d *ConcurrentDict) Put(key string, val interface{}) bool {
 		d.increaseCount()
 	}
 	fragment.data[key] = val
+	return true
+}
+
+func (d *ConcurrentDict) PutIfExist(key string, val interface{}) bool {
+	hashKey := fnv32(key)
+	index := d.spread(hashKey)
+	fragment := d.getFragment(int(index))
+
+	fragment.lock.Lock()
+	defer fragment.lock.Unlock()
+
+	if _, ok := fragment.data[key]; ok {
+		fragment.data[key] = val
+	}
+	return true
+}
+
+func (d *ConcurrentDict) PutIfNotExist(key string, val interface{}) bool {
+	hashKey := fnv32(key)
+	index := d.spread(hashKey)
+	fragment := d.getFragment(int(index))
+
+	fragment.lock.Lock()
+	defer fragment.lock.Unlock()
+
+	if _, ok := fragment.data[key]; !ok {
+		fragment.data[key] = val
+	}
 	return true
 }
 

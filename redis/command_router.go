@@ -7,7 +7,7 @@ import (
 )
 
 type ExecFunc func(db *RedisDB, args [][]byte) response.Response
-type ValidateCmdArgs func(args [][]byte) bool
+type ValidateCmdArgs func(args [][]byte) error
 
 var (
 	CommandTables = make(map[string]Command)
@@ -29,6 +29,7 @@ func registerCommand(cmdName string, execFunc ExecFunc, validate ValidateCmdArgs
 }
 
 const (
+	//string
 	set     = "set"
 	setnx   = "setnx"
 	setex   = "setex"
@@ -43,4 +44,17 @@ const (
 	incrbyf = "incrbyfloat"
 	decr    = "decr"
 	decrby  = "decrby"
+	//list
+	lpush     = "lpush"
+	lpushx    = "lpushx"
+	rpush     = "rpush"
+	rpushx    = "rpushx"
+	lpop      = "lpop"
+	rpop      = "rpop"
+	rpoplpush = "rpoplpush"
+	lrem      = "lrem"
+	llen      = "llen"
+	lindex    = "lindex"
+	lset      = "lset"
+	lrange    = "lrange"
 )

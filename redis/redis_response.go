@@ -14,6 +14,11 @@ const (
 	CRLF = "\r\n"
 )
 
+var (
+	NullMultiResponse = MakeMultiResponse(nil)
+	OKSimpleResponse  = MakeSimpleResponse("OK")
+)
+
 // 错误：以"-" 开始，如："-ERR Invalid Synatx\r\n"
 type RedisErrorResponse struct {
 	Err error
@@ -57,9 +62,32 @@ func MakeSimpleResponse(content string) response.Response {
 
 }
 
+//////多行数据 $ 开头
+type RedisMultiLineResponse struct {
+	Content [][]byte
+}
+
+func (rmls *RedisMultiLineResponse) ToContentByte() []byte {
+	if rmls.Content == nil {
+		return []byte("$-1\r\n")
+	}
+	return []byte{}
+}
+
+func (rmls *RedisMultiLineResponse) ToErrorByte() []byte {
+	return []byte{}
+}
+
+func MakeMultiResponse(content [][]byte) response.Response {
+
+	return &RedisMultiLineResponse{
+		Content: content,
+	}
+}
+
 /////整数：以":"开始，如：":1\r\n"
 type RedisNumberResponse struct {
-	Number int
+	Number int64
 }
 
 func (rsr RedisNumberResponse) ToContentByte() []byte {
@@ -71,7 +99,7 @@ func (rsr RedisNumberResponse) ToErrorByte() []byte {
 	return []byte{}
 }
 
-func MakeNumberResponse(number int) response.Response {
+func MakeNumberResponse(number int64) response.Response {
 	return RedisNumberResponse{
 		Number: number,
 	}
