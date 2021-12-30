@@ -53,10 +53,9 @@ func (rd *RedisDB) ttl(key []byte) int64 {
 	if !ok {
 		return -1
 	}
-
-	expiredAt, _ := res.(time.Time)
-	skip := time.Until(expiredAt)
-	ttl := skip / time.Second
+	expiredAt, _ := res.(int64)
+	now := time.Now().UnixNano() / 1e6
+	ttl := (expiredAt - now) / 1000
 	return int64(ttl)
 }
 
@@ -69,9 +68,7 @@ func (rd *RedisDB) setKeyTtl(key []byte, ttl int64) {
 	if ttl == UnlimitTTL {
 		return
 	}
-
-	d := time.Duration(ttl) * time.Millisecond
-	expiredAt := time.Now().Add(d)
+	expiredAt := time.Now().UnixNano()/1e6 + ttl
 	rd.ttlMap.Put(string(key), expiredAt)
 }
 
