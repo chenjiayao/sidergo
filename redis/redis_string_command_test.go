@@ -1,0 +1,60 @@
+package redis
+
+import (
+	"bytes"
+	"testing"
+
+	"github.com/chenjiayao/goredistraning/lib/dict"
+)
+
+func TestExecSet(t *testing.T) {
+	db := &RedisDB{
+		dataset: dict.NewDict(6),
+		index:   0,
+		ttlMap:  dict.NewDict(6),
+	}
+
+	args := [][]byte{
+		[]byte("key"),
+		[]byte("value"),
+	}
+	got := ExecSet(db, args)
+	want := OKSimpleResponse
+	if got != want {
+		t.Errorf(" ExecSet(db, args) = %v, want = %v", got, want)
+	}
+
+	v, ok := db.dataset.Get("key")
+	if !ok {
+		t.Errorf("execSet failed")
+	}
+	res := v.(string)
+	if res != "value" {
+		t.Errorf("set store value, but got = %s", res)
+	}
+
+	ttl := db.ttl([]byte("key"))
+	if ttl != -1 {
+		t.Errorf("set key  ttl = -1, but got = %d", ttl)
+	}
+}
+
+func TestExecGet(t *testing.T) {
+	db := &RedisDB{
+		dataset: dict.NewDict(6),
+		index:   0,
+		ttlMap:  dict.NewDict(6),
+	}
+	key := "key"
+	value := "value"
+	db.dataset.Put(key, value)
+
+	resp := ExecGet(db, [][]byte{
+		[]byte(key),
+	})
+
+	want := string(MakeSimpleResponse("value").ToContentByte())
+	if !bytes.Equal(resp.ToContentByte(), []byte(want)) {
+		t.Errorf("ExecGet = %s, want %s", string(resp.ToContentByte()), want)
+	}
+}

@@ -57,4 +57,7 @@ const (
 	lindex    = "lindex"
 	lset      = "lset"
 	lrange    = "lrange"
+
+	//common
+	expire = "expire"
 )

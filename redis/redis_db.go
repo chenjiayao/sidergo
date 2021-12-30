@@ -13,7 +13,7 @@ import (
 var _ db.DB = &RedisDB{}
 
 const (
-	UnlimitTTL = -1
+	UnlimitTTL = int64(-1)
 )
 
 type RedisDB struct {
@@ -41,20 +41,38 @@ func (rd *RedisDB) Exec(cmdName string, args [][]byte) response.Response {
 // ttl = -2  key 不存在
 // ttl = -1 永久有效
 func (rd *RedisDB) ttl(key []byte) int64 {
-	res, ok := rd.ttlMap.Get(string(key))
-	if !ok {
+
+	// key 不存在
+	resp := getAsString(rd, key)
+	if resp == "" {
 		return -2
 	}
-	t, _ := res.(time.Time)
-	return int64(time.Until(t))
+
+	//key 存在，但是 ttlMap 中不存在，那么说明key没有设置过期时间
+	res, ok := rd.ttlMap.Get(string(key))
+	if !ok {
+		return -1
+	}
+
+	expiredAt, _ := res.(time.Time)
+	skip := time.Until(expiredAt)
+	ttl := skip / time.Second
+	return int64(ttl)
 }
 
 //设置key 的 ttl
 /*
 	保存到 ttlMap 中的是过期的时间
+	ttl : 毫秒
 */
-func (rd *RedisDB) setKeyTtl(key []byte, ttl time.Time) {
-	rd.ttlMap.Put(string(key), ttl)
+func (rd *RedisDB) setKeyTtl(key []byte, ttl int64) {
+	if ttl == UnlimitTTL {
+		return
+	}
+
+	d := time.Duration(ttl) * time.Millisecond
+	expiredAt := time.Now().Add(d)
+	rd.ttlMap.Put(string(key), expiredAt)
 }
 
 func (rd *RedisDB) ExecNormal(cmdName string, args [][]byte) response.Response {
@@ -65,9 +83,11 @@ func (rd *RedisDB) ExecNormal(cmdName string, args [][]byte) response.Response {
 
 	//参数校验
 	validate := command.ValidateFunc
-	err := validate(args)
-	if err != nil {
-		return MakeErrorResponse(err.Error())
+	if validate != nil {
+		err := validate(args)
+		if err != nil {
+			return MakeErrorResponse(err.Error())
+		}
 	}
 
 	//执行命令
