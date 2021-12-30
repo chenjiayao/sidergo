@@ -88,12 +88,26 @@ func ExecSetNX(db *RedisDB, args [][]byte) response.Response {
 	return ExecSet(db, args)
 }
 
+// setex key seconds value ---> set key value ex second
 func ExecSetEX(db *RedisDB, args [][]byte) response.Response {
-	return MakeSimpleResponse("return exec get")
+	setArgs := [][]byte{
+		args[0],
+		args[2],
+		[]byte("ex"),
+		args[1],
+	}
+	return ExecSet(db, setArgs)
 }
 
+// psetex key milliseconds value --> set key value px milliseconds
 func ExecPSetEX(db *RedisDB, args [][]byte) response.Response {
-	return MakeSimpleResponse("return exec get")
+	setArgs := [][]byte{
+		args[0],
+		args[2],
+		[]byte("px"),
+		args[1],
+	}
+	return ExecSet(db, setArgs)
 }
 
 func ExecMSet(db *RedisDB, args [][]byte) response.Response {
