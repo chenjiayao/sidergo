@@ -40,7 +40,7 @@ func TestRedisDB_setKeyTtl(t *testing.T) {
 	})
 
 	key := []byte("key")
-	db.setKeyTtl(key, int64(5*time.Second))
+	db.setKeyTtl(key, int64(5*1000))
 
 	time.Sleep(3 * time.Second)
 
@@ -49,5 +49,4 @@ func TestRedisDB_setKeyTtl(t *testing.T) {
 	if got != 2 {
 		t.Errorf("db.ttl = %d, want= %d", got, 2)
 	}
-
 }
