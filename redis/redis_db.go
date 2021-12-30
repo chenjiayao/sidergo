@@ -2,6 +2,7 @@ package redis
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/chenjiayao/goredistraning/config"
@@ -20,13 +21,17 @@ type RedisDB struct {
 	dataset *dict.ConcurrentDict
 	index   int                  // 数据库 db 编号
 	ttlMap  *dict.ConcurrentDict //保存 key 和过期时间之间的关系
+	//一个协程来定时删除过期的key
+	//一个chan 来关闭「定时删除过期 key 的协程」
+	keyLocks sync.Map
 }
 
 func NewDBInstance(index int) *RedisDB {
 	rd := &RedisDB{
-		dataset: dict.NewDict(128),
-		index:   index,
-		ttlMap:  dict.NewDict(128),
+		dataset:  dict.NewDict(128),
+		index:    index,
+		ttlMap:   dict.NewDict(128),
+		keyLocks: sync.Map{},
 	}
 	return rd
 }

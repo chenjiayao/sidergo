@@ -58,3 +58,25 @@ func TestExecGet(t *testing.T) {
 		t.Errorf("ExecGet = %s, want %s", string(resp.ToContentByte()), want)
 	}
 }
+
+func TestExecIncrBy(t *testing.T) {
+	db := &RedisDB{
+		dataset: dict.NewDict(1),
+		index:   0,
+		ttlMap:  dict.NewDict(1),
+	}
+
+	args := [][]byte{
+		[]byte("key"),
+		[]byte("1"),
+	}
+	ExecSet(db, args)
+
+	ExecIncr(db, [][]byte{[]byte("key")})
+
+	v, _ := db.dataset.Get("key")
+	got, _ := v.(string)
+	if got != "2" {
+		t.Errorf("execIncr should incr key to 2, but key = %s now", got)
+	}
+}

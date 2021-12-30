@@ -138,11 +138,9 @@ func ValidateIncrBy(args [][]byte) error {
 func ValidateIncreByFloat(args [][]byte) error {
 	if len(args) != 2 {
 		return fmt.Errorf("ERR wrong number of arguments for '%s' command", incrbyf)
-
 	}
 
 	increment := string(args[1])
-
 	_, err := strconv.ParseFloat(increment, 64)
 	if err != nil {
 		return rediserr.NOT_INTEGER_ERROR

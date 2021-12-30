@@ -1,10 +1,12 @@
 package redis
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/chenjiayao/goredistraning/helper"
 	"github.com/chenjiayao/goredistraning/interface/response"
+	"github.com/chenjiayao/goredistraning/rediserr"
 )
 
 // - set
@@ -25,6 +27,11 @@ import (
 func init() {
 	registerCommand(set, ExecSet, ValidateSet)
 	registerCommand(get, ExecGet, ValidateGet)
+	registerCommand(incr, ExecIncr, ValidateIncr)
+	registerCommand(incrby, ExecIncrBy, ValidateIncrBy)
+	registerCommand(decr, ExecDecr, ValidateDecr)
+	registerCommand(decrby, ExecDecrBy, ValidateDecrBy)
+	registerCommand(incrbyf, ExecIncrByFloat, ValidateIncreByFloat)
 }
 
 // key value [EX seconds] [PX milliseconds] [NX|XX]
@@ -155,23 +162,94 @@ func getAsString(db *RedisDB, key []byte) string {
 	return commo
 }
 
+//如果 incr 的key 不存在，那么 set 为1
 func ExecIncr(db *RedisDB, args [][]byte) response.Response {
-	return MakeSimpleResponse("return exec get")
-
+	incrByArgs := append(args, []byte("1"))
+	return ExecIncrBy(db, incrByArgs)
 }
-func ExecIncrBy(db *RedisDB, args [][]byte) response.Response {
-	return MakeSimpleResponse("return exec get")
 
+func ExecIncrBy(db *RedisDB, args [][]byte) response.Response {
+	key := string(args[0])
+	steps := string(args[1])
+	step, _ := strconv.ParseInt(steps, 10, 64)
+
+	// 尝试对一个 key 加锁，利用 sync.map 的并发安全特性
+	// 但是这里应该挺慢的。。。后续有时间再优化吧
+	alreadyLockByOtherGoroutine := false
+	_, alreadyLockByOtherGoroutine = db.keyLocks.LoadOrStore(key, 1)
+	for alreadyLockByOtherGoroutine {
+		_, alreadyLockByOtherGoroutine = db.keyLocks.LoadOrStore(key, 1)
+	}
+	defer db.keyLocks.Delete(key)
+
+	//get
+	s := getAsString(db, args[0])
+
+	val := ""
+	//incr
+	if s == "" {
+		val = fmt.Sprint(step)
+	} else {
+		v, err := strconv.ParseInt(s, 10, 64)
+		if err != nil {
+			return MakeErrorResponse(rediserr.NOT_INTEGER_ERROR.Error()) //试图incr 一个字符串
+		}
+		v += step
+		val = fmt.Sprint(v)
+	}
+
+	//set
+	db.dataset.Put(key, val)
+
+	return MakeSimpleResponse(val)
 }
 func ExecIncrByFloat(db *RedisDB, args [][]byte) response.Response {
-	return MakeSimpleResponse("return exec get")
+	key := string(args[0])
+	steps := string(args[1])
+	step, _ := strconv.ParseFloat(steps, 64)
+
+	// 尝试对一个 key 加锁，利用 sync.map 的并发安全特性
+	// 但是这里应该挺慢的。。。后续有时间再优化吧
+	alreadyLockByOtherGoroutine := false
+	_, alreadyLockByOtherGoroutine = db.keyLocks.LoadOrStore(key, 1)
+	for alreadyLockByOtherGoroutine {
+		_, alreadyLockByOtherGoroutine = db.keyLocks.LoadOrStore(key, 1)
+	}
+	defer db.keyLocks.Delete(key)
+
+	//get
+	s := getAsString(db, args[0])
+
+	val := ""
+	//incr
+	if s == "" {
+		val = fmt.Sprint(step)
+	} else {
+		v, err := strconv.ParseFloat(s, 64)
+		if err != nil {
+			return MakeErrorResponse(rediserr.NOT_INTEGER_ERROR.Error()) //试图incr 一个字符串
+		}
+		v += step
+		val = fmt.Sprint(v)
+	}
+
+	//set
+	db.dataset.Put(key, val)
+
+	return MakeSimpleResponse(val)
 
 }
 func ExecDecr(db *RedisDB, args [][]byte) response.Response {
-	return MakeSimpleResponse("return exec get")
-
+	incrByArgs := append(args, []byte("-1"))
+	return ExecIncrBy(db, incrByArgs)
 }
 func ExecDecrBy(db *RedisDB, args [][]byte) response.Response {
-	return MakeSimpleResponse("return exec get")
 
+	step := string(args[1])
+	step = fmt.Sprintf("-%s", step) // 变成 -
+	incrByArgs := [][]byte{
+		args[0],
+		[]byte(step),
+	}
+	return ExecIncrBy(db, incrByArgs)
 }
