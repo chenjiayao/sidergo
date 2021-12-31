@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/chenjiayao/goredistraning/lib/dict"
+	"github.com/chenjiayao/goredistraning/redis/resp"
 )
 
 func TestExecSet(t *testing.T) {
@@ -19,7 +20,7 @@ func TestExecSet(t *testing.T) {
 		[]byte("value"),
 	}
 	got := ExecSet(db, args)
-	want := OKSimpleResponse
+	want := resp.OKSimpleResponse
 	if got != want {
 		t.Errorf(" ExecSet(db, args) = %v, want = %v", got, want)
 	}
@@ -49,13 +50,13 @@ func TestExecGet(t *testing.T) {
 	value := "value"
 	db.dataset.Put(key, value)
 
-	resp := ExecGet(db, [][]byte{
+	res := ExecGet(db, [][]byte{
 		[]byte(key),
 	})
 
-	want := string(MakeSimpleResponse("value").ToContentByte())
-	if !bytes.Equal(resp.ToContentByte(), []byte(want)) {
-		t.Errorf("ExecGet = %s, want %s", string(resp.ToContentByte()), want)
+	want := string(resp.MakeSimpleResponse("value").ToContentByte())
+	if !bytes.Equal(res.ToContentByte(), []byte(want)) {
+		t.Errorf("ExecGet = %s, want %s", string(res.ToContentByte()), want)
 	}
 }
 
@@ -92,13 +93,13 @@ func TestExecGetset(t *testing.T) {
 	db.dataset.Put(key, value)
 
 	newValue := "newvalue"
-	resp := ExecGetset(db, [][]byte{
+	res := ExecGetset(db, [][]byte{
 		[]byte("key"),
 		[]byte(newValue),
 	})
-	want := MakeSimpleResponse(value)
-	if string(string(want.ToContentByte())) != string(resp.ToContentByte()) {
-		t.Errorf("execgetSet = %s, want = %s", string(resp.ToContentByte()), "+value")
+	want := resp.MakeSimpleResponse(value)
+	if string(string(want.ToContentByte())) != string(res.ToContentByte()) {
+		t.Errorf("execgetSet = %s, want = %s", string(res.ToContentByte()), "+value")
 	}
 	s := getAsString(db, []byte(key))
 	if newValue != s {
