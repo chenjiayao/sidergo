@@ -10,19 +10,19 @@ import (
 )
 
 // - set
+// - get
+// - incr
+// - incrby
+// - decr
+// - decrby
+// - incrbyfloat
+// - getset
+// - psetex
 // - setnx
 // - setex
-// - psetex
 // - mset
 // - mget
 // - msetnx
-// - get
-// - getset
-// - incr
-// - incrby
-// - incrbyfloat
-// - decr
-// - decrby
 
 func init() {
 	registerCommand(set, ExecSet, ValidateSet)
@@ -34,6 +34,58 @@ func init() {
 	registerCommand(incrbyf, ExecIncrByFloat, ValidateIncreByFloat)
 	registerCommand(psetex, ExecPSetEX, ValidatePSetEx)
 	registerCommand(getset, ExecGetset, ValidateGetSet)
+	registerCommand(setnx, ExecSetNX, ValidateSetNx)
+	registerCommand(setex, ExecSetEX, ValidateSetEx)
+}
+
+func ExecMSet(db *RedisDB, args [][]byte) response.Response {
+	for i := 0; i < len(args); i += 2 {
+		ExecSet(db, [][]byte{
+			args[i],
+			args[i+1],
+		})
+	}
+	return OKSimpleResponse
+}
+
+func ExecMGet(db *RedisDB, args [][]byte) response.Response {
+
+	res := make([][]byte, 0)
+	for i := 0; i < len(args); i++ {
+		r := getAsString(db, args[i])
+		if r == "" {
+			res = append(res, nil)
+		} else {
+			res = append(res, []byte(r))
+		}
+	}
+	return MakeMultiResponse(res)
+}
+
+func MSetNX(db *RedisDB, args [][]byte) response.Response {
+
+	//给所有的 key 加锁
+	for i := 0; i < len(args); i += 2 {
+		key := string(args[i])
+		tryLockKey(db, key)
+		defer unlockKey(db, key)
+	}
+
+	//检查是否有哪个 key 已经存在
+	for i := 0; i < len(args); i += 2 {
+		s := getAsString(db, args[i])
+		if s != "" {
+			return MakeNumberResponse(0)
+		}
+	}
+
+	for i := 0; i < len(args); i++ {
+		ExecSet(db, [][]byte{
+			args[i],
+			args[i+1],
+		})
+	}
+	return MakeNumberResponse(1)
 }
 
 func ExecGetset(db *RedisDB, args [][]byte) response.Response {
@@ -138,14 +190,6 @@ func ExecPSetEX(db *RedisDB, args [][]byte) response.Response {
 		args[1],
 	}
 	return ExecSet(db, setArgs)
-}
-
-func ExecMSet(db *RedisDB, args [][]byte) response.Response {
-	return MakeSimpleResponse("return exec get")
-
-}
-func ExecMGet(db *RedisDB, args [][]byte) response.Response {
-	return MakeSimpleResponse("return exec get")
 }
 
 /**
