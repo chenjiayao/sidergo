@@ -2,6 +2,7 @@ package redis
 
 import (
 	"fmt"
+	"runtime"
 	"strconv"
 
 	"github.com/chenjiayao/goredistraning/helper"
@@ -175,10 +176,19 @@ func ExecIncrBy(db *RedisDB, args [][]byte) response.Response {
 
 	// 尝试对一个 key 加锁，利用 sync.map 的并发安全特性
 	// 但是这里应该挺慢的。。。后续有时间再优化吧
+	//使用 for 阻塞的原因：这里阻塞时间很短，所以使用 for 来检查，减少线程切换的时间
+	// backoff ：指数级退避
+	backoff := 1
 	alreadyLockByOtherGoroutine := false
 	_, alreadyLockByOtherGoroutine = db.keyLocks.LoadOrStore(key, 1)
 	for alreadyLockByOtherGoroutine {
 		_, alreadyLockByOtherGoroutine = db.keyLocks.LoadOrStore(key, 1)
+		for i := 0; i < backoff; i++ {
+			runtime.Gosched()
+		}
+		if backoff < 64 {
+			backoff <<= 1
+		}
 	}
 	defer db.keyLocks.Delete(key)
 
