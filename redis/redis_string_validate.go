@@ -96,13 +96,13 @@ func ValidateMSet(args [][]byte) error {
 }
 func ValidateMGet(args [][]byte) error {
 	if len(args) != 1 {
-		return fmt.Errorf("ERR wrong number of arguments for '%s' command", get)
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", mget)
 	}
 	return nil
 }
 func ValidateGetSet(args [][]byte) error {
 	if len(args) != 2 {
-		return fmt.Errorf("ERR wrong number of arguments for '%s' command", get)
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", getset)
 	}
 	return nil
 }
