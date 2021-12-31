@@ -3,15 +3,13 @@ package parser
 import (
 	"bytes"
 	"testing"
-
-	"github.com/chenjiayao/goredistraning/redis"
 )
 
 func TestParseFromSocket(t *testing.T) {
 
 	var buf bytes.Buffer
 	buf.Write([]byte("*3\r\n$3\r\nSET\r\n$3\r\nkey\r\n$5\r\nvalue\r\n"))
-	ch := make(chan redis.RedisRequet)
+	ch := make(chan request.RedisRequet)
 	go ParseFromSocket(&buf, ch)
 
 	r := <-ch

@@ -5,16 +5,16 @@ import (
 	"io"
 	"strconv"
 
-	"github.com/chenjiayao/goredistraning/redis"
+	"github.com/chenjiayao/goredistraning/redis/request"
 )
 
-func ReadCommand(reader io.Reader) chan redis.RedisRequet {
-	ch := make(chan redis.RedisRequet)
+func ReadCommand(reader io.Reader) chan request.RedisRequet {
+	ch := make(chan request.RedisRequet)
 	go ParseFromSocket(reader, ch)
 	return ch
 }
 
-func ParseFromSocket(reader io.Reader, ch chan redis.RedisRequet) {
+func ParseFromSocket(reader io.Reader, ch chan request.RedisRequet) {
 	buf := bufio.NewReader(reader)
 
 	for {
@@ -22,7 +22,7 @@ func ParseFromSocket(reader io.Reader, ch chan redis.RedisRequet) {
 		header, err := buf.ReadBytes('\n')
 		if err != nil {
 
-			ch <- redis.RedisRequet{
+			ch <- request.RedisRequet{
 				Err: err,
 			}
 			//如果是客户端关闭了，那么就不要读了，直接退出当前协程
@@ -33,12 +33,12 @@ func ParseFromSocket(reader io.Reader, ch chan redis.RedisRequet) {
 		}
 
 		if header[0] != '*' {
-			ch <- redis.PROTOCOL_ERROR_REQUEST
+			ch <- request.PROTOCOL_ERROR_REQUEST
 			continue
 		}
 		argsCount, err := parseCmdArgsCount(header)
 		if err != nil {
-			ch <- redis.PROTOCOL_ERROR_REQUEST
+			ch <- request.PROTOCOL_ERROR_REQUEST
 			continue
 		}
 
@@ -48,7 +48,7 @@ func ParseFromSocket(reader io.Reader, ch chan redis.RedisRequet) {
 		for i := 0; i < argsCount; i++ {
 			argsWithDelimiter, err := buf.ReadBytes('\n')
 			if err != nil {
-				ch <- redis.RedisRequet{
+				ch <- request.RedisRequet{
 					Err: err,
 				}
 				//如果是客户端关闭了，那么就不要读了，直接退出当前协程
@@ -64,13 +64,13 @@ func ParseFromSocket(reader io.Reader, ch chan redis.RedisRequet) {
 				argsWithDelimiter[len(argsWithDelimiter)-1] != '\n' ||
 				argsWithDelimiter[len(argsWithDelimiter)-2] != '\r' {
 
-				ch <- redis.PROTOCOL_ERROR_REQUEST
+				ch <- request.PROTOCOL_ERROR_REQUEST
 				readArgsFail = true
 				break
 			}
 			cmdLen, err := parseOneCmdArgsLen(argsWithDelimiter)
 			if err != nil {
-				ch <- redis.PROTOCOL_ERROR_REQUEST
+				ch <- request.PROTOCOL_ERROR_REQUEST
 				readArgsFail = true
 				break
 			}
@@ -78,7 +78,7 @@ func ParseFromSocket(reader io.Reader, ch chan redis.RedisRequet) {
 			cmd := make([]byte, cmdLen+2)
 			_, err = io.ReadFull(buf, cmd)
 			if err != nil {
-				ch <- redis.PROTOCOL_ERROR_REQUEST
+				ch <- request.PROTOCOL_ERROR_REQUEST
 				readArgsFail = true
 				break
 			}
@@ -89,7 +89,7 @@ func ParseFromSocket(reader io.Reader, ch chan redis.RedisRequet) {
 			continue
 		}
 
-		ch <- redis.RedisRequet{
+		ch <- request.RedisRequet{
 			Args: cmds,
 		}
 	}
