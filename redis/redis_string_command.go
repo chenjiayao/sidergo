@@ -7,9 +7,9 @@ import (
 	"github.com/chenjiayao/goredistraning/command"
 	"github.com/chenjiayao/goredistraning/helper"
 	"github.com/chenjiayao/goredistraning/interface/response"
+	"github.com/chenjiayao/goredistraning/redis/rediserr"
 	"github.com/chenjiayao/goredistraning/redis/resp"
 	"github.com/chenjiayao/goredistraning/redis/validate"
-	"github.com/chenjiayao/goredistraning/rediserr"
 )
 
 // - set

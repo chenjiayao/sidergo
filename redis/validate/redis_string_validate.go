@@ -7,7 +7,7 @@ import (
 
 	"github.com/chenjiayao/goredistraning/command"
 	"github.com/chenjiayao/goredistraning/helper"
-	"github.com/chenjiayao/goredistraning/rediserr"
+	"github.com/chenjiayao/goredistraning/redis/rediserr"
 )
 
 //set key value [EX seconds] [PX milliseconds] [NX|XX]
