@@ -80,3 +80,28 @@ func TestExecIncrBy(t *testing.T) {
 		t.Errorf("execIncr should incr key to 2, but key = %s now", got)
 	}
 }
+
+func TestExecGetset(t *testing.T) {
+	db := &RedisDB{
+		dataset: dict.NewDict(6),
+		index:   0,
+		ttlMap:  dict.NewDict(6),
+	}
+	key := "key"
+	value := "value"
+	db.dataset.Put(key, value)
+
+	newValue := "newvalue"
+	resp := ExecGetset(db, [][]byte{
+		[]byte("key"),
+		[]byte(newValue),
+	})
+	want := MakeSimpleResponse(value)
+	if string(string(want.ToContentByte())) != string(resp.ToContentByte()) {
+		t.Errorf("execgetSet = %s, want = %s", string(resp.ToContentByte()), "+value")
+	}
+	s := getAsString(db, []byte(key))
+	if newValue != s {
+		t.Errorf("execgetset store %s , but get %s", "newvalue", s)
+	}
+}

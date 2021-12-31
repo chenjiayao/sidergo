@@ -2,7 +2,6 @@ package redis
 
 import (
 	"fmt"
-	"runtime"
 	"strconv"
 
 	"github.com/chenjiayao/goredistraning/helper"
@@ -33,6 +32,29 @@ func init() {
 	registerCommand(decr, ExecDecr, ValidateDecr)
 	registerCommand(decrby, ExecDecrBy, ValidateDecrBy)
 	registerCommand(incrbyf, ExecIncrByFloat, ValidateIncreByFloat)
+	registerCommand(psetex, ExecPSetEX, ValidatePSetEx)
+	registerCommand(getset, ExecGetset, ValidateGetSet)
+}
+
+func ExecGetset(db *RedisDB, args [][]byte) response.Response {
+	key := string(args[0])
+
+	tryLockKey(db, key)
+	defer unlockKey(db, key)
+
+	i, exists := db.dataset.Get(key)
+
+	if !exists {
+		return NullMultiResponse
+	}
+
+	res, ok := i.(string)
+	if !ok {
+		return MakeErrorResponse("WRONGTYPE Operation against a key holding the wrong kind of value")
+	}
+
+	db.dataset.PutIfExist(key, string(args[1]))
+	return MakeSimpleResponse(res)
 }
 
 // key value [EX seconds] [PX milliseconds] [NX|XX]
@@ -125,9 +147,6 @@ func ExecMSet(db *RedisDB, args [][]byte) response.Response {
 func ExecMGet(db *RedisDB, args [][]byte) response.Response {
 	return MakeSimpleResponse("return exec get")
 }
-func ExecGetSet(db *RedisDB, args [][]byte) response.Response {
-	return MakeSimpleResponse("return exec get")
-}
 
 /**
 get 执行之前要考虑 redis 的过期策略
@@ -169,28 +188,28 @@ func ExecIncr(db *RedisDB, args [][]byte) response.Response {
 	return ExecIncrBy(db, incrByArgs)
 }
 
+//incr 之类的操作不是原子性的，操作之前要加锁
+func tryLockKey(db *RedisDB, key string) {
+	// 尝试对一个 key 加锁，利用 sync.map 的并发安全特性
+	// 但是这里应该挺慢的。。。后续有时间再优化吧
+	alreadyLockByOtherGoroutine := false
+	_, alreadyLockByOtherGoroutine = db.keyLocks.LoadOrStore(key, 1)
+	for alreadyLockByOtherGoroutine {
+		_, alreadyLockByOtherGoroutine = db.keyLocks.LoadOrStore(key, 1)
+	}
+}
+
+func unlockKey(db *RedisDB, key string) {
+	defer db.keyLocks.Delete(key)
+}
+
 func ExecIncrBy(db *RedisDB, args [][]byte) response.Response {
 	key := string(args[0])
 	steps := string(args[1])
 	step, _ := strconv.ParseInt(steps, 10, 64)
 
-	// 尝试对一个 key 加锁，利用 sync.map 的并发安全特性
-	// 但是这里应该挺慢的。。。后续有时间再优化吧
-	//使用 for 阻塞的原因：这里阻塞时间很短，所以使用 for 来检查，减少线程切换的时间
-	// backoff ：指数级退避
-	backoff := 1
-	alreadyLockByOtherGoroutine := false
-	_, alreadyLockByOtherGoroutine = db.keyLocks.LoadOrStore(key, 1)
-	for alreadyLockByOtherGoroutine {
-		_, alreadyLockByOtherGoroutine = db.keyLocks.LoadOrStore(key, 1)
-		for i := 0; i < backoff; i++ {
-			runtime.Gosched()
-		}
-		if backoff < 64 {
-			backoff <<= 1
-		}
-	}
-	defer db.keyLocks.Delete(key)
+	tryLockKey(db, string(args[0]))
+	defer unlockKey(db, key)
 
 	//get
 	s := getAsString(db, args[0])
@@ -247,12 +266,13 @@ func ExecIncrByFloat(db *RedisDB, args [][]byte) response.Response {
 	db.dataset.Put(key, val)
 
 	return MakeSimpleResponse(val)
-
 }
+
 func ExecDecr(db *RedisDB, args [][]byte) response.Response {
 	incrByArgs := append(args, []byte("-1"))
 	return ExecIncrBy(db, incrByArgs)
 }
+
 func ExecDecrBy(db *RedisDB, args [][]byte) response.Response {
 
 	step := string(args[1])
