@@ -3,12 +3,13 @@ package redis
 import (
 	"strconv"
 
+	"github.com/chenjiayao/goredistraning/command"
 	"github.com/chenjiayao/goredistraning/interface/response"
 	"github.com/chenjiayao/goredistraning/redis/resp"
 )
 
 func init() {
-	registerCommand(expire, ExecExpire, nil)
+	registerCommand(command.Expire, ExecExpire, nil)
 }
 
 func ExecExpire(db *RedisDB, args [][]byte) response.Response {

@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/chenjiayao/goredistraning/command"
 	"github.com/chenjiayao/goredistraning/helper"
 	"github.com/chenjiayao/goredistraning/interface/response"
 	"github.com/chenjiayao/goredistraning/redis/resp"
+	"github.com/chenjiayao/goredistraning/redis/validate"
 	"github.com/chenjiayao/goredistraning/rediserr"
 )
 
@@ -26,20 +28,20 @@ import (
 // - msetnx
 
 func init() {
-	registerCommand(set, ExecSet, ValidateSet)
-	registerCommand(get, ExecGet, ValidateGet)
-	registerCommand(incr, ExecIncr, ValidateIncr)
-	registerCommand(incrby, ExecIncrBy, ValidateIncrBy)
-	registerCommand(decr, ExecDecr, ValidateDecr)
-	registerCommand(decrby, ExecDecrBy, ValidateDecrBy)
-	registerCommand(incrbyf, ExecIncrByFloat, ValidateIncreByFloat)
-	registerCommand(psetex, ExecPSetEX, ValidatePSetEx)
-	registerCommand(getset, ExecGetset, ValidateGetSet)
-	registerCommand(setnx, ExecSetNX, ValidateSetNx)
-	registerCommand(setex, ExecSetEX, ValidateSetEx)
-	registerCommand(mget, ExecMGet, ValidateMGet)
-	registerCommand(mset, ExecMSet, ValidateMSet)
-	registerCommand(msetnx, ExecMSetNX, validateMSetNX)
+	registerCommand(command.Set, ExecSet, validate.ValidateSet)
+	registerCommand(command.Get, ExecGet, validate.ValidateGet)
+	registerCommand(command.Incr, ExecIncr, validate.ValidateIncr)
+	registerCommand(command.Incrby, ExecIncrBy, validate.ValidateIncrBy)
+	registerCommand(command.Decr, ExecDecr, validate.ValidateDecr)
+	registerCommand(command.Decrby, ExecDecrBy, validate.ValidateDecrBy)
+	registerCommand(command.Incrbyf, ExecIncrByFloat, validate.ValidateIncreByFloat)
+	registerCommand(command.Psetex, ExecPSetEX, validate.ValidatePSetEx)
+	registerCommand(command.Getset, ExecGetset, validate.ValidateGetSet)
+	registerCommand(command.Setnx, ExecSetNX, validate.ValidateSetNx)
+	registerCommand(command.Setex, ExecSetEX, validate.ValidateSetEx)
+	registerCommand(command.Mget, ExecMGet, validate.ValidateMGet)
+	registerCommand(command.Mset, ExecMSet, validate.ValidateMSet)
+	registerCommand(command.Msetnx, ExecMSetNX, validate.ValidateMSetNX)
 }
 
 func ExecMSet(db *RedisDB, args [][]byte) response.Response {

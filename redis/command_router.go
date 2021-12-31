@@ -27,37 +27,3 @@ func registerCommand(cmdName string, execFunc ExecFunc, validate ValidateCmdArgs
 		ValidateFunc: validate,
 	}
 }
-
-const (
-	//string
-	set     = "set"
-	setnx   = "setnx"
-	setex   = "setex"
-	psetex  = "psetex"
-	mset    = "mset"
-	mget    = "mget"
-	msetnx  = "msetnx"
-	get     = "get"
-	getset  = "getset"
-	incr    = "incr"
-	incrby  = "incrby"
-	incrbyf = "incrbyfloat"
-	decr    = "decr"
-	decrby  = "decrby"
-	//list
-	lpush     = "lpush"
-	lpushx    = "lpushx"
-	rpush     = "rpush"
-	rpushx    = "rpushx"
-	lpop      = "lpop"
-	rpop      = "rpop"
-	rpoplpush = "rpoplpush"
-	lrem      = "lrem"
-	llen      = "llen"
-	lindex    = "lindex"
-	lset      = "lset"
-	lrange    = "lrange"
-
-	//common
-	expire = "expire"
-)
