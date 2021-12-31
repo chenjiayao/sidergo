@@ -89,11 +89,16 @@ func ValidatePSetEx(args [][]byte) error {
 }
 
 func ValidateMSet(args [][]byte) error {
-	if len(args)/2 != 0 {
+	if len(args)%2 != 0 {
 		return fmt.Errorf("ERR wrong number of arguments for '%s' command", mset)
 	}
 	return nil
 }
+
+func validateMSetNX(args [][]byte) error {
+	return ValidateMSet(args)
+}
+
 func ValidateMGet(args [][]byte) error {
 	if len(args) != 1 {
 		return fmt.Errorf("ERR wrong number of arguments for '%s' command", mget)
