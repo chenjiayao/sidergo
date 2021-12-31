@@ -36,6 +36,9 @@ func init() {
 	registerCommand(getset, ExecGetset, ValidateGetSet)
 	registerCommand(setnx, ExecSetNX, ValidateSetNx)
 	registerCommand(setex, ExecSetEX, ValidateSetEx)
+	registerCommand(mget, ExecMGet, ValidateMGet)
+	registerCommand(mset, ExecMSet, ValidateMSet)
+	registerCommand(msetnx, ExecMSetNX, validateMSetNX)
 }
 
 func ExecMSet(db *RedisDB, args [][]byte) response.Response {
@@ -62,13 +65,13 @@ func ExecMGet(db *RedisDB, args [][]byte) response.Response {
 	return MakeMultiResponse(res)
 }
 
-func MSetNX(db *RedisDB, args [][]byte) response.Response {
+func ExecMSetNX(db *RedisDB, args [][]byte) response.Response {
 
 	//给所有的 key 加锁
 	for i := 0; i < len(args); i += 2 {
 		key := string(args[i])
-		tryLockKey(db, key)
-		defer unlockKey(db, key)
+		db.lockKey(key)
+		defer db.unlockKey(key)
 	}
 
 	//检查是否有哪个 key 已经存在
@@ -91,8 +94,8 @@ func MSetNX(db *RedisDB, args [][]byte) response.Response {
 func ExecGetset(db *RedisDB, args [][]byte) response.Response {
 	key := string(args[0])
 
-	tryLockKey(db, key)
-	defer unlockKey(db, key)
+	db.lockKey(key)
+	defer db.unlockKey(key)
 
 	i, exists := db.dataset.Get(key)
 
@@ -232,28 +235,13 @@ func ExecIncr(db *RedisDB, args [][]byte) response.Response {
 	return ExecIncrBy(db, incrByArgs)
 }
 
-//incr 之类的操作不是原子性的，操作之前要加锁
-func tryLockKey(db *RedisDB, key string) {
-	// 尝试对一个 key 加锁，利用 sync.map 的并发安全特性
-	// 但是这里应该挺慢的。。。后续有时间再优化吧
-	alreadyLockByOtherGoroutine := false
-	_, alreadyLockByOtherGoroutine = db.keyLocks.LoadOrStore(key, 1)
-	for alreadyLockByOtherGoroutine {
-		_, alreadyLockByOtherGoroutine = db.keyLocks.LoadOrStore(key, 1)
-	}
-}
-
-func unlockKey(db *RedisDB, key string) {
-	defer db.keyLocks.Delete(key)
-}
-
 func ExecIncrBy(db *RedisDB, args [][]byte) response.Response {
 	key := string(args[0])
 	steps := string(args[1])
 	step, _ := strconv.ParseInt(steps, 10, 64)
 
-	tryLockKey(db, string(args[0]))
-	defer unlockKey(db, key)
+	db.lockKey(string(args[0]))
+	defer db.unlockKey(key)
 
 	//get
 	s := getAsString(db, args[0])
@@ -281,14 +269,8 @@ func ExecIncrByFloat(db *RedisDB, args [][]byte) response.Response {
 	steps := string(args[1])
 	step, _ := strconv.ParseFloat(steps, 64)
 
-	// 尝试对一个 key 加锁，利用 sync.map 的并发安全特性
-	// 但是这里应该挺慢的。。。后续有时间再优化吧
-	alreadyLockByOtherGoroutine := false
-	_, alreadyLockByOtherGoroutine = db.keyLocks.LoadOrStore(key, 1)
-	for alreadyLockByOtherGoroutine {
-		_, alreadyLockByOtherGoroutine = db.keyLocks.LoadOrStore(key, 1)
-	}
-	defer db.keyLocks.Delete(key)
+	db.lockKey(key)
+	defer db.unlockKey(key)
 
 	//get
 	s := getAsString(db, args[0])

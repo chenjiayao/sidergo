@@ -23,6 +23,7 @@ type RedisDB struct {
 	ttlMap  *dict.ConcurrentDict //保存 key 和过期时间之间的关系
 	//一个协程来定时删除过期的key
 	//一个chan 来关闭「定时删除过期 key 的协程」
+
 	keyLocks sync.Map
 }
 
@@ -96,6 +97,19 @@ func (rd *RedisDB) ExecNormal(cmdName string, args [][]byte) response.Response {
 	execFunc := command.ExecFunc
 	resp := execFunc(rd, args)
 	return resp
+}
+
+func (rd *RedisDB) lockKey(key string) {
+	// 尝试对一个 key 加锁，利用 sync.map 的并发安全特性
+	// 但是这里应该挺慢的。。。后续有时间再优化吧
+	alreadyLockByOtherGoroutine := false
+	_, alreadyLockByOtherGoroutine = rd.keyLocks.LoadOrStore(key, 1)
+	for alreadyLockByOtherGoroutine {
+		_, alreadyLockByOtherGoroutine = rd.keyLocks.LoadOrStore(key, 1)
+	}
+}
+func (rd *RedisDB) unlockKey(key string) {
+	defer rd.keyLocks.Delete(key)
 }
 
 ////////////////
