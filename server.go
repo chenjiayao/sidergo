@@ -14,6 +14,7 @@ import (
 	"github.com/chenjiayao/goredistraning/lib/logger"
 	"github.com/chenjiayao/goredistraning/parser"
 	"github.com/chenjiayao/goredistraning/redis"
+	"github.com/chenjiayao/goredistraning/redis/resp"
 )
 
 var _ server.Server = &RedisServer{}
@@ -84,7 +85,7 @@ func (redisServer *RedisServer) Handle(conn net.Conn) {
 				return
 			}
 
-			errResponse := redis.MakeErrorResponse(request.Err.Error())
+			errResponse := resp.MakeErrorResponse(request.Err.Error())
 			err := redisClient.Write(errResponse.ToErrorByte()) //返回执行命令失败，close client
 			if err != nil {
 				logger.Info("response failed: " + redisClient.RemoteAddress())
@@ -93,14 +94,14 @@ func (redisServer *RedisServer) Handle(conn net.Conn) {
 			}
 		}
 
-		var resp response.Response
+		var res response.Response
 
 		cmd := request.Args
 		cmdName := redisServer.parseCommand(request.Args)
 		args := cmd[1:]
 		if cmdName == "auth" {
-			resp = redisServer.auth(redisClient, args)
-			err := redisServer.sendResponse(redisClient, resp)
+			res = redisServer.auth(redisClient, args)
+			err := redisServer.sendResponse(redisClient, res)
 			if err == io.EOF {
 				redisServer.closeClient(redisClient)
 				break
@@ -108,8 +109,8 @@ func (redisServer *RedisServer) Handle(conn net.Conn) {
 			continue
 		}
 		if !redisServer.isAuthenticated(redisClient) {
-			resp := redis.MakeErrorResponse("NOAUTH Authentication required")
-			err := redisServer.sendResponse(redisClient, resp)
+			res := resp.MakeErrorResponse("NOAUTH Authentication required")
+			err := redisServer.sendResponse(redisClient, res)
 			if err == io.EOF {
 				redisServer.closeClient(redisClient)
 				break
@@ -119,9 +120,9 @@ func (redisServer *RedisServer) Handle(conn net.Conn) {
 
 		selectedDBIndex := redisClient.GetSelectedDBIndex()
 		selectedDB := redisServer.rds.DBs[selectedDBIndex]
-		resp = selectedDB.Exec(cmdName, args)
+		res = selectedDB.Exec(cmdName, args)
 
-		err := redisServer.sendResponse(redisClient, resp)
+		err := redisServer.sendResponse(redisClient, res)
 		if err == io.EOF {
 			redisServer.closeClient(redisClient)
 			break
@@ -133,31 +134,31 @@ func (redisServer *RedisServer) isAuthenticated(redisClient *redis.RedisConn) bo
 	return config.Config.RequirePass == redisClient.Password
 }
 
-func (redisServer *RedisServer) sendResponse(redisClient *redis.RedisConn, resp response.Response) error {
+func (redisServer *RedisServer) sendResponse(redisClient *redis.RedisConn, res response.Response) error {
 	var err error
-	if _, ok := resp.(redis.RedisErrorResponse); ok {
-		err = redisClient.Write(resp.ToErrorByte())
+	if _, ok := res.(resp.RedisErrorResponse); ok {
+		err = redisClient.Write(res.ToErrorByte())
 	} else {
-		err = redisClient.Write(resp.ToContentByte())
+		err = redisClient.Write(res.ToContentByte())
 	}
 	return err
 }
 
 func (redisServer *RedisServer) auth(c *redis.RedisConn, args [][]byte) response.Response {
 	if config.Config.RequirePass == "" {
-		return redis.MakeErrorResponse("ERR Client sent AUTH, but no password is set")
+		return resp.MakeErrorResponse("ERR Client sent AUTH, but no password is set")
 	}
 
 	if len(args) != 1 {
-		return redis.MakeErrorResponse("ERR wrong number of arguments for 'auth' command")
+		return resp.MakeErrorResponse("ERR wrong number of arguments for 'auth' command")
 	}
 	password := string(args[0])
 	if config.Config.RequirePass != password {
-		return redis.MakeErrorResponse("ERR invalid password")
+		return resp.MakeErrorResponse("ERR invalid password")
 	}
 	c.Password = password
 	c.Authorized = true
-	return redis.MakeSimpleResponse("ok")
+	return resp.MakeSimpleResponse("ok")
 }
 
 //从请求数据中解析出 redis 命令

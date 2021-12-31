@@ -9,6 +9,7 @@ import (
 	"github.com/chenjiayao/goredistraning/interface/db"
 	"github.com/chenjiayao/goredistraning/interface/response"
 	"github.com/chenjiayao/goredistraning/lib/dict"
+	"github.com/chenjiayao/goredistraning/redis/resp"
 )
 
 var _ db.DB = &RedisDB{}
@@ -39,7 +40,7 @@ func NewDBInstance(index int) *RedisDB {
 
 func (rd *RedisDB) Exec(cmdName string, args [][]byte) response.Response {
 	if cmdName == "ttl" {
-		return MakeNumberResponse(rd.ttl(args[0]))
+		return resp.MakeNumberResponse(rd.ttl(args[0]))
 	}
 	return rd.ExecNormal(cmdName, args)
 }
@@ -81,7 +82,7 @@ func (rd *RedisDB) setKeyTtl(key []byte, ttl int64) {
 func (rd *RedisDB) ExecNormal(cmdName string, args [][]byte) response.Response {
 	command, ok := CommandTables[cmdName]
 	if !ok {
-		return MakeErrorResponse(fmt.Sprintf("ERR unknown command '%s'", cmdName))
+		return resp.MakeErrorResponse(fmt.Sprintf("ERR unknown command '%s'", cmdName))
 	}
 
 	//参数校验
@@ -89,7 +90,7 @@ func (rd *RedisDB) ExecNormal(cmdName string, args [][]byte) response.Response {
 	if validate != nil {
 		err := validate(args)
 		if err != nil {
-			return MakeErrorResponse(err.Error())
+			return resp.MakeErrorResponse(err.Error())
 		}
 	}
 
