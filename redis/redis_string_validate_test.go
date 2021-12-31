@@ -73,3 +73,16 @@ func TestValidateSet(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateMSet(t *testing.T) {
+	args := [][]byte{
+		[]byte("key1"),
+		[]byte("value1"),
+		[]byte("key2"),
+		[]byte("value2"),
+	}
+	err := ValidateMSet(args)
+	if err != nil {
+		t.Errorf("ValidateMSet(args) = %v, want nil", err)
+	}
+}
