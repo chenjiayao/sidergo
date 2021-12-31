@@ -3,6 +3,8 @@ package parser
 import (
 	"bytes"
 	"testing"
+
+	"github.com/chenjiayao/goredistraning/redis/request"
 )
 
 func TestParseFromSocket(t *testing.T) {
