@@ -1,19 +1,16 @@
-package redis
+package datatype
 
 import (
 	"bytes"
 	"testing"
 
 	"github.com/chenjiayao/goredistraning/lib/dict"
+	"github.com/chenjiayao/goredistraning/redis"
 	"github.com/chenjiayao/goredistraning/redis/resp"
 )
 
 func TestExecSet(t *testing.T) {
-	db := &RedisDB{
-		dataset: dict.NewDict(6),
-		index:   0,
-		ttlMap:  dict.NewDict(6),
-	}
+	db := redis.NewDBInstance(0)
 
 	args := [][]byte{
 		[]byte("key"),
@@ -25,7 +22,7 @@ func TestExecSet(t *testing.T) {
 		t.Errorf(" ExecSet(db, args) = %v, want = %v", got, want)
 	}
 
-	v, ok := db.dataset.Get("key")
+	v, ok := db.Dataset.Get("key")
 	if !ok {
 		t.Errorf("execSet failed")
 	}
@@ -34,21 +31,17 @@ func TestExecSet(t *testing.T) {
 		t.Errorf("set store value, but got = %s", res)
 	}
 
-	ttl := db.ttl([]byte("key"))
+	ttl := ExecTTL(db, [][]byte{[]byte("key")})
 	if ttl != -1 {
 		t.Errorf("set key  ttl = -1, but got = %d", ttl)
 	}
 }
 
 func TestExecGet(t *testing.T) {
-	db := &RedisDB{
-		dataset: dict.NewDict(6),
-		index:   0,
-		ttlMap:  dict.NewDict(6),
-	}
+	db := redis.NewDBInstance(0)
 	key := "key"
 	value := "value"
-	db.dataset.Put(key, value)
+	db.Dataset.Put(key, value)
 
 	res := ExecGet(db, [][]byte{
 		[]byte(key),
@@ -61,11 +54,7 @@ func TestExecGet(t *testing.T) {
 }
 
 func TestExecIncrBy(t *testing.T) {
-	db := &RedisDB{
-		dataset: dict.NewDict(1),
-		index:   0,
-		ttlMap:  dict.NewDict(1),
-	}
+	db := redis.NewDBInstance(0)
 
 	args := [][]byte{
 		[]byte("key"),
@@ -75,7 +64,7 @@ func TestExecIncrBy(t *testing.T) {
 
 	ExecIncr(db, [][]byte{[]byte("key")})
 
-	v, _ := db.dataset.Get("key")
+	v, _ := db.Dataset.Get("key")
 	got, _ := v.(string)
 	if got != "2" {
 		t.Errorf("execIncr should incr key to 2, but key = %s now", got)
@@ -83,14 +72,14 @@ func TestExecIncrBy(t *testing.T) {
 }
 
 func TestExecGetset(t *testing.T) {
-	db := &RedisDB{
-		dataset: dict.NewDict(6),
-		index:   0,
-		ttlMap:  dict.NewDict(6),
+	db := &redis.RedisDB{
+		Dataset: dict.NewDict(6),
+		Index:   0,
+		TtlMap:  dict.NewDict(6),
 	}
 	key := "key"
 	value := "value"
-	db.dataset.Put(key, value)
+	db.Dataset.Put(key, value)
 
 	newValue := "newvalue"
 	res := ExecGetset(db, [][]byte{

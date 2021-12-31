@@ -1,12 +1,13 @@
-package redis
+package datatype
 
 import (
 	"fmt"
 	"strconv"
 
-	"github.com/chenjiayao/goredistraning/command"
 	"github.com/chenjiayao/goredistraning/helper"
 	"github.com/chenjiayao/goredistraning/interface/response"
+	"github.com/chenjiayao/goredistraning/redis"
+	"github.com/chenjiayao/goredistraning/redis/command"
 	"github.com/chenjiayao/goredistraning/redis/rediserr"
 	"github.com/chenjiayao/goredistraning/redis/resp"
 	"github.com/chenjiayao/goredistraning/redis/validate"
@@ -28,23 +29,24 @@ import (
 // - msetnx
 
 func init() {
-	registerCommand(command.Set, ExecSet, validate.ValidateSet)
-	registerCommand(command.Get, ExecGet, validate.ValidateGet)
-	registerCommand(command.Incr, ExecIncr, validate.ValidateIncr)
-	registerCommand(command.Incrby, ExecIncrBy, validate.ValidateIncrBy)
-	registerCommand(command.Decr, ExecDecr, validate.ValidateDecr)
-	registerCommand(command.Decrby, ExecDecrBy, validate.ValidateDecrBy)
-	registerCommand(command.Incrbyf, ExecIncrByFloat, validate.ValidateIncreByFloat)
-	registerCommand(command.Psetex, ExecPSetEX, validate.ValidatePSetEx)
-	registerCommand(command.Getset, ExecGetset, validate.ValidateGetSet)
-	registerCommand(command.Setnx, ExecSetNX, validate.ValidateSetNx)
-	registerCommand(command.Setex, ExecSetEX, validate.ValidateSetEx)
-	registerCommand(command.Mget, ExecMGet, validate.ValidateMGet)
-	registerCommand(command.Mset, ExecMSet, validate.ValidateMSet)
-	registerCommand(command.Msetnx, ExecMSetNX, validate.ValidateMSetNX)
+
+	redis.RegisterCommand(command.Set, ExecSet, validate.ValidateSet)
+	redis.RegisterCommand(command.Get, ExecGet, validate.ValidateGet)
+	redis.RegisterCommand(command.Incr, ExecIncr, validate.ValidateIncr)
+	redis.RegisterCommand(command.Incrby, ExecIncrBy, validate.ValidateIncrBy)
+	redis.RegisterCommand(command.Decr, ExecDecr, validate.ValidateDecr)
+	redis.RegisterCommand(command.Decrby, ExecDecrBy, validate.ValidateDecrBy)
+	redis.RegisterCommand(command.Incrbyf, ExecIncrByFloat, validate.ValidateIncreByFloat)
+	redis.RegisterCommand(command.Psetex, ExecPSetEX, validate.ValidatePSetEx)
+	redis.RegisterCommand(command.Getset, ExecGetset, validate.ValidateGetSet)
+	redis.RegisterCommand(command.Setnx, ExecSetNX, validate.ValidateSetNx)
+	redis.RegisterCommand(command.Setex, ExecSetEX, validate.ValidateSetEx)
+	redis.RegisterCommand(command.Mget, ExecMGet, validate.ValidateMGet)
+	redis.RegisterCommand(command.Mset, ExecMSet, validate.ValidateMSet)
+	redis.RegisterCommand(command.Msetnx, ExecMSetNX, validate.ValidateMSetNX)
 }
 
-func ExecMSet(db *RedisDB, args [][]byte) response.Response {
+func ExecMSet(db *redis.RedisDB, args [][]byte) response.Response {
 	for i := 0; i < len(args); i += 2 {
 		ExecSet(db, [][]byte{
 			args[i],
@@ -54,7 +56,7 @@ func ExecMSet(db *RedisDB, args [][]byte) response.Response {
 	return resp.OKSimpleResponse
 }
 
-func ExecMGet(db *RedisDB, args [][]byte) response.Response {
+func ExecMGet(db *redis.RedisDB, args [][]byte) response.Response {
 
 	res := make([][]byte, 0)
 	for i := 0; i < len(args); i++ {
@@ -68,13 +70,14 @@ func ExecMGet(db *RedisDB, args [][]byte) response.Response {
 	return resp.MakeMultiResponse(res)
 }
 
-func ExecMSetNX(db *RedisDB, args [][]byte) response.Response {
+func ExecMSetNX(db *redis.RedisDB, args [][]byte) response.Response {
 
 	//给所有的 key 加锁
+	// TODO 这里加锁之前应该对 args 按照字母顺序排序， 保证每个 key 的加锁顺序一致，不然会导致死锁
 	for i := 0; i < len(args); i += 2 {
 		key := string(args[i])
-		db.lockKey(key)
-		defer db.unlockKey(key)
+		db.LockKey(key)
+		defer db.UnLockKey(key)
 	}
 
 	//检查是否有哪个 key 已经存在
@@ -94,13 +97,13 @@ func ExecMSetNX(db *RedisDB, args [][]byte) response.Response {
 	return resp.MakeNumberResponse(1)
 }
 
-func ExecGetset(db *RedisDB, args [][]byte) response.Response {
+func ExecGetset(db *redis.RedisDB, args [][]byte) response.Response {
 	key := string(args[0])
 
-	db.lockKey(key)
-	defer db.unlockKey(key)
+	db.LockKey(key)
+	defer db.UnLockKey(key)
 
-	i, exists := db.dataset.Get(key)
+	i, exists := db.Dataset.Get(key)
 
 	if !exists {
 		return resp.NullMultiResponse
@@ -111,30 +114,29 @@ func ExecGetset(db *RedisDB, args [][]byte) response.Response {
 		return resp.MakeErrorResponse("WRONGTYPE Operation against a key holding the wrong kind of value")
 	}
 
-	db.dataset.PutIfExist(key, string(args[1]))
+	db.Dataset.PutIfExist(key, string(args[1]))
 	return resp.MakeSimpleResponse(res)
 }
 
 // key value [EX seconds] [PX milliseconds] [NX|XX]
 // NX -- Only set the key if it does not already exist.
 // XX -- Only set the key if it already exist.   --->同时覆盖新的 ttl
-func ExecSet(db *RedisDB, args [][]byte) response.Response {
+func ExecSet(db *redis.RedisDB, args [][]byte) response.Response {
 
 	ttl := UnlimitTTL
+	ttls := fmt.Sprintf("%d", ttl)
 
 	ss := helper.BbyteToSString(args)
 	exFlagIndex := helper.ContainWithoutCaseSensitive(ss, "EX")
 	if exFlagIndex != -1 {
 		ttlStr := string(args[exFlagIndex+1])
 		ttli, _ := strconv.ParseInt(ttlStr, 10, 64)
-		ttl = ttli * 1000
+		ttls = fmt.Sprintf("%d", ttli*1000)
 	}
 
 	pxFlagIndex := helper.ContainWithoutCaseSensitive(ss, "PX")
 	if pxFlagIndex != -1 {
-		ttlStr := string(args[pxFlagIndex+1])
-		ttli, _ := strconv.ParseInt(ttlStr, 10, 64)
-		ttl = ttli
+		ttls = string(args[pxFlagIndex+1])
 	}
 
 	key := string(args[0])
@@ -142,9 +144,12 @@ func ExecSet(db *RedisDB, args [][]byte) response.Response {
 
 	//不存在 key 就 insert
 	if helper.ContainWithoutCaseSensitive(ss, "NX") != -1 {
-		ok := db.dataset.PutIfNotExist(key, value)
+		ok := db.Dataset.PutIfNotExist(key, value)
 		if ok {
-			db.setKeyTtl(args[0], int64(ttl))
+			SetKeyTTL(db, [][]byte{
+				args[0],
+				[]byte(ttls),
+			})
 		} else {
 			return resp.NullMultiResponse
 		}
@@ -152,32 +157,38 @@ func ExecSet(db *RedisDB, args [][]byte) response.Response {
 
 	//不存在key就 insert
 	if helper.ContainWithoutCaseSensitive(ss, "XX") != -1 {
-		ok := db.dataset.PutIfExist(key, value)
+		ok := db.Dataset.PutIfExist(key, value)
 		if ok {
-			db.setKeyTtl(args[0], ttl)
+			SetKeyTTL(db, [][]byte{
+				args[0],
+				[]byte(ttls),
+			})
 			return resp.OKSimpleResponse
 		} else {
 			return resp.NullMultiResponse
 		}
 	}
 
-	ok := db.dataset.Put(key, value)
+	ok := db.Dataset.Put(key, value)
 
 	if ok {
-		db.setKeyTtl(args[0], ttl)
+		ExecTTL(db, [][]byte{
+			args[0],
+			[]byte(ttls),
+		})
 		return resp.OKSimpleResponse
 	}
 	return resp.NullMultiResponse
 }
 
 // setnx key value ---> set key value nx
-func ExecSetNX(db *RedisDB, args [][]byte) response.Response {
+func ExecSetNX(db *redis.RedisDB, args [][]byte) response.Response {
 	args = append(args, []byte("nx"))
 	return ExecSet(db, args)
 }
 
 // setex key seconds value ---> set key value ex second
-func ExecSetEX(db *RedisDB, args [][]byte) response.Response {
+func ExecSetEX(db *redis.RedisDB, args [][]byte) response.Response {
 	setArgs := [][]byte{
 		args[0],
 		args[2],
@@ -188,7 +199,7 @@ func ExecSetEX(db *RedisDB, args [][]byte) response.Response {
 }
 
 // psetex key milliseconds value --> set key value px milliseconds
-func ExecPSetEX(db *RedisDB, args [][]byte) response.Response {
+func ExecPSetEX(db *redis.RedisDB, args [][]byte) response.Response {
 	setArgs := [][]byte{
 		args[0],
 		args[2],
@@ -204,10 +215,10 @@ get 执行之前要考虑 redis 的过期策略
 		1. 定期删除：每次间隔一定时间再 ttlDict 中扫描，清除过期的 key
 		2. 惰性删除：访问一个 key 之前，判断是否已经过期，如果已经过期那么直接删除，并且返回 null
 */
-func ExecGet(db *RedisDB, args [][]byte) response.Response {
+func ExecGet(db *redis.RedisDB, args [][]byte) response.Response {
 
 	//key 不存在，或者已经到过期时间了
-	if db.ttl(args[0]) < -1 {
+	if ExecTTL(db, [][]byte{args[0]}) < -1 {
 		// TODO 删除 key
 		return resp.NullMultiResponse
 	}
@@ -219,8 +230,8 @@ func ExecGet(db *RedisDB, args [][]byte) response.Response {
 	return resp.MakeSimpleResponse(s)
 }
 
-func getAsString(db *RedisDB, key []byte) string {
-	res, ok := db.dataset.Get(string(key))
+func getAsString(db *redis.RedisDB, key []byte) string {
+	res, ok := db.Dataset.Get(string(key))
 	if !ok {
 		return ""
 	}
@@ -233,18 +244,18 @@ func getAsString(db *RedisDB, key []byte) string {
 }
 
 //如果 incr 的key 不存在，那么 set 为1
-func ExecIncr(db *RedisDB, args [][]byte) response.Response {
+func ExecIncr(db *redis.RedisDB, args [][]byte) response.Response {
 	incrByArgs := append(args, []byte("1"))
 	return ExecIncrBy(db, incrByArgs)
 }
 
-func ExecIncrBy(db *RedisDB, args [][]byte) response.Response {
+func ExecIncrBy(db *redis.RedisDB, args [][]byte) response.Response {
 	key := string(args[0])
 	steps := string(args[1])
 	step, _ := strconv.ParseInt(steps, 10, 64)
 
-	db.lockKey(string(args[0]))
-	defer db.unlockKey(key)
+	db.LockKey(string(args[0]))
+	defer db.UnLockKey(key)
 
 	//get
 	s := getAsString(db, args[0])
@@ -263,17 +274,17 @@ func ExecIncrBy(db *RedisDB, args [][]byte) response.Response {
 	}
 
 	//set
-	db.dataset.Put(key, val)
+	db.Dataset.Put(key, val)
 
 	return resp.MakeSimpleResponse(val)
 }
-func ExecIncrByFloat(db *RedisDB, args [][]byte) response.Response {
+func ExecIncrByFloat(db *redis.RedisDB, args [][]byte) response.Response {
 	key := string(args[0])
 	steps := string(args[1])
 	step, _ := strconv.ParseFloat(steps, 64)
 
-	db.lockKey(key)
-	defer db.unlockKey(key)
+	db.LockKey(key)
+	defer db.UnLockKey(key)
 
 	//get
 	s := getAsString(db, args[0])
@@ -292,17 +303,17 @@ func ExecIncrByFloat(db *RedisDB, args [][]byte) response.Response {
 	}
 
 	//set
-	db.dataset.Put(key, val)
+	db.Dataset.Put(key, val)
 
 	return resp.MakeSimpleResponse(val)
 }
 
-func ExecDecr(db *RedisDB, args [][]byte) response.Response {
+func ExecDecr(db *redis.RedisDB, args [][]byte) response.Response {
 	incrByArgs := append(args, []byte("-1"))
 	return ExecIncrBy(db, incrByArgs)
 }
 
-func ExecDecrBy(db *RedisDB, args [][]byte) response.Response {
+func ExecDecrBy(db *redis.RedisDB, args [][]byte) response.Response {
 
 	step := string(args[1])
 	step = fmt.Sprintf("-%s", step) // 变成 -

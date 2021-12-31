@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/chenjiayao/goredistraning/command"
 	"github.com/chenjiayao/goredistraning/helper"
+	"github.com/chenjiayao/goredistraning/redis/command"
 	"github.com/chenjiayao/goredistraning/redis/rediserr"
 )
 

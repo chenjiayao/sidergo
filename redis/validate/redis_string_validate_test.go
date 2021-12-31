@@ -3,7 +3,7 @@ package validate
 import (
 	"testing"
 
-	"github.com/chenjiayao/goredistraning/rediserr"
+	"github.com/chenjiayao/goredistraning/redis/rediserr"
 )
 
 func TestValidateSet(t *testing.T) {

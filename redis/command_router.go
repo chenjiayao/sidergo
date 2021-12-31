@@ -7,7 +7,7 @@ import (
 )
 
 type ExecFunc func(db *RedisDB, args [][]byte) response.Response
-type ValidateCmdArgs func(args [][]byte) error
+type ValidateCmdArgsFunc func(args [][]byte) error
 
 var (
 	CommandTables = make(map[string]Command)
@@ -16,10 +16,10 @@ var (
 type Command struct {
 	CmdName      string
 	ExecFunc     ExecFunc
-	ValidateFunc ValidateCmdArgs
+	ValidateFunc ValidateCmdArgsFunc
 }
 
-func registerCommand(cmdName string, execFunc ExecFunc, validate ValidateCmdArgs) {
+func RegisterCommand(cmdName string, execFunc ExecFunc, validate ValidateCmdArgsFunc) {
 	cmdName = strings.ToLower(cmdName)
 	CommandTables[cmdName] = Command{
 		CmdName:      cmdName,
