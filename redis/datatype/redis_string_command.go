@@ -2,6 +2,7 @@ package datatype
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 
 	"github.com/chenjiayao/goredistraning/helper"
@@ -71,10 +72,16 @@ func ExecMGet(db *redis.RedisDB, args [][]byte) response.Response {
 
 func ExecMSetNX(db *redis.RedisDB, args [][]byte) response.Response {
 
-	//给所有的 key 加锁
-	// TODO 这里加锁之前应该对 args 按照字母顺序排序， 保证每个 key 的加锁顺序一致，不然会导致死锁
+	//  这里加锁之前应该对 args 按照字母顺序排序， 保证每个goroutine 的 keys 加锁顺序一致，不然会导致死锁
+	allKeys := make([]string, 0)
 	for i := 0; i < len(args); i += 2 {
-		key := string(args[i])
+		allKeys = append(allKeys, string(args[i]))
+	}
+	sort.Slice(allKeys, func(i, j int) bool { return i < j })
+
+	//对所有的 key 加锁
+	for i := 0; i < len(allKeys); i++ {
+		key := allKeys[i]
 		db.LockKey(key)
 		defer db.UnLockKey(key)
 	}
