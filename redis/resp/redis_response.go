@@ -113,6 +113,10 @@ type RedisArrayResponse struct {
 //*3\r\n$3\r\nSET\r\n$3\r\nkey\r\n$5\r\nvalue\r\n
 func (rar RedisArrayResponse) ToContentByte() []byte {
 
+	if rar.Content == nil {
+		return []byte("*0\r\n")
+	}
+
 	var builder strings.Builder
 	builder.WriteString(fmt.Sprintf("*%d%s", len(rar.Content), CRLF)) //*3\r\n*3\r\n
 
@@ -124,4 +128,10 @@ func (rar RedisArrayResponse) ToContentByte() []byte {
 
 func (rar RedisArrayResponse) ToErrorByte() []byte {
 	return []byte{}
+}
+
+func MakeArrayResponse(content [][]byte) response.Response {
+	return RedisArrayResponse{
+		Content: content,
+	}
 }

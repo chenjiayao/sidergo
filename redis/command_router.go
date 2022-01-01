@@ -41,6 +41,10 @@ const (
 
 	//common
 	Expire = "expire"
+
+	//set
+	Sadd     = "sadd"
+	Smembers = "smembers"
 )
 
 var (
