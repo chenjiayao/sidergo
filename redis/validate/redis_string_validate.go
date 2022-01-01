@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"github.com/chenjiayao/goredistraning/helper"
-	"github.com/chenjiayao/goredistraning/redis/command"
+	"github.com/chenjiayao/goredistraning/redis"
 	"github.com/chenjiayao/goredistraning/redis/rediserr"
 )
 
@@ -14,7 +14,7 @@ import (
 func ValidateSet(args [][]byte) error {
 
 	if len(args) < 2 || len(args) > 7 {
-		return fmt.Errorf("ERR wrong number of arguments for '%s' command", command.Set)
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Set)
 	}
 
 	ss := helper.BbyteToSString(args)
@@ -91,7 +91,7 @@ func ValidatePSetEx(args [][]byte) error {
 
 func ValidateMSet(args [][]byte) error {
 	if len(args)%2 != 0 {
-		return fmt.Errorf("ERR wrong number of arguments for '%s' command", command.Mset)
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Mset)
 	}
 	return nil
 }
@@ -102,34 +102,34 @@ func ValidateMSetNX(args [][]byte) error {
 
 func ValidateMGet(args [][]byte) error {
 	if len(args) != 1 {
-		return fmt.Errorf("ERR wrong number of arguments for '%s' command", command.Mget)
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Mget)
 	}
 	return nil
 }
 func ValidateGetSet(args [][]byte) error {
 	if len(args) != 2 {
-		return fmt.Errorf("ERR wrong number of arguments for '%s' command", command.Getset)
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Getset)
 	}
 	return nil
 }
 
 func ValidateGet(args [][]byte) error {
 	if len(args) != 1 {
-		return fmt.Errorf("ERR wrong number of arguments for '%s' command", command.Get)
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Get)
 	}
 	return nil
 }
 
 func ValidateIncr(args [][]byte) error {
 	if len(args) != 1 {
-		return fmt.Errorf("ERR wrong number of arguments for '%s' command", command.Incr)
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Incr)
 	}
 	return nil
 }
 
 func ValidateIncrBy(args [][]byte) error {
 	if len(args) != 2 {
-		return fmt.Errorf("ERR wrong number of arguments for '%s' command", command.Incrby)
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Incrby)
 	}
 
 	increment := string(args[1])
@@ -143,7 +143,7 @@ func ValidateIncrBy(args [][]byte) error {
 
 func ValidateIncreByFloat(args [][]byte) error {
 	if len(args) != 2 {
-		return fmt.Errorf("ERR wrong number of arguments for '%s' command", command.Incrbyf)
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Incrbyf)
 	}
 
 	increment := string(args[1])

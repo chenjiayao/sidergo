@@ -7,7 +7,6 @@ import (
 	"github.com/chenjiayao/goredistraning/helper"
 	"github.com/chenjiayao/goredistraning/interface/response"
 	"github.com/chenjiayao/goredistraning/redis"
-	"github.com/chenjiayao/goredistraning/redis/command"
 	"github.com/chenjiayao/goredistraning/redis/rediserr"
 	"github.com/chenjiayao/goredistraning/redis/resp"
 	"github.com/chenjiayao/goredistraning/redis/validate"
@@ -30,20 +29,20 @@ import (
 
 func init() {
 
-	redis.RegisterCommand(command.Set, ExecSet, validate.ValidateSet)
-	redis.RegisterCommand(command.Get, ExecGet, validate.ValidateGet)
-	redis.RegisterCommand(command.Incr, ExecIncr, validate.ValidateIncr)
-	redis.RegisterCommand(command.Incrby, ExecIncrBy, validate.ValidateIncrBy)
-	redis.RegisterCommand(command.Decr, ExecDecr, validate.ValidateDecr)
-	redis.RegisterCommand(command.Decrby, ExecDecrBy, validate.ValidateDecrBy)
-	redis.RegisterCommand(command.Incrbyf, ExecIncrByFloat, validate.ValidateIncreByFloat)
-	redis.RegisterCommand(command.Psetex, ExecPSetEX, validate.ValidatePSetEx)
-	redis.RegisterCommand(command.Getset, ExecGetset, validate.ValidateGetSet)
-	redis.RegisterCommand(command.Setnx, ExecSetNX, validate.ValidateSetNx)
-	redis.RegisterCommand(command.Setex, ExecSetEX, validate.ValidateSetEx)
-	redis.RegisterCommand(command.Mget, ExecMGet, validate.ValidateMGet)
-	redis.RegisterCommand(command.Mset, ExecMSet, validate.ValidateMSet)
-	redis.RegisterCommand(command.Msetnx, ExecMSetNX, validate.ValidateMSetNX)
+	redis.RegisterCommand(redis.Set, ExecSet, validate.ValidateSet)
+	redis.RegisterCommand(redis.Get, ExecGet, validate.ValidateGet)
+	redis.RegisterCommand(redis.Incr, ExecIncr, validate.ValidateIncr)
+	redis.RegisterCommand(redis.Incrby, ExecIncrBy, validate.ValidateIncrBy)
+	redis.RegisterCommand(redis.Decr, ExecDecr, validate.ValidateDecr)
+	redis.RegisterCommand(redis.Decrby, ExecDecrBy, validate.ValidateDecrBy)
+	redis.RegisterCommand(redis.Incrbyf, ExecIncrByFloat, validate.ValidateIncreByFloat)
+	redis.RegisterCommand(redis.Psetex, ExecPSetEX, validate.ValidatePSetEx)
+	redis.RegisterCommand(redis.Getset, ExecGetset, validate.ValidateGetSet)
+	redis.RegisterCommand(redis.Setnx, ExecSetNX, validate.ValidateSetNx)
+	redis.RegisterCommand(redis.Setex, ExecSetEX, validate.ValidateSetEx)
+	redis.RegisterCommand(redis.Mget, ExecMGet, validate.ValidateMGet)
+	redis.RegisterCommand(redis.Mset, ExecMSet, validate.ValidateMSet)
+	redis.RegisterCommand(redis.Msetnx, ExecMSetNX, validate.ValidateMSetNX)
 }
 
 func ExecMSet(db *redis.RedisDB, args [][]byte) response.Response {

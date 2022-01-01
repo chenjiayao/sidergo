@@ -7,6 +7,7 @@ import (
 	"github.com/chenjiayao/goredistraning/config"
 	"github.com/chenjiayao/goredistraning/interface/server"
 	"github.com/chenjiayao/goredistraning/lib/logger"
+	_ "github.com/chenjiayao/goredistraning/redis/datatype"
 )
 
 func main() {

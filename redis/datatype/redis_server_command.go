@@ -6,17 +6,12 @@ import (
 
 	"github.com/chenjiayao/goredistraning/interface/response"
 	"github.com/chenjiayao/goredistraning/redis"
-	"github.com/chenjiayao/goredistraning/redis/command"
 	"github.com/chenjiayao/goredistraning/redis/resp"
 )
 
 const (
 	UnlimitTTL = int64(-1)
 )
-
-func init() {
-	redis.RegisterCommand(command.Expire, ExecExpire, nil)
-}
 
 func ExecExpire(db *redis.RedisDB, args [][]byte) response.Response {
 	ExecTTL(db, args)
