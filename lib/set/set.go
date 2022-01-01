@@ -25,10 +25,16 @@ func (set *Set) Del(v string) {
 }
 
 func (set *Set) Members() [][]byte {
-	keys := make([][]byte, len(set.vals))
-	for k, v := range set.vals {
-		_ = v //避免 simplify range expressionsimplifyrange
-		keys = append(keys, []byte(k))
+	sl := len(set.vals)
+	keys := make([][]byte, sl)
+	i := 0
+	for key, value := range set.vals {
+		_ = value
+		if key == "" {
+			continue
+		}
+		keys[i] = []byte(key)
+		i++
 	}
 	return keys
 }
