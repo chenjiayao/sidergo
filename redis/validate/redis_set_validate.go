@@ -29,3 +29,10 @@ func ValidateScard(args [][]byte) error {
 	}
 	return nil
 }
+
+func ValidateSpop(args [][]byte) error {
+	if len(args) > 2 {
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Spop)
+	}
+	return nil
+}

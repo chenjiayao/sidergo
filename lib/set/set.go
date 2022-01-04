@@ -30,9 +30,11 @@ func (set *Set) Members() [][]byte {
 	i := 0
 	for key, value := range set.vals {
 		_ = value
+
 		if key == "" {
 			continue
 		}
+
 		keys[i] = []byte(key)
 		i++
 	}

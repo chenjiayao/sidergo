@@ -12,12 +12,14 @@ import (
 
 SADD
 SCARD
+SMEMBERS
+
+
 SDIFF
 SDIFFSTORE
 SINTER
 SINTERSTORE
 SISMEMBER
-SMEMBERS
 SMOVE
 SPOP
 SRANDMEMBER
@@ -30,11 +32,23 @@ func init() {
 	redis.RegisterCommand(redis.Sadd, ExecSadd, validate.ValidateSadd)
 	redis.RegisterCommand(redis.Smembers, ExecSmembers, validate.ValidateSmembers)
 	redis.RegisterCommand(redis.Scard, ExecScard, validate.ValidateScard)
+	redis.RegisterCommand(redis.Spop, ExecSpop, validate.ValidateSpop)
 }
 
 const (
 	size = 2 >> 64
 )
+
+func ExecSpop(db *redis.RedisDB, args [][]byte) response.Response {
+	key := string(args[0])
+	s := getSet(db, key)
+	l := s.Len()
+	if l == 0 {
+		return resp.NullMultiResponse
+	}
+
+	return nil
+}
 
 //SADD runoobkey redis
 func ExecSadd(db *redis.RedisDB, args [][]byte) response.Response {

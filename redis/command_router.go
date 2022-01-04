@@ -46,6 +46,7 @@ const (
 	Sadd     = "sadd"
 	Smembers = "smembers"
 	Scard    = "scard"
+	Spop     = "spop"
 )
 
 var (
