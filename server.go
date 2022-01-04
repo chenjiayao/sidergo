@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -23,6 +24,7 @@ var _ server.Server = &RedisServer{}
 type RedisServer struct {
 	closed atomic.Boolean
 	rds    *redis.RedisDBs
+	aof    chan [][]byte
 }
 
 ///////////启动 redis 服务，
@@ -31,6 +33,15 @@ func MakeRedisServer() *RedisServer {
 	return &RedisServer{
 		rds:    redis.NewDBs(),
 		closed: atomic.Boolean(0),
+		aof:    make(chan [][]byte, 4096),
+	}
+}
+
+//执行 aof
+func (redisServer *RedisServer) Aof() {
+
+	for cmd := range redisServer.aof {
+		fmt.Println(cmd)
 	}
 }
 
@@ -46,6 +57,11 @@ func ListenAndServe(server server.Server) {
 		listener.Close()
 		server.Close()
 	}()
+
+	if config.Config.Appendonly {
+		//开启 aof
+		go server.Aof()
+	}
 
 	var waitGroup sync.WaitGroup
 
@@ -116,6 +132,21 @@ func (redisServer *RedisServer) Handle(conn net.Conn) {
 				break
 			}
 			continue
+		}
+
+		//执行 select 命令
+		if cmdName == "select" {
+			dbStr := string(args[0])
+			index, err := strconv.Atoi(dbStr)
+			if err != nil {
+				redisServer.sendResponse(redisClient, resp.MakeErrorResponse("ERR invalid DB index"))
+				if err == io.EOF {
+					redisServer.closeClient(redisClient)
+					break
+				}
+			}
+
+			redisClient.SetSelectedDBIndex(index)
 		}
 
 		selectedDBIndex := redisClient.GetSelectedDBIndex()
