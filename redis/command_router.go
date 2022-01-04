@@ -43,10 +43,11 @@ const (
 	Expire = "expire"
 
 	//set
-	Sadd     = "sadd"
-	Smembers = "smembers"
-	Scard    = "scard"
-	Spop     = "spop"
+	Sadd      = "sadd"
+	Smembers  = "smembers"
+	Scard     = "scard"
+	Spop      = "spop"
+	Sismember = "sismember"
 )
 
 var (

@@ -20,6 +20,11 @@ func (set *Set) Len() int {
 	return len(set.vals)
 }
 
+func (set *Set) Exist(key string) bool {
+	_, exist := set.vals[key]
+	return exist
+}
+
 func (set *Set) Del(v string) {
 	delete(set.vals, v)
 }

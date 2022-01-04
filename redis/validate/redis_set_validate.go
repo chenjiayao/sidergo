@@ -36,3 +36,10 @@ func ValidateSpop(args [][]byte) error {
 	}
 	return nil
 }
+
+func ValidateSismember(args [][]byte) error {
+	if len(args) != 2 {
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Sismember)
+	}
+	return nil
+}

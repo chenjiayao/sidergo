@@ -13,13 +13,14 @@ import (
 SADD
 SCARD
 SMEMBERS
+SISMEMBER
 
 
 SDIFF
 SDIFFSTORE
 SINTER
 SINTERSTORE
-SISMEMBER
+
 SMOVE
 SPOP
 SRANDMEMBER
@@ -33,11 +34,27 @@ func init() {
 	redis.RegisterCommand(redis.Smembers, ExecSmembers, validate.ValidateSmembers)
 	redis.RegisterCommand(redis.Scard, ExecScard, validate.ValidateScard)
 	redis.RegisterCommand(redis.Spop, ExecSpop, validate.ValidateSpop)
+	redis.RegisterCommand(redis.Sismember, ExecSismember, validate.ValidateSismember)
 }
 
 const (
 	size = 2 >> 64
 )
+
+func ExecSismember(db *redis.RedisDB, args [][]byte) response.Response {
+	key := string(args[0])
+	s := getSet(db, key)
+
+	if s == nil {
+		return resp.MakeNumberResponse(0)
+	}
+
+	exist := s.Exist(key)
+	if exist {
+		return resp.MakeNumberResponse(1)
+	}
+	return resp.MakeNumberResponse(0)
+}
 
 func ExecSpop(db *redis.RedisDB, args [][]byte) response.Response {
 	key := string(args[0])
@@ -85,13 +102,18 @@ func ExecSmembers(db *redis.RedisDB, args [][]byte) response.Response {
 
 //如果 key 不存在，会新建一个 set
 func getSetOrInitSet(db *redis.RedisDB, key string) *set.Set {
-	d, exist := db.Dataset.Get(key)
-
-	var setValue *set.Set
-	if !exist {
-		setValue = set.MakeSet(size)
-	} else {
-		setValue = d.(*set.Set)
+	s := getSet(db, key)
+	if s == nil {
+		return set.MakeSet(size)
 	}
-	return setValue
+	return s
+}
+
+func getSet(db *redis.RedisDB, key string) *set.Set {
+	d, exist := db.Dataset.Get(key)
+	if exist {
+		setValue := d.(*set.Set)
+		return setValue
+	}
+	return nil
 }
