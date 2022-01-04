@@ -43,3 +43,10 @@ func ValidateSismember(args [][]byte) error {
 	}
 	return nil
 }
+
+func ValidateSdiff(args [][]byte) error {
+	if len(args) < 1 {
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Sdiff)
+	}
+	return nil
+}

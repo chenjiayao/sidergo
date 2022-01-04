@@ -8,8 +8,9 @@ import (
 	"github.com/chenjiayao/goredistraning/redis/validate"
 )
 
-/**
+// TODO set 中很多操作达不到 redis 的时间复杂度，这里先做功能实现，后续再考虑性能优化
 
+/**
 SADD
 SCARD
 SMEMBERS
@@ -20,7 +21,6 @@ SDIFF
 SDIFFSTORE
 SINTER
 SINTERSTORE
-
 SMOVE
 SPOP
 SRANDMEMBER
@@ -35,11 +35,17 @@ func init() {
 	redis.RegisterCommand(redis.Scard, ExecScard, validate.ValidateScard)
 	redis.RegisterCommand(redis.Spop, ExecSpop, validate.ValidateSpop)
 	redis.RegisterCommand(redis.Sismember, ExecSismember, validate.ValidateSismember)
+	redis.RegisterCommand(redis.Sdiff, ExecSdiff, validate.ValidateSdiff)
 }
 
 const (
 	size = 2 >> 64
 )
+
+func ExecSdiff(db *redis.RedisDB, args [][]byte) response.Response {
+
+	return nil
+}
 
 func ExecSismember(db *redis.RedisDB, args [][]byte) response.Response {
 	key := string(args[0])
@@ -58,9 +64,8 @@ func ExecSismember(db *redis.RedisDB, args [][]byte) response.Response {
 
 func ExecSpop(db *redis.RedisDB, args [][]byte) response.Response {
 	key := string(args[0])
-	s := getSetOrInitSet(db, key)
-	l := s.Len()
-	if l == 0 {
+	s := getSet(db, key)
+	if s == nil {
 		return resp.NullMultiResponse
 	}
 

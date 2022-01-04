@@ -48,6 +48,7 @@ const (
 	Scard     = "scard"
 	Spop      = "spop"
 	Sismember = "sismember"
+	Sdiff     = "sdiff"
 )
 
 var (
