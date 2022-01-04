@@ -41,7 +41,7 @@ const (
 
 func ExecSpop(db *redis.RedisDB, args [][]byte) response.Response {
 	key := string(args[0])
-	s := getSet(db, key)
+	s := getSetOrInitSet(db, key)
 	l := s.Len()
 	if l == 0 {
 		return resp.NullMultiResponse
@@ -53,7 +53,7 @@ func ExecSpop(db *redis.RedisDB, args [][]byte) response.Response {
 //SADD runoobkey redis
 func ExecSadd(db *redis.RedisDB, args [][]byte) response.Response {
 
-	setValue := getSet(db, string(args[0]))
+	setValue := getSetOrInitSet(db, string(args[0]))
 
 	for _, v := range args[1:] {
 		setValue.Add(string(v))
@@ -66,13 +66,13 @@ func ExecSadd(db *redis.RedisDB, args [][]byte) response.Response {
 func ExecScard(db *redis.RedisDB, args [][]byte) response.Response {
 
 	key := string(args[0])
-	s := getSet(db, key)
+	s := getSetOrInitSet(db, key)
 	return resp.MakeNumberResponse(int64(s.Len()))
 }
 
 func ExecSmembers(db *redis.RedisDB, args [][]byte) response.Response {
 
-	setValue := getSet(db, string(args[0]))
+	setValue := getSetOrInitSet(db, string(args[0]))
 	if setValue.Len() == 0 {
 		// TODO 返回空数组
 		// return resp.make
@@ -84,7 +84,7 @@ func ExecSmembers(db *redis.RedisDB, args [][]byte) response.Response {
 }
 
 //如果 key 不存在，会新建一个 set
-func getSet(db *redis.RedisDB, key string) *set.Set {
+func getSetOrInitSet(db *redis.RedisDB, key string) *set.Set {
 	d, exist := db.Dataset.Get(key)
 
 	var setValue *set.Set
