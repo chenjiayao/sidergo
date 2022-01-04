@@ -4,55 +4,55 @@ module.exports = {
 
   types: [
     {
-      value: 'WIP 💪',
+      value: '💪',
       name: '💪  WIP:      Work in progress'
     },
     {
-      value: 'feat ✨',
+      value: '✨',
       name: '✨  feat:     添加新的功能或者特性'
     },
     {
-      value: 'fix 🐛',
+      value: '🐛',
       name: '🐛  fix:      修复 bug'
     },
     {
-      value: 'refactor 🛠',
+      value: '🛠',
       name: '🛠  refactor: 代码重构'
     },
     {
-      value: 'docs 📚',
+      value: '📚',
       name: '📚  docs:     修改文档'
     },
     {
-      value: 'test 🏁',
+      value: '🏁',
       name: '🏁  test:     添加单元测试'
     },
     {
-      value: 'style 💅',
+      value: '💅',
       name: '💅  style:    格式化代码'
     },
     {
-      value: 'docker 🐳',
+      value: '🐳',
       name: '🐳  docker:  docker 相关'
     },
     {
-      value: 'remove ➖',
+      value: '➖',
       name: '➖  remove:   减少第三方依赖'
     },
     {
-      value: 'add ➕',
+      value: '➕',
       name: '➕  add:   添加第三方依赖'
     },
     {
-      value: 'CI 👷',
+      value: '👷',
       name: '👷  CI:   CI/CD 相关'
     },
     {
-      value: 'performance 🐎',
+      value: '🐎',
       name: '🐎  performance:   性能优化'
     },
     {
-      value: 'revert ⏪',
+      value: '⏪',
       name: '⏪  revert:   Revert to a commit'
     }
   ]
