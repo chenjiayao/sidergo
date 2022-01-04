@@ -45,6 +45,7 @@ const (
 	//set
 	Sadd     = "sadd"
 	Smembers = "smembers"
+	Scard    = "scard"
 )
 
 var (

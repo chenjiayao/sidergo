@@ -29,6 +29,7 @@ SSCAN
 func init() {
 	redis.RegisterCommand(redis.Sadd, ExecSadd, validate.ValidateSadd)
 	redis.RegisterCommand(redis.Smembers, ExecSmembers, validate.ValidateSmembers)
+	redis.RegisterCommand(redis.Scard, ExecScard, validate.ValidateScard)
 }
 
 const (
@@ -48,6 +49,13 @@ func ExecSadd(db *redis.RedisDB, args [][]byte) response.Response {
 	return resp.MakeNumberResponse(1)
 }
 
+func ExecScard(db *redis.RedisDB, args [][]byte) response.Response {
+
+	key := string(args[0])
+	s := getSet(db, key)
+	return resp.MakeNumberResponse(int64(s.Len()))
+}
+
 func ExecSmembers(db *redis.RedisDB, args [][]byte) response.Response {
 
 	setValue := getSet(db, string(args[0]))
@@ -61,6 +69,7 @@ func ExecSmembers(db *redis.RedisDB, args [][]byte) response.Response {
 	return resp.MakeArrayResponse(members)
 }
 
+//如果 key 不存在，会新建一个 set
 func getSet(db *redis.RedisDB, key string) *set.Set {
 	d, exist := db.Dataset.Get(key)
 
