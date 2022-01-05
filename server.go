@@ -147,6 +147,13 @@ func (redisServer *RedisServer) Handle(conn net.Conn) {
 			}
 
 			redisClient.SetSelectedDBIndex(index)
+
+			resp.MakeSimpleResponse("OK")
+			err = redisServer.sendResponse(redisClient, res)
+			if err == io.EOF {
+				redisServer.closeClient(redisClient)
+				break
+			}
 		}
 
 		selectedDBIndex := redisClient.GetSelectedDBIndex()
