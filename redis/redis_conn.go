@@ -46,3 +46,7 @@ func (rc *RedisConn) RemoteAddress() string {
 func (rc *RedisConn) GetSelectedDBIndex() int {
 	return rc.selectedDB
 }
+
+func (rc *RedisConn) SetSelectedDBIndex(index int) {
+	rc.selectedDB = index
+}

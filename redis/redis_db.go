@@ -13,13 +13,16 @@ import (
 
 var _ db.DB = &RedisDB{}
 
+//aof 规则：
+// 1. 不管有多少个 db，只有一个 appendonly.aof 文件，会记录 select db 命令
+// 2. 只会记录写命令，不会记录读命令
 type RedisDB struct {
 	Dataset *dict.ConcurrentDict
 	Index   int                  // 数据库 db 编号
 	TtlMap  *dict.ConcurrentDict //保存 key 和过期时间之间的关系
+
 	//一个协程来定时删除过期的key
 	//一个chan 来关闭「定时删除过期 key 的协程」
-
 	keyLocks sync.Map
 }
 
