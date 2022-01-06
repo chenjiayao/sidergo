@@ -131,7 +131,6 @@ func (redisServer *RedisServer) Handle(conn net.Conn) {
 			}
 			continue
 		}
-
 		//执行 select 命令
 		if cmdName == "select" {
 			dbStr := string(args[0])
@@ -146,20 +145,24 @@ func (redisServer *RedisServer) Handle(conn net.Conn) {
 
 			redisClient.SetSelectedDBIndex(index)
 
-			resp.MakeSimpleResponse("OK")
+			res = resp.MakeSimpleResponse("OK")
 			err = redisServer.sendResponse(redisClient, res)
+			redisServer.aofHandler.LogCmd(request.Args)
 			if err == io.EOF {
 				redisServer.closeClient(redisClient)
 				break
 			}
+			continue
 		}
 
 		selectedDBIndex := redisClient.GetSelectedDBIndex()
 		selectedDB := redisServer.rds.DBs[selectedDBIndex]
 
 		res = selectedDB.Exec(cmdName, args)
-
 		err := redisServer.sendResponse(redisClient, res)
+		if res.ISOK() {
+			redisServer.aofHandler.LogCmd(request.Args)
+		}
 		if err == io.EOF {
 			redisServer.closeClient(redisClient)
 			break
