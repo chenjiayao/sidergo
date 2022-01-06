@@ -36,7 +36,7 @@ func LoadDefaultConfig() {
 		Port:           3101,
 		Databases:      16,
 		RequirePass:    "",
-		Appendonly:     false,
+		Appendonly:     true,
 		AppendFilename: "",
 	}
 }
