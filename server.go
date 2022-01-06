@@ -22,27 +22,21 @@ var _ server.Server = &RedisServer{}
 
 // handler 实例只会有一个
 type RedisServer struct {
-	closed atomic.Boolean
-	rds    *redis.RedisDBs
-	aof    chan [][]byte
+	closed     atomic.Boolean
+	rds        *redis.RedisDBs
+	aofHandler *redis.AofHandler
 }
 
 ///////////启动 redis 服务，
 // 如果这里有 aof，那么需要加载 aof
 func MakeRedisServer() *RedisServer {
-	return &RedisServer{
-		rds:    redis.NewDBs(),
+	redisServer := &RedisServer{
 		closed: atomic.Boolean(0),
-		aof:    make(chan [][]byte, 4096),
 	}
-}
 
-//执行 aof
-func (redisServer *RedisServer) Aof() {
-
-	for cmd := range redisServer.aof {
-		fmt.Println(cmd)
-	}
+	redisServer.rds = redis.NewDBs(redisServer)
+	redisServer.aofHandler = redis.MakeAofHandler(redisServer)
+	return redisServer
 }
 
 func ListenAndServe(server server.Server) {
@@ -53,15 +47,14 @@ func ListenAndServe(server server.Server) {
 	}
 
 	logger.Info(fmt.Sprintf("start listen %s", listener.Addr().String()))
+	if config.Config.Appendonly {
+		server.Log()
+	}
+
 	defer func() {
 		listener.Close()
 		server.Close()
 	}()
-
-	if config.Config.Appendonly {
-		//开启 aof
-		go server.Aof()
-	}
 
 	var waitGroup sync.WaitGroup
 
@@ -82,6 +75,10 @@ func ListenAndServe(server server.Server) {
 	//这里使用 waitGroup 的作用是：还有 conn 在处理情况下
 	// 如果 redis server 关闭，那么这里需要 wait 等待已有链接处理完成。
 	waitGroup.Wait()
+}
+
+func (redisServer *RedisServer) Log() {
+	redisServer.aofHandler.StartAof()
 }
 
 func (redisServer *RedisServer) Handle(conn net.Conn) {
@@ -124,6 +121,7 @@ func (redisServer *RedisServer) Handle(conn net.Conn) {
 			}
 			continue
 		}
+
 		if !redisServer.isAuthenticated(redisClient) {
 			res := resp.MakeErrorResponse("NOAUTH Authentication required")
 			err := redisServer.sendResponse(redisClient, res)
@@ -158,6 +156,7 @@ func (redisServer *RedisServer) Handle(conn net.Conn) {
 
 		selectedDBIndex := redisClient.GetSelectedDBIndex()
 		selectedDB := redisServer.rds.DBs[selectedDBIndex]
+
 		res = selectedDB.Exec(cmdName, args)
 
 		err := redisServer.sendResponse(redisClient, res)
@@ -212,6 +211,7 @@ func (redisServer *RedisServer) closeClient(client *redis.RedisConn) {
 }
 
 func (redisServer *RedisServer) Close() error {
-	logger.Info("client close....")
+	logger.Info("server close....")
+	redisServer.aofHandler.EndAof()
 	return nil
 }
