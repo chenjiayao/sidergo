@@ -34,6 +34,10 @@ func (rer RedisErrorResponse) ToErrorByte() []byte {
 	return []byte(errString)
 }
 
+func (rer RedisErrorResponse) ISOK() bool {
+	return false
+}
+
 func MakeErrorResponse(err string) response.Response {
 	return RedisErrorResponse{
 		Err: errors.New(err),
@@ -52,6 +56,9 @@ func (rsr RedisSimpleResponse) ToContentByte() []byte {
 
 func (rsr RedisSimpleResponse) ToErrorByte() []byte {
 	return []byte{}
+}
+func (rsr RedisSimpleResponse) ISOK() bool {
+	return true
 }
 
 func MakeSimpleResponse(content string) response.Response {
@@ -78,6 +85,9 @@ func (rmls *RedisMultiLineResponse) ToErrorByte() []byte {
 	return []byte{}
 }
 
+func (rmls RedisMultiLineResponse) ISOK() bool {
+	return true
+}
 func MakeMultiResponse(content [][]byte) response.Response {
 
 	return &RedisMultiLineResponse{
@@ -98,7 +108,9 @@ func (rsr RedisNumberResponse) ToContentByte() []byte {
 func (rsr RedisNumberResponse) ToErrorByte() []byte {
 	return []byte{}
 }
-
+func (rsr RedisNumberResponse) ISOK() bool {
+	return true
+}
 func MakeNumberResponse(number int64) response.Response {
 	return RedisNumberResponse{
 		Number: number,
@@ -129,7 +141,9 @@ func (rar RedisArrayResponse) ToContentByte() []byte {
 func (rar RedisArrayResponse) ToErrorByte() []byte {
 	return []byte{}
 }
-
+func (rar RedisArrayResponse) ISOK() bool {
+	return true
+}
 func MakeArrayResponse(content [][]byte) response.Response {
 	return RedisArrayResponse{
 		Content: content,
