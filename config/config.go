@@ -37,7 +37,7 @@ func LoadDefaultConfig() {
 		Databases:      16,
 		RequirePass:    "",
 		Appendonly:     true,
-		AppendFilename: "",
+		AppendFilename: "./datadir/appendonly.aof",
 	}
 }
 
