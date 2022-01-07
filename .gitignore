@@ -17,3 +17,4 @@
 logs/*.log
 examples/
 go-redis-training
+datadir/appendonly.aof
