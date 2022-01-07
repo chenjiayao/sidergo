@@ -7,6 +7,7 @@ import (
 	"github.com/chenjiayao/goredistraning/config"
 	"github.com/chenjiayao/goredistraning/interface/server"
 	"github.com/chenjiayao/goredistraning/lib/logger"
+	"github.com/chenjiayao/goredistraning/redis"
 	_ "github.com/chenjiayao/goredistraning/redis/datatype"
 )
 
@@ -26,5 +27,5 @@ func main() {
 }
 
 func makeServer() server.Server {
-	return goredistraning.MakeRedisServer()
+	return redis.MakeRedisServer()
 }
