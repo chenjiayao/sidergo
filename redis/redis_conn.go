@@ -24,6 +24,7 @@ func MakeRedisConn(conn net.Conn) *RedisConn {
 		conn:           conn,
 		selectedDB:     0,
 		password:       "",
+		inMultiState:   false,
 		multiCmdQueues: make([][][]byte, 128),
 	}
 	return rc
@@ -39,6 +40,15 @@ func (rc *RedisConn) SetMultiState(state int) {
 	} else {
 		rc.inMultiState = false
 	}
+}
+
+//执行事务的命令
+func (rc *RedisConn) ExecMultiCmds() {
+
+}
+
+func (rc *RedisConn) PushMultiCmd(cmd [][]byte) {
+	rc.multiCmdQueues = append(rc.multiCmdQueues, cmd)
 }
 
 func (rc *RedisConn) GetPassword() string {
