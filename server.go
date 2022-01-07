@@ -171,7 +171,7 @@ func (redisServer *RedisServer) Handle(conn net.Conn) {
 }
 
 func (redisServer *RedisServer) isAuthenticated(redisClient *redis.RedisConn) bool {
-	return config.Config.RequirePass == redisClient.Password
+	return config.Config.RequirePass == redisClient.GetPassword()
 }
 
 func (redisServer *RedisServer) sendResponse(redisClient *redis.RedisConn, res response.Response) error {
@@ -196,8 +196,7 @@ func (redisServer *RedisServer) auth(c *redis.RedisConn, args [][]byte) response
 	if config.Config.RequirePass != password {
 		return resp.MakeErrorResponse("ERR invalid password")
 	}
-	c.Password = password
-	c.Authorized = true
+	c.SetPassword(password)
 	return resp.MakeSimpleResponse("ok")
 }
 

@@ -2,9 +2,7 @@ package redis
 
 import (
 	"net"
-	"sync"
 
-	"github.com/chenjiayao/goredistraning/config"
 	"github.com/chenjiayao/goredistraning/interface/conn"
 )
 
@@ -14,20 +12,41 @@ var _ conn.Conn = &RedisConn{}
 type RedisConn struct {
 	conn       net.Conn
 	selectedDB int
-	Password   string
-	Mu         sync.Mutex
-	Authorized bool
+	password   string
+
+	inMultiState   bool       //是否处于事务状态
+	multiCmdQueues [][][]byte // 事务命令
 }
 
 func MakeRedisConn(conn net.Conn) *RedisConn {
 
 	rc := &RedisConn{
-		conn:       conn,
-		selectedDB: 0,
-		Password:   "",
-		Authorized: config.Config.RequirePass != "",
+		conn:           conn,
+		selectedDB:     0,
+		password:       "",
+		multiCmdQueues: make([][][]byte, 128),
 	}
 	return rc
+}
+
+func (rc *RedisConn) IsInMultiState() bool {
+	return rc.inMultiState
+}
+
+func (rc *RedisConn) SetMultiState(state int) {
+	if state == 1 {
+		rc.inMultiState = true
+	} else {
+		rc.inMultiState = false
+	}
+}
+
+func (rc *RedisConn) GetPassword() string {
+	return rc.password
+}
+
+func (rc *RedisConn) SetPassword(password string) {
+	rc.password = password
 }
 
 func (rc *RedisConn) Close() {
