@@ -34,7 +34,7 @@ func MakeRedisServer() *RedisServer {
 		closed: atomic.Boolean(0),
 	}
 
-	redisServer.rds = redis.NewDBs(redisServer)
+	redisServer.rds = redis.NewDBs()
 	redisServer.aofHandler = redis.MakeAofHandler(redisServer)
 	return redisServer
 }

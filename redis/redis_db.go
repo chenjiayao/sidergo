@@ -7,7 +7,6 @@ import (
 	"github.com/chenjiayao/goredistraning/config"
 	"github.com/chenjiayao/goredistraning/interface/db"
 	"github.com/chenjiayao/goredistraning/interface/response"
-	"github.com/chenjiayao/goredistraning/interface/server"
 	"github.com/chenjiayao/goredistraning/lib/dict"
 	"github.com/chenjiayao/goredistraning/redis/resp"
 )
@@ -25,17 +24,14 @@ type RedisDB struct {
 	//一个协程来定时删除过期的key
 	//一个chan 来关闭「定时删除过期 key 的协程」
 	keyLocks sync.Map
-
-	Server server.Server
 }
 
-func NewDBInstance(index int, server server.Server) *RedisDB {
+func NewDBInstance(index int) *RedisDB {
 	rd := &RedisDB{
 		Dataset:  dict.NewDict(128),
 		Index:    index,
 		TtlMap:   dict.NewDict(128),
 		keyLocks: sync.Map{},
-		Server:   server,
 	}
 	return rd
 }
@@ -82,7 +78,7 @@ type RedisDBs struct {
 	DBCount int
 }
 
-func NewDBs(server server.Server) *RedisDBs {
+func NewDBs() *RedisDBs {
 	dbCount := config.Config.Databases
 	rds := &RedisDBs{
 		DBs:     make([]*RedisDB, dbCount),
@@ -90,7 +86,7 @@ func NewDBs(server server.Server) *RedisDBs {
 	}
 
 	for i := 0; i < dbCount; i++ {
-		rds.DBs[i] = NewDBInstance(i, server)
+		rds.DBs[i] = NewDBInstance(i)
 	}
 	return rds
 }
