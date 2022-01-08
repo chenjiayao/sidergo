@@ -82,7 +82,7 @@ func (redisServer *RedisServer) Handle(conn net.Conn) {
 			continue
 		}
 
-		if redisServer.isConnCommand(cmdName) {
+		if redisServer.isConnCommand(cmdName) || redisClient.IsInMultiState() {
 			res = redisClient.Exec(cmdName, args)
 			err = redisServer.sendResponse(redisClient, res)
 			if err == io.EOF {

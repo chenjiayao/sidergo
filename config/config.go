@@ -35,7 +35,7 @@ func LoadDefaultConfig() {
 		Bind:           "127.0.0.1",
 		Port:           3101,
 		Databases:      16,
-		RequirePass:    "",
+		RequirePass:    "123456",
 		Appendonly:     true,
 		AppendFilename: "./datadir/appendonly.aof",
 	}

@@ -4,6 +4,7 @@ import (
 	"github.com/chenjiayao/goredistraning/interface/conn"
 	"github.com/chenjiayao/goredistraning/interface/response"
 	"github.com/chenjiayao/goredistraning/redis"
+	"github.com/chenjiayao/goredistraning/redis/resp"
 	"github.com/chenjiayao/goredistraning/redis/validate"
 )
 
@@ -12,5 +13,11 @@ func init() {
 }
 
 func ExecMulti(conn conn.Conn, args [][]byte) response.Response {
-	return nil
+	conn.SetMultiState(1)
+	return resp.OKSimpleResponse
+}
+
+func ExecDiscard(conn conn.Conn, args [][]byte) response.Response {
+	conn.Discard()
+	return resp.OKSimpleResponse
 }

@@ -20,4 +20,6 @@ type Conn interface {
 	ExecMultiCmds()
 
 	Exec(cmdName string, args [][]byte) response.Response
+
+	Discard()
 }

@@ -27,11 +27,15 @@ func MakeRedisConn(conn net.Conn) *RedisConn {
 		selectedDB:     0,
 		password:       "",
 		inMultiState:   false,
-		multiCmdQueues: make([][][]byte, 128),
+		multiCmdQueues: make([][][]byte, 0),
 	}
 	return rc
 }
 
+func (rc *RedisConn) Discard() {
+	rc.SetMultiState(0)
+	rc.multiCmdQueues = rc.multiCmdQueues[:0]
+}
 func (rc *RedisConn) IsInMultiState() bool {
 	return rc.inMultiState
 }
