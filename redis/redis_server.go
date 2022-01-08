@@ -73,7 +73,7 @@ func (redisServer *RedisServer) Handle(conn net.Conn) {
 		cmdName := redisServer.parseCommand(request.Args)
 		args := cmd[1:]
 
-		if !redisServer.isAuthenticated(redisClient) {
+		if cmdName != "auth" && !redisServer.isAuthenticated(redisClient) {
 			res := resp.MakeErrorResponse("NOAUTH Authentication required")
 			err := redisServer.sendResponse(redisClient, res)
 			if err == io.EOF {
