@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"strconv"
 	"strings"
 
 	"github.com/chenjiayao/goredistraning/config"
@@ -68,66 +67,63 @@ func (redisServer *RedisServer) Handle(conn net.Conn) {
 		}
 
 		var res response.Response
+		var err error
 
 		cmd := request.Args
 		cmdName := redisServer.parseCommand(request.Args)
 		args := cmd[1:]
-		if cmdName == "auth" {
-			res = redisServer.auth(redisClient, args)
-			err := redisServer.sendResponse(redisClient, res)
-			if err == io.EOF {
-				redisServer.closeClient(redisClient)
-				break
-			}
-			continue
-		}
 
 		if !redisServer.isAuthenticated(redisClient) {
 			res := resp.MakeErrorResponse("NOAUTH Authentication required")
 			err := redisServer.sendResponse(redisClient, res)
 			if err == io.EOF {
-				redisServer.closeClient(redisClient)
 				break
 			}
 			continue
 		}
-		//执行 select 命令
-		if cmdName == "select" {
-			dbStr := string(args[0])
-			index, err := strconv.Atoi(dbStr)
-			if err != nil {
-				redisServer.sendResponse(redisClient, resp.MakeErrorResponse("ERR invalid DB index"))
-				if err == io.EOF {
-					redisServer.closeClient(redisClient)
-					break
-				}
-			}
 
-			redisClient.SetSelectedDBIndex(index)
-
-			res = resp.MakeSimpleResponse("OK")
+		if redisServer.isConnCommand(cmdName) {
+			res = redisClient.Exec(cmdName, args)
 			err = redisServer.sendResponse(redisClient, res)
-			redisServer.aofHandler.LogCmd(request.Args)
 			if err == io.EOF {
-				redisServer.closeClient(redisClient)
 				break
 			}
 			continue
 		}
 
-		selectedDBIndex := redisClient.GetSelectedDBIndex()
-		selectedDB := redisServer.rds.DBs[selectedDBIndex]
+		if redisServer.isDBCommand(cmdName) {
+			selectedDBIndex := redisClient.GetSelectedDBIndex()
+			selectedDB := redisServer.rds.DBs[selectedDBIndex]
 
-		res = selectedDB.Exec(cmdName, args)
-		err := redisServer.sendResponse(redisClient, res)
-		if res.ISOK() {
-			redisServer.aofHandler.LogCmd(request.Args)
+			res = selectedDB.Exec(cmdName, args)
+			err = redisServer.sendResponse(redisClient, res)
+
+			if res.ISOK() {
+				redisServer.aofHandler.LogCmd(request.Args)
+			}
+			if err == io.EOF {
+				break
+			}
+			continue
 		}
+
+		res = resp.MakeErrorResponse(fmt.Sprintf("ERR unknown command '%s'", cmdName))
+		err = redisServer.sendResponse(redisClient, res)
 		if err == io.EOF {
-			redisServer.closeClient(redisClient)
 			break
 		}
+		continue
 	}
+}
+
+func (redisServer *RedisServer) isConnCommand(cmdName string) bool {
+	_, exist := ConnCommand[cmdName]
+	return exist
+}
+
+func (redisServer *RedisServer) isDBCommand(cmdName string) bool {
+	_, exist := DBCommand[cmdName]
+	return exist
 }
 
 func (redisServer *RedisServer) isAuthenticated(redisClient *RedisConn) bool {
@@ -141,23 +137,10 @@ func (redisServer *RedisServer) sendResponse(redisClient *RedisConn, res respons
 	} else {
 		err = redisClient.Write(res.ToContentByte())
 	}
+	if err == io.EOF {
+		redisServer.closeClient(redisClient)
+	}
 	return err
-}
-
-func (redisServer *RedisServer) auth(c *RedisConn, args [][]byte) response.Response {
-	if config.Config.RequirePass == "" {
-		return resp.MakeErrorResponse("ERR Client sent AUTH, but no password is set")
-	}
-
-	if len(args) != 1 {
-		return resp.MakeErrorResponse("ERR wrong number of arguments for 'auth' command")
-	}
-	password := string(args[0])
-	if config.Config.RequirePass != password {
-		return resp.MakeErrorResponse("ERR invalid password")
-	}
-	c.SetPassword(password)
-	return resp.MakeSimpleResponse("ok")
 }
 
 //从请求数据中解析出 redis 命令

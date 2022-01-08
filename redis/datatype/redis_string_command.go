@@ -30,20 +30,20 @@ import (
 
 func init() {
 
-	redis.RegisterCommand(redis.Set, ExecSet, validate.ValidateSet)
-	redis.RegisterCommand(redis.Get, ExecGet, validate.ValidateGet)
-	redis.RegisterCommand(redis.Incr, ExecIncr, validate.ValidateIncr)
-	redis.RegisterCommand(redis.Incrby, ExecIncrBy, validate.ValidateIncrBy)
-	redis.RegisterCommand(redis.Decr, ExecDecr, validate.ValidateDecr)
-	redis.RegisterCommand(redis.Decrby, ExecDecrBy, validate.ValidateDecrBy)
-	redis.RegisterCommand(redis.Incrbyf, ExecIncrByFloat, validate.ValidateIncreByFloat)
-	redis.RegisterCommand(redis.Psetex, ExecPSetEX, validate.ValidatePSetEx)
-	redis.RegisterCommand(redis.Getset, ExecGetset, validate.ValidateGetSet)
-	redis.RegisterCommand(redis.Setnx, ExecSetNX, validate.ValidateSetNx)
-	redis.RegisterCommand(redis.Setex, ExecSetEX, validate.ValidateSetEx)
-	redis.RegisterCommand(redis.Mget, ExecMGet, validate.ValidateMGet)
-	redis.RegisterCommand(redis.Mset, ExecMSet, validate.ValidateMSet)
-	redis.RegisterCommand(redis.Msetnx, ExecMSetNX, validate.ValidateMSetNX)
+	redis.RegisterExecCommand(redis.Set, ExecSet, nil, validate.ValidateSet, nil)
+	redis.RegisterExecCommand(redis.Get, ExecGet, nil, validate.ValidateGet, nil)
+	redis.RegisterExecCommand(redis.Incr, ExecIncr, nil, validate.ValidateIncr, nil)
+	redis.RegisterExecCommand(redis.Incrby, ExecIncrBy, nil, validate.ValidateIncrBy, nil)
+	redis.RegisterExecCommand(redis.Decr, ExecDecr, nil, validate.ValidateDecr, nil)
+	redis.RegisterExecCommand(redis.Decrby, ExecDecrBy, nil, validate.ValidateDecrBy, nil)
+	redis.RegisterExecCommand(redis.Incrbyf, ExecIncrByFloat, nil, validate.ValidateIncreByFloat, nil)
+	redis.RegisterExecCommand(redis.Psetex, ExecPSetEX, nil, validate.ValidatePSetEx, nil)
+	redis.RegisterExecCommand(redis.Getset, ExecGetset, nil, validate.ValidateGetSet, nil)
+	redis.RegisterExecCommand(redis.Setnx, ExecSetNX, nil, validate.ValidateSetNx, nil)
+	redis.RegisterExecCommand(redis.Setex, ExecSetEX, nil, validate.ValidateSetEx, nil)
+	redis.RegisterExecCommand(redis.Mget, ExecMGet, nil, validate.ValidateMGet, nil)
+	redis.RegisterExecCommand(redis.Mset, ExecMSet, nil, validate.ValidateMSet, nil)
+	redis.RegisterExecCommand(redis.Msetnx, ExecMSetNX, nil, validate.ValidateMSetNX, nil)
 }
 
 func ExecMSet(db *redis.RedisDB, args [][]byte) response.Response {

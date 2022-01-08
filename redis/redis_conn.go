@@ -4,6 +4,8 @@ import (
 	"net"
 
 	"github.com/chenjiayao/goredistraning/interface/conn"
+	"github.com/chenjiayao/goredistraning/interface/response"
+	"github.com/chenjiayao/goredistraning/redis/resp"
 )
 
 var _ conn.Conn = &RedisConn{}
@@ -78,4 +80,20 @@ func (rc *RedisConn) GetSelectedDBIndex() int {
 
 func (rc *RedisConn) SetSelectedDBIndex(index int) {
 	rc.selectedDB = index
+}
+
+func (rc *RedisConn) Exec(cmdName string, args [][]byte) response.Response {
+	command := CommandTables[cmdName]
+	validate := command.ConnValidateFunc
+	if validate != nil {
+		err := validate(rc, args)
+		if err != nil {
+			return resp.MakeErrorResponse(err.Error())
+		}
+	}
+
+	//执行命令
+	connCommandFun := command.ConnCommandFun
+	resp := connCommandFun(rc, args)
+	return resp
 }

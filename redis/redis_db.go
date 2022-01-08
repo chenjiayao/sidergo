@@ -1,7 +1,6 @@
 package redis
 
 import (
-	"fmt"
 	"sync"
 
 	"github.com/chenjiayao/goredistraning/config"
@@ -37,13 +36,10 @@ func NewDBInstance(index int) *RedisDB {
 }
 
 func (rd *RedisDB) Exec(cmdName string, args [][]byte) response.Response {
-	command, ok := CommandTables[cmdName]
-	if !ok {
-		return resp.MakeErrorResponse(fmt.Sprintf("ERR unknown command '%s'", cmdName))
-	}
-
 	//参数校验
-	validate := command.ValidateFunc
+	command := CommandTables[cmdName]
+	validate := command.DBValidateFunc
+
 	if validate != nil {
 		err := validate(args)
 		if err != nil {
@@ -52,8 +48,8 @@ func (rd *RedisDB) Exec(cmdName string, args [][]byte) response.Response {
 	}
 
 	//执行命令
-	execFunc := command.ExecFunc
-	resp := execFunc(rd, args)
+	DBCommandFun := command.DBCommandFun
+	resp := DBCommandFun(rd, args)
 	return resp
 }
 
