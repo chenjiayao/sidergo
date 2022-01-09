@@ -15,6 +15,7 @@ var _ db.DB = &RedisDB{}
 //aof 规则：
 // 1. 不管有多少个 db，只有一个 appendonly.aof 文件，会记录 select db 命令
 // 2. 只会记录写命令，不会记录读命令
+//保存了一个 watched_keys 字典， 字典的键是这个数据库被监视的键， 而字典的值则是一个链表， 链表中保存了所有监视这个键的客户端。
 type RedisDB struct {
 	Dataset *dict.ConcurrentDict
 	Index   int                  // 数据库 db 编号
@@ -23,6 +24,9 @@ type RedisDB struct {
 	//一个协程来定时删除过期的key
 	//一个chan 来关闭「定时删除过期 key 的协程」
 	keyLocks sync.Map
+
+	// 保存了一个 watched_keys 字典， 字典的键是这个数据库被监视的键， 而字典的值则是一个链表， 链表中保存了所有监视这个键的客户端。
+	WatchedKeys sync.Map
 }
 
 func NewDBInstance(index int) *RedisDB {
@@ -31,6 +35,8 @@ func NewDBInstance(index int) *RedisDB {
 		Index:    index,
 		TtlMap:   dict.NewDict(128),
 		keyLocks: sync.Map{},
+
+		WatchedKeys: sync.Map{},
 	}
 	return rd
 }
