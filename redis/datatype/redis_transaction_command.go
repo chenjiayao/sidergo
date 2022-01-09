@@ -21,3 +21,8 @@ func ExecDiscard(conn conn.Conn, args [][]byte) response.Response {
 	conn.Discard()
 	return resp.OKSimpleResponse
 }
+
+// watch 的 key ，如果在事务执行之前被其他 client 修改，那么事务不会被执行。
+func ExecWatch(conn conn.Conn, args [][]byte) response.Response {
+	return nil
+}
