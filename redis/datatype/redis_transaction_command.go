@@ -14,6 +14,7 @@ func init() {
 	redis.RegisterExecCommand(redis.Multi, ExecMulti, validate.ValidateMulti)
 	redis.RegisterExecCommand(redis.Discard, ExecDiscard, validate.ValidateDiscard)
 	redis.RegisterExecCommand(redis.Watch, ExecWatch, validate.ValidateWatch)
+
 }
 
 func ExecMulti(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
@@ -37,5 +38,10 @@ func ExecWatch(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respon
 		watchKey := watchKeys[i]
 		db.AddWatchKey(conn, watchKey)
 	}
+	return resp.OKSimpleResponse
+}
+
+func ExecUnwatch(connn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
+	db.RemoveAllWatchKey()
 	return resp.OKSimpleResponse
 }

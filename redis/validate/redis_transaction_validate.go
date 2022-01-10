@@ -26,3 +26,10 @@ func ValidateWatch(conn conn.Conn, args [][]byte) error {
 	}
 	return nil
 }
+
+func ValidateUnwatch(conn conn.Conn, args [][]byte) error {
+	if len(args) > 0 {
+		return errors.New("ERR wrong number of arguments for 'unwatch' command")
+	}
+	return nil
+}
