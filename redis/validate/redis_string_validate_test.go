@@ -57,7 +57,7 @@ func TestValidateSet(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := ValidateSet(tt.args.args)
+			got := ValidateSet(nil, tt.args.args)
 
 			//got 和 want 都是nil
 			if got == tt.want && got == nil && tt.want == nil {
@@ -81,7 +81,7 @@ func TestValidateMSet(t *testing.T) {
 		[]byte("key2"),
 		[]byte("value2"),
 	}
-	err := ValidateMSet(args)
+	err := ValidateMSet(nil, args)
 	if err != nil {
 		t.Errorf("ValidateMSet(args) = %v, want nil", err)
 	}

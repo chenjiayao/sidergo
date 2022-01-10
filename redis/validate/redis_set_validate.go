@@ -3,10 +3,11 @@ package validate
 import (
 	"fmt"
 
+	"github.com/chenjiayao/goredistraning/interface/conn"
 	"github.com/chenjiayao/goredistraning/redis"
 )
 
-func ValidateSadd(args [][]byte) error {
+func ValidateSadd(conn conn.Conn, args [][]byte) error {
 
 	if len(args) < 2 {
 		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Set)
@@ -15,7 +16,7 @@ func ValidateSadd(args [][]byte) error {
 	return nil
 }
 
-func ValidateSmembers(args [][]byte) error {
+func ValidateSmembers(conn conn.Conn, args [][]byte) error {
 
 	if len(args) > 2 {
 		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Smembers)
@@ -23,28 +24,28 @@ func ValidateSmembers(args [][]byte) error {
 	return nil
 }
 
-func ValidateScard(args [][]byte) error {
+func ValidateScard(conn conn.Conn, args [][]byte) error {
 	if len(args) > 2 {
 		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Scard)
 	}
 	return nil
 }
 
-func ValidateSpop(args [][]byte) error {
+func ValidateSpop(conn conn.Conn, args [][]byte) error {
 	if len(args) > 2 {
 		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Spop)
 	}
 	return nil
 }
 
-func ValidateSismember(args [][]byte) error {
+func ValidateSismember(conn conn.Conn, args [][]byte) error {
 	if len(args) != 2 {
 		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Sismember)
 	}
 	return nil
 }
 
-func ValidateSdiff(args [][]byte) error {
+func ValidateSdiff(conn conn.Conn, args [][]byte) error {
 	if len(args) < 1 {
 		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Sdiff)
 	}

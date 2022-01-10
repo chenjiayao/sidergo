@@ -1,6 +1,7 @@
 package datatype
 
 import (
+	"github.com/chenjiayao/goredistraning/interface/conn"
 	"github.com/chenjiayao/goredistraning/interface/response"
 	"github.com/chenjiayao/goredistraning/lib/set"
 	"github.com/chenjiayao/goredistraning/redis"
@@ -30,26 +31,27 @@ SUNIONSTORE
 SSCAN
 */
 func init() {
-	redis.RegisterExecCommand(redis.Sadd, ExecSadd, nil, validate.ValidateSadd, nil)
-	redis.RegisterExecCommand(redis.Smembers, ExecSmembers, nil, validate.ValidateSmembers, nil)
-	redis.RegisterExecCommand(redis.Scard, ExecScard, nil, validate.ValidateScard, nil)
-	redis.RegisterExecCommand(redis.Spop, ExecSpop, nil, validate.ValidateSpop, nil)
-	redis.RegisterExecCommand(redis.Sismember, ExecSismember, nil, validate.ValidateSismember, nil)
-	redis.RegisterExecCommand(redis.Sdiff, ExecSdiff, nil, validate.ValidateSdiff, nil)
+	redis.RegisterExecCommand(redis.Sdiff, ExecSdiff, validate.ValidateSdiff)
+	redis.RegisterExecCommand(redis.Sismember, ExecSismember, validate.ValidateSismember)
+	redis.RegisterExecCommand(redis.Spop, ExecSpop, validate.ValidateSpop)
+	redis.RegisterExecCommand(redis.Sadd, ExecSadd, validate.ValidateSadd)
+	redis.RegisterExecCommand(redis.Scard, ExecScard, validate.ValidateScard)
+	redis.RegisterExecCommand(redis.Smembers, ExecSmembers, validate.ValidateSmembers)
+
 }
 
 const (
 	size = 2 >> 64
 )
 
-func ExecSdiff(db *redis.RedisDB, args [][]byte) response.Response {
+func ExecSdiff(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 
 	return nil
 }
 
-func ExecSismember(db *redis.RedisDB, args [][]byte) response.Response {
+func ExecSismember(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 	key := string(args[0])
-	s := getSet(db, key)
+	s := getSet(conn, db, key)
 
 	if s == nil {
 		return resp.MakeNumberResponse(0)
@@ -62,9 +64,9 @@ func ExecSismember(db *redis.RedisDB, args [][]byte) response.Response {
 	return resp.MakeNumberResponse(0)
 }
 
-func ExecSpop(db *redis.RedisDB, args [][]byte) response.Response {
+func ExecSpop(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 	key := string(args[0])
-	s := getSet(db, key)
+	s := getSet(conn, db, key)
 	if s == nil {
 		return resp.NullMultiResponse
 	}
@@ -73,9 +75,9 @@ func ExecSpop(db *redis.RedisDB, args [][]byte) response.Response {
 }
 
 //SADD runoobkey redis
-func ExecSadd(db *redis.RedisDB, args [][]byte) response.Response {
+func ExecSadd(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 
-	setValue := getSetOrInitSet(db, string(args[0]))
+	setValue := getSetOrInitSet(conn, db, string(args[0]))
 
 	for _, v := range args[1:] {
 		setValue.Add(string(v))
@@ -85,16 +87,16 @@ func ExecSadd(db *redis.RedisDB, args [][]byte) response.Response {
 	return resp.MakeNumberResponse(1)
 }
 
-func ExecScard(db *redis.RedisDB, args [][]byte) response.Response {
+func ExecScard(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 
 	key := string(args[0])
-	s := getSetOrInitSet(db, key)
+	s := getSetOrInitSet(conn, db, key)
 	return resp.MakeNumberResponse(int64(s.Len()))
 }
 
-func ExecSmembers(db *redis.RedisDB, args [][]byte) response.Response {
+func ExecSmembers(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 
-	setValue := getSetOrInitSet(db, string(args[0]))
+	setValue := getSetOrInitSet(conn, db, string(args[0]))
 	if setValue.Len() == 0 {
 		// TODO 返回空数组
 		// return resp.make
@@ -106,15 +108,15 @@ func ExecSmembers(db *redis.RedisDB, args [][]byte) response.Response {
 }
 
 //如果 key 不存在，会新建一个 set
-func getSetOrInitSet(db *redis.RedisDB, key string) *set.Set {
-	s := getSet(db, key)
+func getSetOrInitSet(conn conn.Conn, db *redis.RedisDB, key string) *set.Set {
+	s := getSet(conn, db, key)
 	if s == nil {
 		return set.MakeSet(size)
 	}
 	return s
 }
 
-func getSet(db *redis.RedisDB, key string) *set.Set {
+func getSet(conn conn.Conn, db *redis.RedisDB, key string) *set.Set {
 	d, exist := db.Dataset.Get(key)
 	if exist {
 		setValue := d.(*set.Set)

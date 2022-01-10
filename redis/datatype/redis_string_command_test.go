@@ -16,10 +16,10 @@ func TestExecSet(t *testing.T) {
 		[]byte("key"),
 		[]byte("value"),
 	}
-	got := ExecSet(db, args)
+	got := ExecSet(nil, db, args)
 	want := resp.OKSimpleResponse
 	if got != want {
-		t.Errorf(" ExecSet(db, args) = %v, want = %v", got, want)
+		t.Errorf(" ExecSet(nil,db, args) = %v, want = %v", got, want)
 	}
 
 	v, ok := db.Dataset.Get("key")
@@ -31,19 +31,20 @@ func TestExecSet(t *testing.T) {
 		t.Errorf("set store value, but got = %s", res)
 	}
 
-	ttl := ExecTTL(db, [][]byte{[]byte("key")})
+	ttl := ExecTTL(nil, db, [][]byte{[]byte("key")})
 	if ttl != -1 {
 		t.Errorf("set key  ttl = -1, but got = %d", ttl)
 	}
 }
 
 func TestExecGet(t *testing.T) {
+
 	db := redis.NewDBInstance(0)
 	key := "key"
 	value := "value"
 	db.Dataset.Put(key, value)
 
-	res := ExecGet(db, [][]byte{
+	res := ExecGet(nil, db, [][]byte{
 		[]byte(key),
 	})
 
@@ -60,9 +61,9 @@ func TestExecIncrBy(t *testing.T) {
 		[]byte("key"),
 		[]byte("1"),
 	}
-	ExecSet(db, args)
+	ExecSet(nil, db, args)
 
-	ExecIncr(db, [][]byte{[]byte("key")})
+	ExecIncr(nil, db, [][]byte{[]byte("key")})
 
 	v, _ := db.Dataset.Get("key")
 	got, _ := v.(string)
@@ -82,7 +83,7 @@ func TestExecGetset(t *testing.T) {
 	db.Dataset.Put(key, value)
 
 	newValue := "newvalue"
-	res := ExecGetset(db, [][]byte{
+	res := ExecGetset(nil, db, [][]byte{
 		[]byte("key"),
 		[]byte(newValue),
 	})
@@ -90,7 +91,7 @@ func TestExecGetset(t *testing.T) {
 	if string(string(want.ToContentByte())) != string(res.ToContentByte()) {
 		t.Errorf("execgetSet = %s, want = %s", string(res.ToContentByte()), "+value")
 	}
-	s := getAsString(db, []byte(key))
+	s := getAsString(nil, db, []byte(key))
 	if newValue != s {
 		t.Errorf("execgetset store %s , but get %s", "newvalue", s)
 	}

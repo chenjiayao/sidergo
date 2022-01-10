@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/chenjiayao/goredistraning/config"
+	"github.com/chenjiayao/goredistraning/interface/conn"
 	"github.com/chenjiayao/goredistraning/interface/db"
 	"github.com/chenjiayao/goredistraning/interface/response"
 	"github.com/chenjiayao/goredistraning/lib/dict"
@@ -41,21 +42,21 @@ func NewDBInstance(index int) *RedisDB {
 	return rd
 }
 
-func (rd *RedisDB) Exec(cmdName string, args [][]byte) response.Response {
+func (rd *RedisDB) Exec(conn conn.Conn, cmdName string, args [][]byte) response.Response {
 	//参数校验
 	command := CommandTables[cmdName]
-	validate := command.DBValidateFunc
+	validate := command.ValidateFunc
 
 	if validate != nil {
-		err := validate(args)
+		err := validate(conn, args)
 		if err != nil {
 			return resp.MakeErrorResponse(err.Error())
 		}
 	}
 
 	//执行命令
-	DBCommandFun := command.DBCommandFun
-	resp := DBCommandFun(rd, args)
+	CommandFunc := command.CommandFunc
+	resp := CommandFunc(conn, rd, args)
 	return resp
 }
 

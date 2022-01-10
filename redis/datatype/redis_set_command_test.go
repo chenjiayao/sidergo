@@ -17,7 +17,7 @@ func TestExecSadd(t *testing.T) {
 		[]byte("value3"),
 	}
 
-	ExecSadd(db, append([][]byte{[]byte("key")}, insertValue...))
+	ExecSadd(nil, db, append([][]byte{[]byte("key")}, insertValue...))
 
 	i, exist := db.Dataset.Get("key")
 	if !exist {

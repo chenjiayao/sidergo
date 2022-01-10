@@ -9,20 +9,23 @@ import (
 )
 
 func init() {
-	redis.RegisterExecCommand(redis.Multi, nil, ExecMulti, nil, validate.ValidateMultiFun)
+
+	redis.RegisterExecCommand(redis.Multi, ExecMulti, validate.ValidateMulti)
+	redis.RegisterExecCommand(redis.Discard, ExecDiscard, validate.ValidateDiscard)
+	redis.RegisterExecCommand(redis.Watch, ExecWatch, validate.ValidateWatch)
 }
 
-func ExecMulti(conn conn.Conn, args [][]byte) response.Response {
+func ExecMulti(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 	conn.SetMultiState(1)
 	return resp.OKSimpleResponse
 }
 
-func ExecDiscard(conn conn.Conn, args [][]byte) response.Response {
+func ExecDiscard(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 	conn.Discard()
 	return resp.OKSimpleResponse
 }
 
 // watch 的 key ，如果在事务执行之前被其他 client 修改，那么事务不会被执行。
-func ExecWatch(conn conn.Conn, args [][]byte) response.Response {
+func ExecWatch(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 	return nil
 }

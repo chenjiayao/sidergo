@@ -6,12 +6,13 @@ import (
 	"strconv"
 
 	"github.com/chenjiayao/goredistraning/helper"
+	"github.com/chenjiayao/goredistraning/interface/conn"
 	"github.com/chenjiayao/goredistraning/redis"
 	"github.com/chenjiayao/goredistraning/redis/rediserr"
 )
 
 //set key value [EX seconds] [PX milliseconds] [NX|XX]
-func ValidateSet(args [][]byte) error {
+func ValidateSet(conn conn.Conn, args [][]byte) error {
 
 	if len(args) < 2 || len(args) > 7 {
 		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Set)
@@ -63,21 +64,21 @@ func ValidateSet(args [][]byte) error {
 	return nil
 }
 
-func ValidateSetNx(args [][]byte) error {
+func ValidateSetNx(conn conn.Conn, args [][]byte) error {
 	if len(args) != 2 {
 		return rediserr.SYNTAX_ERROR
 	}
 	return nil
 }
 
-func ValidateSetEx(args [][]byte) error {
+func ValidateSetEx(conn conn.Conn, args [][]byte) error {
 	if len(args) != 2 {
 		return rediserr.SYNTAX_ERROR
 	}
 	return nil
 }
 
-func ValidatePSetEx(args [][]byte) error {
+func ValidatePSetEx(conn conn.Conn, args [][]byte) error {
 	if len(args) != 3 {
 		return rediserr.SYNTAX_ERROR
 	}
@@ -89,45 +90,45 @@ func ValidatePSetEx(args [][]byte) error {
 	return nil
 }
 
-func ValidateMSet(args [][]byte) error {
+func ValidateMSet(conn conn.Conn, args [][]byte) error {
 	if len(args)%2 != 0 {
 		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Mset)
 	}
 	return nil
 }
 
-func ValidateMSetNX(args [][]byte) error {
-	return ValidateMSet(args)
+func ValidateMSetNX(conn conn.Conn, args [][]byte) error {
+	return ValidateMSet(conn, args)
 }
 
-func ValidateMGet(args [][]byte) error {
+func ValidateMGet(conn conn.Conn, args [][]byte) error {
 	if len(args) != 1 {
 		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Mget)
 	}
 	return nil
 }
-func ValidateGetSet(args [][]byte) error {
+func ValidateGetSet(conn conn.Conn, args [][]byte) error {
 	if len(args) != 2 {
 		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Getset)
 	}
 	return nil
 }
 
-func ValidateGet(args [][]byte) error {
+func ValidateGet(conn conn.Conn, args [][]byte) error {
 	if len(args) != 1 {
 		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Get)
 	}
 	return nil
 }
 
-func ValidateIncr(args [][]byte) error {
+func ValidateIncr(conn conn.Conn, args [][]byte) error {
 	if len(args) != 1 {
 		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Incr)
 	}
 	return nil
 }
 
-func ValidateIncrBy(args [][]byte) error {
+func ValidateIncrBy(conn conn.Conn, args [][]byte) error {
 	if len(args) != 2 {
 		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Incrby)
 	}
@@ -141,7 +142,7 @@ func ValidateIncrBy(args [][]byte) error {
 	return nil
 }
 
-func ValidateIncreByFloat(args [][]byte) error {
+func ValidateIncreByFloat(conn conn.Conn, args [][]byte) error {
 	if len(args) != 2 {
 		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Incrbyf)
 	}
@@ -154,10 +155,10 @@ func ValidateIncreByFloat(args [][]byte) error {
 	return nil
 }
 
-func ValidateDecr(args [][]byte) error {
-	return ValidateIncr(args)
+func ValidateDecr(conn conn.Conn, args [][]byte) error {
+	return ValidateIncr(conn, args)
 }
 
-func ValidateDecrBy(args [][]byte) error {
-	return ValidateIncrBy(args)
+func ValidateDecrBy(conn conn.Conn, args [][]byte) error {
+	return ValidateIncrBy(conn, args)
 }

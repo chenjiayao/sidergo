@@ -12,11 +12,11 @@ import (
 )
 
 func init() {
-	redis.RegisterExecCommand(redis.Auth, nil, ExecAuth, nil, validate.ValidateAuthFunc)
-	redis.RegisterExecCommand(redis.Select, nil, ExecSelect, nil, validate.ValidateSelectFunc)
+	redis.RegisterExecCommand(redis.Auth, ExecAuth, validate.ValidateAuthFunc)
+	redis.RegisterExecCommand(redis.Select, ExecSelect, validate.ValidateSelectFunc)
 }
 
-func ExecAuth(conn conn.Conn, args [][]byte) response.Response {
+func ExecAuth(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 
 	password := string(args[0])
 	if config.Config.RequirePass != password {
@@ -26,7 +26,7 @@ func ExecAuth(conn conn.Conn, args [][]byte) response.Response {
 	return resp.MakeSimpleResponse("ok")
 }
 
-func ExecSelect(conn conn.Conn, args [][]byte) response.Response {
+func ExecSelect(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 	dbIndexStr := string(args[0])
 	dbIndex, _ := strconv.Atoi(dbIndexStr)
 	conn.SetSelectedDBIndex(dbIndex)

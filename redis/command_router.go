@@ -7,11 +7,8 @@ import (
 	"github.com/chenjiayao/goredistraning/interface/response"
 )
 
-type ExecDBCommandFunc func(db *RedisDB, args [][]byte) response.Response
-type ValidateDBCmdArgsFunc func(args [][]byte) error
-
-type ExecConnCommandFunc func(conn conn.Conn, args [][]byte) response.Response
-type ValidateConnCmdArgsFunc func(conn conn.Conn, args [][]byte) error
+type ExecCommandFunc func(conn conn.Conn, db *RedisDB, args [][]byte) response.Response
+type ValidateDBCmdArgsFunc func(conn conn.Conn, args [][]byte) error
 
 const (
 	//string
@@ -54,7 +51,9 @@ const (
 	Sismember = "sismember"
 	Sdiff     = "sdiff"
 
-	Multi = "multi"
+	Multi   = "multi"
+	Discard = "discard"
+	Watch   = "watch"
 
 	Auth   = "auth"
 	Select = "select"
@@ -106,27 +105,17 @@ var (
 )
 
 type Command struct {
-	CmdName        string
-	DBCommandFun   ExecDBCommandFunc
-	ConnCommandFun ExecConnCommandFunc
-
-	DBValidateFunc   ValidateDBCmdArgsFunc
-	ConnValidateFunc ValidateConnCmdArgsFunc
+	CmdName      string
+	CommandFunc  ExecCommandFunc
+	ValidateFunc ValidateDBCmdArgsFunc
 }
 
-func RegisterExecCommand(
-	cmdName string,
-	dbCommandFun ExecDBCommandFunc,
-	connCommandFun ExecConnCommandFunc,
-	dbValidateFunc ValidateDBCmdArgsFunc,
-	connValidateFunc ValidateConnCmdArgsFunc) {
+func RegisterExecCommand(cmdName string, commandFunc ExecCommandFunc, validateFunc ValidateDBCmdArgsFunc) {
 
 	cmdName = strings.ToLower(cmdName)
 	CommandTables[cmdName] = Command{
-		CmdName:          cmdName,
-		DBCommandFun:     dbCommandFun,
-		ConnCommandFun:   connCommandFun,
-		DBValidateFunc:   dbValidateFunc,
-		ConnValidateFunc: connValidateFunc,
+		CmdName:      cmdName,
+		CommandFunc:  commandFunc,
+		ValidateFunc: validateFunc,
 	}
 }

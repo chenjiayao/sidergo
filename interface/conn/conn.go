@@ -1,7 +1,5 @@
 package conn
 
-import "github.com/chenjiayao/goredistraning/interface/response"
-
 type Conn interface {
 	Close()
 	RemoteAddress() string
@@ -18,8 +16,6 @@ type Conn interface {
 
 	PushMultiCmd(cmd [][]byte)
 	ExecMultiCmds()
-
-	Exec(cmdName string, args [][]byte) response.Response
 
 	Discard()
 }

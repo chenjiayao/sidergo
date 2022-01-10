@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/chenjiayao/goredistraning/interface/conn"
 	"github.com/chenjiayao/goredistraning/interface/response"
 	"github.com/chenjiayao/goredistraning/redis"
 	"github.com/chenjiayao/goredistraning/redis/resp"
@@ -13,14 +14,14 @@ const (
 	UnlimitTTL = int64(-1)
 )
 
-func ExecExpire(db *redis.RedisDB, args [][]byte) response.Response {
-	ExecTTL(db, args)
+func ExecExpire(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
+	ExecTTL(conn, db, args)
 	return resp.MakeNumberResponse(1)
 }
 
 // ttl = -2  key 不存在
 // ttl = -1 永久有效
-func ExecTTL(db *redis.RedisDB, args [][]byte) int64 {
+func ExecTTL(conn conn.Conn, db *redis.RedisDB, args [][]byte) int64 {
 
 	key := string(args[0])
 
@@ -45,7 +46,7 @@ func ExecTTL(db *redis.RedisDB, args [][]byte) int64 {
 	保存到 TtlMap 中的是过期的时间
 	ttl : 毫秒，以字符串形式传递
 */
-func SetKeyTTL(db *redis.RedisDB, args [][]byte) {
+func SetKeyTTL(conn conn.Conn, db *redis.RedisDB, args [][]byte) {
 	key := string(args[0])
 	ttls := string(args[1])
 

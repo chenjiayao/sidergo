@@ -82,48 +82,19 @@ func (redisServer *RedisServer) Handle(conn net.Conn) {
 			continue
 		}
 
-		if redisServer.isConnCommand(cmdName) || redisClient.IsInMultiState() {
-			res = redisClient.Exec(cmdName, args)
-			err = redisServer.sendResponse(redisClient, res)
-			if err == io.EOF {
-				break
-			}
-			continue
-		}
+		selectedDBIndex := redisClient.GetSelectedDBIndex()
+		selectedDB := redisServer.rds.DBs[selectedDBIndex]
 
-		if redisServer.isDBCommand(cmdName) {
-			selectedDBIndex := redisClient.GetSelectedDBIndex()
-			selectedDB := redisServer.rds.DBs[selectedDBIndex]
-
-			res = selectedDB.Exec(cmdName, args)
-			err = redisServer.sendResponse(redisClient, res)
-
-			if res.ISOK() {
-				redisServer.aofHandler.LogCmd(request.Args)
-			}
-			if err == io.EOF {
-				break
-			}
-			continue
-		}
-
-		res = resp.MakeErrorResponse(fmt.Sprintf("ERR unknown command '%s'", cmdName))
+		res = selectedDB.Exec(redisClient, cmdName, args)
 		err = redisServer.sendResponse(redisClient, res)
+
+		if res.ISOK() {
+			redisServer.aofHandler.LogCmd(request.Args)
+		}
 		if err == io.EOF {
 			break
 		}
-		continue
 	}
-}
-
-func (redisServer *RedisServer) isConnCommand(cmdName string) bool {
-	_, exist := ConnCommand[cmdName]
-	return exist
-}
-
-func (redisServer *RedisServer) isDBCommand(cmdName string) bool {
-	_, exist := DBCommand[cmdName]
-	return exist
 }
 
 func (redisServer *RedisServer) isAuthenticated(redisClient *RedisConn) bool {
