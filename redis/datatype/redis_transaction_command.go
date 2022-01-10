@@ -1,6 +1,7 @@
 package datatype
 
 import (
+	"github.com/chenjiayao/goredistraning/helper"
 	"github.com/chenjiayao/goredistraning/interface/conn"
 	"github.com/chenjiayao/goredistraning/interface/response"
 	"github.com/chenjiayao/goredistraning/redis"
@@ -25,7 +26,16 @@ func ExecDiscard(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Resp
 	return resp.OKSimpleResponse
 }
 
+func ExecExec(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
+	return resp.NullMultiResponse
+}
+
 // watch 的 key ，如果在事务执行之前被其他 client 修改，那么事务不会被执行。
 func ExecWatch(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
-	return nil
+	watchKeys := helper.BbyteToSString(args)
+	for i := 0; i < len(watchKeys); i++ {
+		watchKey := watchKeys[i]
+		db.AddWatchKey(conn, watchKey)
+	}
+	return resp.OKSimpleResponse
 }

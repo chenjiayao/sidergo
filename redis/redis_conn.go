@@ -16,6 +16,8 @@ type RedisConn struct {
 
 	inMultiState   bool       //是否处于事务状态
 	multiCmdQueues [][][]byte // 事务命令
+
+	redisDirtyCAS bool
 }
 
 func MakeRedisConn(conn net.Conn) *RedisConn {
@@ -28,6 +30,14 @@ func MakeRedisConn(conn net.Conn) *RedisConn {
 		multiCmdQueues: make([][][]byte, 0),
 	}
 	return rc
+}
+
+func (rc *RedisConn) DirtyCAS(flag bool) {
+	rc.redisDirtyCAS = flag
+}
+
+func (rc *RedisConn) GetDirtyCAS() bool {
+	return rc.redisDirtyCAS
 }
 
 func (rc *RedisConn) Discard() {

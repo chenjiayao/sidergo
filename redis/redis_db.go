@@ -8,10 +8,17 @@ import (
 	"github.com/chenjiayao/goredistraning/interface/db"
 	"github.com/chenjiayao/goredistraning/interface/response"
 	"github.com/chenjiayao/goredistraning/lib/dict"
+	"github.com/chenjiayao/goredistraning/lib/list"
 	"github.com/chenjiayao/goredistraning/redis/resp"
 )
 
 var _ db.DB = &RedisDB{}
+
+var (
+	modifyKeys = map[string]string{
+		Set: Set,
+	}
+)
 
 //aof 规则：
 // 1. 不管有多少个 db，只有一个 appendonly.aof 文件，会记录 select db 命令
@@ -57,7 +64,15 @@ func (rd *RedisDB) Exec(conn conn.Conn, cmdName string, args [][]byte) response.
 	//执行命令
 	CommandFunc := command.CommandFunc
 	resp := CommandFunc(conn, rd, args)
+	if rd.isWatched(cmdName) {
+		conn.DirtyCAS(true)
+	}
 	return resp
+}
+
+func (rd *RedisDB) isWatched(key string) bool {
+	_, exist := rd.WatchedKeys.Load(key)
+	return exist
 }
 
 func (rd *RedisDB) LockKey(key string) {
@@ -73,6 +88,30 @@ func (rd *RedisDB) LockKey(key string) {
 
 func (rd *RedisDB) UnLockKey(key string) {
 	defer rd.keyLocks.Delete(key)
+}
+
+func (rd *RedisDB) AddWatchKey(conn conn.Conn, key string) {
+
+	var link *list.List
+	val, exist := rd.WatchedKeys.Load(key)
+	if !exist {
+		link = list.MakeList()
+	} else {
+		link = val.(*list.List)
+	}
+	link.InsertIfNotExist(conn)
+}
+
+func (rd *RedisDB) RemoveWatchKey(conn conn.Conn, key string) {
+	var link *list.List
+	val, exist := rd.WatchedKeys.Load(key)
+	if !exist {
+		link = list.MakeList()
+	} else {
+		link = val.(*list.List)
+	}
+
+	link.Remove(conn)
 }
 
 ////////////////

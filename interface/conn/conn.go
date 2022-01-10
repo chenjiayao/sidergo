@@ -18,4 +18,7 @@ type Conn interface {
 	ExecMultiCmds()
 
 	Discard()
+
+	DirtyCAS(flag bool)
+	GetDirtyCAS()
 }
