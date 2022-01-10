@@ -20,5 +20,5 @@ type Conn interface {
 	Discard()
 
 	DirtyCAS(flag bool)
-	GetDirtyCAS()
+	GetDirtyCAS() bool
 }
