@@ -14,15 +14,15 @@ func ValidateMulti(conn conn.Conn, args [][]byte) error {
 }
 
 func ValidateDiscard(conn conn.Conn, args [][]byte) error {
-	if conn.IsInMultiState() {
-		return errors.New("ERR MULTI calls can not be nested")
+	if !conn.IsInMultiState() {
+		return errors.New("ERR DISCARD without MULTI")
 	}
 	return nil
 }
 
 func ValidateWatch(conn conn.Conn, args [][]byte) error {
-	if conn.IsInMultiState() {
-		return errors.New("ERR MULTI calls can not be nested")
+	if len(args) < 1 {
+		return errors.New("ERR wrong number of arguments for 'watch' command")
 	}
 	return nil
 }
