@@ -28,10 +28,16 @@ func ExecDiscard(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Resp
 }
 
 func ExecExec(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
+	db.RemoveAllWatchKey()
+	if conn.GetDirtyCAS() {
+		return resp.NullMultiResponse
+	}
 	return resp.NullMultiResponse
 }
 
 // watch 的 key ，如果在事务执行之前被其他 client 修改，那么事务不会被执行。
+// 不管是否已经执行 multi，watch 之后key 被修改，那么事务就不会被执行
+// exec 和 discard 执行之后， watch 的 key 被清空
 func ExecWatch(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 	watchKeys := helper.BbyteToSString(args)
 	for i := 0; i < len(watchKeys); i++ {

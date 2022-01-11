@@ -61,6 +61,11 @@ const (
 
 var (
 	CommandTables = make(map[string]Command)
+	WriteCommands = map[string]string{
+		Set:   Set,
+		Setnx: Setnx,
+		//TODO 其他修改命令
+	}
 )
 
 type Command struct {
