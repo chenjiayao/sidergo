@@ -60,47 +60,6 @@ const (
 )
 
 var (
-	ConnCommand = map[string]string{
-		Multi:  "",
-		Select: "",
-		Auth:   "",
-	}
-
-	DBCommand = map[string]string{
-		Set:       "",
-		Setnx:     "",
-		Mset:      "",
-		Msetnx:    "",
-		Get:       "",
-		Getset:    "",
-		Incr:      "",
-		Incrby:    "",
-		Incrbyf:   "",
-		Decr:      "",
-		Decrby:    "",
-		Lpush:     "",
-		Lpushx:    "",
-		Rpush:     "",
-		Rpushx:    "",
-		Lpop:      "",
-		Rpop:      "",
-		Rpoplpush: "",
-		Lrem:      "",
-		Llen:      "",
-		Lindex:    "",
-		Lset:      "",
-		Lrange:    "",
-		Sadd:      "",
-		Smembers:  "",
-		Scard:     "",
-		Spop:      "",
-		Sismember: "",
-		Sdiff:     "",
-		Expire:    "",
-	}
-)
-
-var (
 	CommandTables = make(map[string]Command)
 )
 
