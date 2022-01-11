@@ -24,6 +24,7 @@ func ExecMulti(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respon
 
 func ExecDiscard(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 	conn.Discard()
+	db.RemoveAllWatchKey()
 	return resp.OKSimpleResponse
 }
 
