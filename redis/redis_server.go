@@ -32,7 +32,9 @@ func MakeRedisServer() *RedisServer {
 	}
 
 	redisServer.rds = NewDBs()
-	redisServer.aofHandler = MakeAofHandler(redisServer)
+	if config.Config.Appendonly {
+		redisServer.aofHandler = MakeAofHandler(redisServer)
+	}
 	return redisServer
 }
 
@@ -74,7 +76,7 @@ func (redisServer *RedisServer) Handle(conn net.Conn) {
 		args := cmd[1:]
 
 		if cmdName != "auth" && !redisServer.isAuthenticated(redisClient) {
-			res := resp.MakeErrorResponse("NOAUTH Authentication required")
+			res = resp.MakeErrorResponse("NOAUTH Authentication required")
 			err := redisServer.sendResponse(redisClient, res)
 			if err == io.EOF {
 				break
@@ -85,6 +87,9 @@ func (redisServer *RedisServer) Handle(conn net.Conn) {
 		selectedDBIndex := redisClient.GetSelectedDBIndex()
 		selectedDB := redisServer.rds.DBs[selectedDBIndex]
 
+		res = selectedDB.Exec(redisClient, cmdName, args)
+		err = redisServer.sendResponse(redisClient, res)
+
 		//这里进行判断，如果是修改命令，并且执行成功，那么需要看看 key 是否被 watch
 		if res.ISOK() && redisServer.isWriteCommand(cmdName) {
 			//检查 key 是否被 watch
@@ -93,10 +98,7 @@ func (redisServer *RedisServer) Handle(conn net.Conn) {
 			}
 		}
 
-		res = selectedDB.Exec(redisClient, cmdName, args)
-		err = redisServer.sendResponse(redisClient, res)
-
-		if res.ISOK() {
+		if res.ISOK() && config.Config.Appendonly {
 			redisServer.aofHandler.LogCmd(request.Args)
 		}
 		if err == io.EOF {
