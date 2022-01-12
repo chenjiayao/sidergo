@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/chenjiayao/goredistraning/config"
+	"github.com/chenjiayao/goredistraning/interface/response"
 	"github.com/chenjiayao/goredistraning/interface/server"
 	"github.com/chenjiayao/goredistraning/lib/logger"
 	"github.com/chenjiayao/goredistraning/redis/resp"
@@ -28,7 +29,9 @@ func (h *AofHandler) StartAof() {
 }
 
 func (h *AofHandler) writeToAofFile(cmd [][]byte) {
-	asArrayResponse := resp.MakeArrayResponse(cmd)
+
+	simpleResponse := resp.MakeMultiResponse(cmd)
+	asArrayResponse := resp.MakeArrayResponse([]response.Response{simpleResponse})
 	asBytes := asArrayResponse.ToContentByte()
 	_, err := h.aofFile.Write(asBytes)
 	if err != nil {
