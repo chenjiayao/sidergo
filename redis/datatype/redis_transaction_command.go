@@ -14,6 +14,7 @@ func init() {
 	redis.RegisterExecCommand(redis.Multi, ExecMulti, validate.ValidateMulti)
 	redis.RegisterExecCommand(redis.Discard, ExecDiscard, validate.ValidateDiscard)
 	redis.RegisterExecCommand(redis.Watch, ExecWatch, validate.ValidateWatch)
+	redis.RegisterExecCommand(redis.Exec, ExecExec, validate.ValidateExec)
 
 }
 
@@ -30,10 +31,11 @@ func ExecDiscard(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Resp
 
 func ExecExec(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 	db.RemoveAllWatchKey()
+	conn.SetMultiState(0)
 	if conn.GetDirtyCAS() {
 		return resp.NullMultiResponse
 	}
-	return resp.NullMultiResponse
+	return resp.OKSimpleResponse
 }
 
 // watch 的 key ，如果在事务执行之前被其他 client 修改，那么事务不会被执行。
