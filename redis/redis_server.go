@@ -91,7 +91,7 @@ func (redisServer *RedisServer) Handle(conn net.Conn) {
 		err = redisServer.sendResponse(redisClient, res)
 
 		//这里进行判断，如果是修改命令，并且执行成功，那么需要看看 key 是否被 watch
-		if res.ISOK() && redisServer.isWriteCommand(cmdName) {
+		if res.ISOK() && !redisClient.IsInMultiState() && redisServer.isWriteCommand(cmdName) {
 			//检查 key 是否被 watch
 			if selectedDB.isWatched(cmdName) {
 				redisClient.DirtyCAS(true)
