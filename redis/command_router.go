@@ -54,6 +54,7 @@ const (
 	Multi   = "multi"
 	Discard = "discard"
 	Watch   = "watch"
+	Exec    = "exec"
 
 	Auth   = "auth"
 	Select = "select"
