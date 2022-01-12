@@ -3,7 +3,6 @@ package resp
 import (
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/chenjiayao/goredistraning/interface/response"
 )
@@ -88,6 +87,7 @@ func (rmls *RedisMultiLineResponse) ToErrorByte() []byte {
 func (rmls RedisMultiLineResponse) ISOK() bool {
 	return true
 }
+
 func MakeMultiResponse(content [][]byte) response.Response {
 
 	return &RedisMultiLineResponse{
@@ -119,7 +119,7 @@ func MakeNumberResponse(number int64) response.Response {
 
 ///////
 type RedisArrayResponse struct {
-	Content [][]byte
+	Content []response.Response
 }
 
 //*3\r\n$3\r\nSET\r\n$3\r\nkey\r\n$5\r\nvalue\r\n
@@ -129,13 +129,13 @@ func (rar RedisArrayResponse) ToContentByte() []byte {
 		return []byte("*0\r\n")
 	}
 
-	var builder strings.Builder
-	builder.WriteString(fmt.Sprintf("*%d%s", len(rar.Content), CRLF)) //*3\r\n*3\r\n
+	res := make([]byte, 0)
+	res = append(res, []byte(fmt.Sprintf("*%d%s", len(rar.Content), CRLF))...)
 
 	for _, v := range rar.Content {
-		builder.WriteString(fmt.Sprintf("$%d%s%s%s", len(v), CRLF, string(v), CRLF)) // $3\r\nSET\r\n
+		res = append(res, v.ToContentByte()...)
 	}
-	return []byte(builder.String())
+	return res
 }
 
 func (rar RedisArrayResponse) ToErrorByte() []byte {
@@ -144,8 +144,8 @@ func (rar RedisArrayResponse) ToErrorByte() []byte {
 func (rar RedisArrayResponse) ISOK() bool {
 	return true
 }
-func MakeArrayResponse(content [][]byte) response.Response {
+func MakeArrayResponse(resps []response.Response) response.Response {
 	return RedisArrayResponse{
-		Content: content,
+		Content: resps,
 	}
 }
