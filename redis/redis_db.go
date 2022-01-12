@@ -50,7 +50,26 @@ func NewDBInstance(index int) *RedisDB {
 	return rd
 }
 
+func (rd *RedisDB) canPushMultiQueues(cmdName string) bool {
+	canNotPushMultiQueues := map[string]string{
+		Exec:    Exec,
+		Watch:   Watch,
+		Discard: Discard,
+		Multi:   Multi,
+	}
+	_, can := canNotPushMultiQueues[cmdName]
+	return !can
+}
+
 func (rd *RedisDB) Exec(conn conn.Conn, cmdName string, args [][]byte) response.Response {
+
+	//在事务状态下，有些命令不需要 push 到 queue 中
+	if conn.IsInMultiState() && !rd.canPushMultiQueues(cmdName) {
+		cmd := append([][]byte{[]byte(cmdName)}, args...)
+		conn.PushMultiCmd(cmd)
+		return resp.OKSimpleResponse
+	}
+
 	//参数校验
 	command, exist := CommandTables[cmdName]
 	if !exist {
