@@ -13,9 +13,10 @@ type Conn interface {
 
 	IsInMultiState() bool
 	SetMultiState(state int)
+	GetMultiState() int
 
 	PushMultiCmd(cmd [][]byte)
-	ExecMultiCmds()
+	GetMultiCmds() [][][]byte
 
 	Discard()
 

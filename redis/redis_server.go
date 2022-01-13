@@ -90,14 +90,6 @@ func (redisServer *RedisServer) Handle(conn net.Conn) {
 		res = selectedDB.Exec(redisClient, cmdName, args)
 		err = redisServer.sendResponse(redisClient, res)
 
-		//这里进行判断，如果是修改命令，并且执行成功，那么需要看看 key 是否被 watch
-		if res.ISOK() && !redisClient.IsInMultiState() && redisServer.isWriteCommand(cmdName) {
-			//检查 key 是否被 watch
-			if selectedDB.isWatched(cmdName) {
-				redisClient.DirtyCAS(true)
-			}
-		}
-
 		if res.ISOK() && config.Config.Appendonly {
 			redisServer.aofHandler.LogCmd(request.Args)
 		}
@@ -109,11 +101,6 @@ func (redisServer *RedisServer) Handle(conn net.Conn) {
 
 func (redisServer *RedisServer) isAuthenticated(redisClient *RedisConn) bool {
 	return config.Config.RequirePass == redisClient.GetPassword()
-}
-
-func (redisServer *RedisServer) isWriteCommand(cmdName string) bool {
-	_, is := WriteCommands[cmdName]
-	return is
 }
 
 func (redisServer *RedisServer) sendResponse(redisClient *RedisConn, res response.Response) error {

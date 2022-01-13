@@ -6,10 +6,24 @@ type List struct {
 	size int
 }
 
+/**
+ *
+ *
+ *
+ */
+
 type Node struct {
 	val  interface{}
 	prev *Node
 	next *Node
+}
+
+func (node *Node) Element() interface{} {
+	return node.val
+}
+
+func (node *Node) Next() *Node {
+	return node.next
 }
 
 func (l *List) InsertLast(val interface{}) {
@@ -47,6 +61,10 @@ func (l *List) Remove(val interface{}) {
 
 		cur = cur.next
 	}
+}
+
+func (l *List) Head() *Node {
+	return l.head
 }
 
 func (l *List) Exist(val interface{}) bool {

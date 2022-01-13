@@ -8,16 +8,24 @@ import (
 
 var _ conn.Conn = &RedisConn{}
 
+type MultiState int
+
+const (
+	NotInMultiState MultiState = iota
+	InMultiState
+	InMultiStateButHaveError
+)
+
 //每个连接需要保存的信息
 type RedisConn struct {
 	conn       net.Conn
 	selectedDB int
 	password   string
 
-	inMultiState   bool       //是否处于事务状态
+	multiState     MultiState
 	multiCmdQueues [][][]byte // 事务命令
 
-	redisDirtyCAS bool
+	redisDirtyCAS bool //标记当前事务是否被破坏 ----> watch 的 key 是否被更改了
 }
 
 func MakeRedisConn(conn net.Conn) *RedisConn {
@@ -26,13 +34,15 @@ func MakeRedisConn(conn net.Conn) *RedisConn {
 		conn:           conn,
 		selectedDB:     0,
 		password:       "",
-		inMultiState:   false,
 		multiCmdQueues: make([][][]byte, 0),
 	}
 	return rc
 }
 
 func (rc *RedisConn) DirtyCAS(flag bool) {
+	if !rc.IsInMultiState() {
+		return
+	}
 	rc.redisDirtyCAS = flag
 }
 
@@ -41,28 +51,27 @@ func (rc *RedisConn) GetDirtyCAS() bool {
 }
 
 func (rc *RedisConn) Discard() {
-	rc.SetMultiState(0)
+	rc.SetMultiState(int(NotInMultiState))
 	rc.multiCmdQueues = rc.multiCmdQueues[:0]
 }
 func (rc *RedisConn) IsInMultiState() bool {
-	return rc.inMultiState
+	return rc.multiState == InMultiState || rc.multiState == InMultiStateButHaveError
 }
 
 func (rc *RedisConn) SetMultiState(state int) {
-	if state == 1 {
-		rc.inMultiState = true
-	} else {
-		rc.inMultiState = false
-	}
-}
-
-//执行事务的命令
-func (rc *RedisConn) ExecMultiCmds() {
-
+	rc.multiState = MultiState(state)
 }
 
 func (rc *RedisConn) PushMultiCmd(cmd [][]byte) {
 	rc.multiCmdQueues = append(rc.multiCmdQueues, cmd)
+}
+
+func (rc *RedisConn) GetMultiCmds() [][][]byte {
+	return rc.multiCmdQueues
+}
+
+func (rc *RedisConn) GetMultiState() int {
+	return int(rc.multiState)
 }
 
 func (rc *RedisConn) GetPassword() string {

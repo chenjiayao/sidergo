@@ -15,12 +15,6 @@ import (
 
 var _ db.DB = &RedisDB{}
 
-var (
-	modifyKeys = map[string]string{
-		Set: Set,
-	}
-)
-
 //aof 规则：
 // 1. 不管有多少个 db，只有一个 appendonly.aof 文件，会记录 select db 命令
 // 2. 只会记录写命令，不会记录读命令
@@ -63,40 +57,63 @@ func (rd *RedisDB) canPushMultiQueues(cmdName string) bool {
 
 func (rd *RedisDB) Exec(conn conn.Conn, cmdName string, args [][]byte) response.Response {
 
-	//在事务状态下，有些命令不需要 push 到 queue 中
-	if conn.IsInMultiState() && !rd.canPushMultiQueues(cmdName) {
-		cmd := append([][]byte{[]byte(cmdName)}, args...)
-		conn.PushMultiCmd(cmd)
-		return resp.OKSimpleResponse
-	}
-
 	//参数校验
 	command, exist := CommandTables[cmdName]
 	if !exist {
 		return resp.MakeErrorResponse(fmt.Sprintf("ERR unknown command `%s`, with args beginning with:", cmdName))
 	}
 	validate := command.ValidateFunc
-
-	if validate != nil {
-		err := validate(conn, args)
-		if err != nil {
-			return resp.MakeErrorResponse(err.Error())
+	err := validate(conn, args)
+	if err != nil {
+		//在 multi 状态下，如果 cmd 校验失败，那么标记 multi 失败，并且返回 error response
+		if conn.IsInMultiState() {
+			conn.SetMultiState(int(InMultiStateButHaveError))
 		}
+		return resp.MakeErrorResponse(err.Error())
+	}
+
+	//在事务状态下，有些命令不需要 push 到 queue 中s
+	if conn.IsInMultiState() && rd.canPushMultiQueues(cmdName) {
+		cmd := append([][]byte{[]byte(cmdName)}, args...)
+		conn.PushMultiCmd(cmd)
+		return resp.MakeSimpleResponse("QUEUED")
 	}
 
 	//执行命令
 	CommandFunc := command.CommandFunc
 
 	resp := CommandFunc(conn, rd, args)
-	if rd.isWatched(cmdName) {
-		conn.DirtyCAS(true)
-	}
+
+	rd.setWatchedKeyClientCASDirty(cmdName)
 	return resp
 }
 
-func (rd *RedisDB) isWatched(key string) bool {
-	_, exist := rd.WatchedKeys.Load(key)
-	return exist
+//将有 watch key 的 client 的 dirtyCAS 设置为 true
+func (rd *RedisDB) setWatchedKeyClientCASDirty(key string) {
+
+	_, is := WriteCommands[key]
+	if !is {
+		return
+	}
+
+	val, exist := rd.WatchedKeys.Load(key)
+	if !exist {
+		return
+	}
+
+	link := val.(*list.List)
+	head := link.Head()
+	for {
+		node := head.Next()
+		if node == nil {
+			return
+		}
+		v := node.Element()
+		conn := v.(*RedisConn)
+		conn.DirtyCAS(true)
+
+		head = node
+	}
 }
 
 func (rd *RedisDB) LockKey(key string) {
@@ -124,6 +141,7 @@ func (rd *RedisDB) AddWatchKey(conn conn.Conn, key string) {
 		link = val.(*list.List)
 	}
 	link.InsertIfNotExist(conn)
+	rd.WatchedKeys.Store(key, link)
 }
 
 func (rd *RedisDB) RemoveWatchKey(conn conn.Conn, key string) {

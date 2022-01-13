@@ -19,7 +19,7 @@ func init() {
 }
 
 func ExecMulti(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
-	conn.SetMultiState(1)
+	conn.SetMultiState(int(redis.InMultiState))
 	return resp.OKSimpleResponse
 }
 
@@ -35,7 +35,23 @@ func ExecExec(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respons
 	if conn.GetDirtyCAS() {
 		return resp.NullMultiResponse
 	}
-	return resp.OKSimpleResponse
+
+	if conn.GetMultiState() == int(redis.InMultiStateButHaveError) {
+		return resp.MakeErrorResponse("EXECABORT Transaction discarded because of previous errors.")
+	}
+
+	multiCmds := conn.GetMultiCmds()
+
+	responseContent := make([]response.Response, len(multiCmds))
+
+	for index, cmd := range multiCmds {
+		cmdResponse := db.Exec(conn, string(cmd[0]), cmd[1:])
+		if !cmdResponse.ISOK() {
+			return resp.MakeErrorResponse("EXECABORT Transaction discarded because of previous errors.")
+		}
+		responseContent[index] = cmdResponse
+	}
+	return resp.MakeArrayResponse(responseContent)
 }
 
 // watch 的 key ，如果在事务执行之前被其他 client 修改，那么事务不会被执行。
