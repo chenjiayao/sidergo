@@ -41,6 +41,10 @@ func (l *List) InsertLast(val interface{}) {
 	l.size++
 }
 
+func (l *List) Len() int {
+	return l.size
+}
+
 func (l *List) InsertIfNotExist(val interface{}) {
 	if !l.Exist(val) {
 		l.InsertLast(val)
@@ -57,6 +61,7 @@ func (l *List) Remove(val interface{}) {
 
 		if val == cur.val {
 			cur.prev.next = cur.next
+			break
 		}
 
 		cur = cur.next
@@ -87,16 +92,16 @@ func (l *List) Exist(val interface{}) bool {
 }
 
 func MakeList() *List {
-	n := &Node{
+	emptyNode := &Node{
 		val: 0,
 	}
 
-	n.prev = nil
-	n.next = nil
+	emptyNode.prev = nil
+	emptyNode.next = nil
 
 	l := &List{
-		head: n,
-		tail: n,
+		head: nil,
+		tail: emptyNode,
 		size: 0,
 	}
 
