@@ -74,7 +74,7 @@ func (l *List) Remove(val interface{}) {
 	}
 }
 
-func (l *List) Head() *Node {
+func (l *List) First() *Node {
 	return l.head
 }
 
