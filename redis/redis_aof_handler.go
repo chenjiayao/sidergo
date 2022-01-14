@@ -8,27 +8,29 @@ import (
 	"github.com/chenjiayao/goredistraning/interface/response"
 	"github.com/chenjiayao/goredistraning/interface/server"
 	"github.com/chenjiayao/goredistraning/lib/logger"
+	"github.com/chenjiayao/goredistraning/lib/unboundedchan"
 	"github.com/chenjiayao/goredistraning/redis/resp"
 )
 
 // redis aof 属于写后日志，先写内存，再写日志
 type AofHandler struct {
-	aofChan     chan [][]byte
+	aofChan     *unboundedchan.UnboundedChan
 	redisServer server.Server
 	aofFile     io.Writer
 }
 
 func (h *AofHandler) StartAof() {
 	go func() {
-		for cmd := range h.aofChan {
-			if h.isWriteCmd(cmd[0]) {
-				h.writeToAofFile(cmd)
-			}
+		for cmd := range h.aofChan.Out {
+			h.writeToAofFile(cmd)
 		}
 	}()
 }
 
 func (h *AofHandler) writeToAofFile(cmd [][]byte) {
+	if !h.isWriteCmd(cmd[0]) {
+		return
+	}
 
 	simpleResponse := resp.MakeMultiResponse(cmd)
 	asArrayResponse := resp.MakeArrayResponse([]response.Response{simpleResponse})
@@ -40,16 +42,19 @@ func (h *AofHandler) writeToAofFile(cmd [][]byte) {
 }
 
 func (h *AofHandler) LogCmd(cmd [][]byte) {
-	h.aofChan <- cmd
+	h.aofChan.In <- cmd
 }
 
 func (h *AofHandler) EndAof() {
-	close(h.aofChan)
+	defer close(h.aofChan.In)
+	for cmd := range h.aofChan.Out {
+		h.writeToAofFile(cmd)
+	}
 }
 
 func MakeAofHandler(server server.Server) *AofHandler {
 	handler := &AofHandler{
-		aofChan:     make(chan [][]byte, 4096), //TODO 这里后续应该改成使用 unboundchan 来实现无限制的 chan
+		aofChan:     unboundedchan.MakeUnboundedChan(20),
 		redisServer: server,
 	}
 	aofFileName := config.Config.AppendFilename
