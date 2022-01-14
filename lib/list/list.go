@@ -35,6 +35,10 @@ func (l *List) InsertLast(val interface{}) {
 		prev: tail,
 		val:  val,
 	}
+	if l.head == nil {
+		l.head = node
+	}
+
 	tail.next = node
 	l.tail = node
 
