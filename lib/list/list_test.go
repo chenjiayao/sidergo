@@ -54,6 +54,6 @@ func TestList_Remove(t *testing.T) {
 	l.Remove(1)
 	exist = l.Exist(1)
 	if exist {
-		t.Errorf("l.Remove(2) = falied")
+		t.Errorf("l.Remove(1) = falied")
 	}
 }
