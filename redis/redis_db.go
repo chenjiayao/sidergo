@@ -84,17 +84,29 @@ func (rd *RedisDB) Exec(conn conn.Conn, cmdName string, args [][]byte) response.
 
 	resp := CommandFunc(conn, rd, args)
 
-	rd.setWatchedKeyClientCASDirty(cmdName)
+	_, is := WriteCommands[cmdName]
+	if !is {
+		return resp
+	}
+
+	key := rd.parseCommandKeyFromArgs(args)
+	if key != "" {
+		rd.setWatchedKeyClientCASDirty(key)
+	}
 	return resp
+}
+
+// 从命令参数中解析出 key
+func (rd *RedisDB) parseCommandKeyFromArgs(args [][]byte) string {
+	if len(args) == 0 {
+		return ""
+	}
+	key := string(args[0])
+	return key
 }
 
 //将有 watch key 的 client 的 dirtyCAS 设置为 true
 func (rd *RedisDB) setWatchedKeyClientCASDirty(key string) {
-
-	_, is := WriteCommands[key]
-	if !is {
-		return
-	}
 
 	val, exist := rd.WatchedKeys.Load(key)
 	if !exist {
@@ -102,17 +114,16 @@ func (rd *RedisDB) setWatchedKeyClientCASDirty(key string) {
 	}
 
 	link := val.(*list.List)
-	head := link.Head()
+	node := link.Head()
 	for {
-		node := head.Next()
 		if node == nil {
-			return
+			break
 		}
 		v := node.Element()
 		conn := v.(*RedisConn)
 		conn.DirtyCAS(true)
 
-		head = node
+		node = node.Next()
 	}
 }
 

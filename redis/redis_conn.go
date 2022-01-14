@@ -40,9 +40,7 @@ func MakeRedisConn(conn net.Conn) *RedisConn {
 }
 
 func (rc *RedisConn) DirtyCAS(flag bool) {
-	if !rc.IsInMultiState() {
-		return
-	}
+
 	rc.redisDirtyCAS = flag
 }
 
