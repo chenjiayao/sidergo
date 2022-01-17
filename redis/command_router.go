@@ -26,6 +26,7 @@ const (
 	Incrbyf = "incrbyfloat"
 	Decr    = "decr"
 	Decrby  = "decrby"
+
 	//list
 	Lpush     = "lpush"
 	Lpushx    = "lpushx"
@@ -39,6 +40,8 @@ const (
 	Lindex    = "lindex"
 	Lset      = "lset"
 	Lrange    = "lrange"
+	Blpop     = "blpop"
+	Brpop     = "brpop"
 
 	//common
 	Expire = "expire"
