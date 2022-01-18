@@ -26,6 +26,15 @@ func (node *Node) Next() *Node {
 	return node.next
 }
 
+func (l *List) InsertHead(val interface{}) {
+	n := &Node{
+		val:  val,
+		prev: nil,
+		next: l.head,
+	}
+	l.head = n
+}
+
 func (l *List) InsertLast(val interface{}) {
 
 	n := &Node{
