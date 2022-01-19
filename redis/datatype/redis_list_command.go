@@ -17,6 +17,19 @@ func init() {
 	redis.RegisterExecCommand(redis.Lpush, ExecLPush, validate.ValidateLPush)
 	redis.RegisterExecCommand(redis.Llen, ExecLLen, validate.ValidateLLen)
 	redis.RegisterExecCommand(redis.Lindex, ExecLIndex, validate.ValidateLIndex)
+	redis.RegisterExecCommand(redis.Lpushx, ExecLPushx, validate.ValidateLPushx)
+}
+
+func ExecLPushx(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
+	l, err := getList(conn, db, args)
+	if err != nil {
+		return resp.MakeErrorResponse(err.Error())
+	}
+	if l == nil {
+		return resp.NullMultiResponse
+	}
+
+	return ExecLPush(conn, db, args)
 }
 
 func ExecLIndex(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
