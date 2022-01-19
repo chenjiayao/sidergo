@@ -28,7 +28,7 @@ func ExecLPush(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respon
 	l, err := getListOrInitList(conn, db, args)
 
 	if err != nil {
-		return resp.MakeErrorResponse("(error) WRONGTYPE Operation against a key holding the wrong kind of value")
+		return resp.MakeErrorResponse(err.Error())
 	}
 
 	for _, v := range args[1:] {
@@ -48,7 +48,7 @@ func getList(conn conn.Conn, db *redis.RedisDB, args [][]byte) (*list.List, erro
 	l, ok := val.(*list.List)
 	if !ok {
 		//TODO报错不是 list 类型
-		return nil, errors.New("not list")
+		return nil, errors.New("(error) WRONGTYPE Operation against a key holding the wrong kind of value")
 	}
 	return l, nil
 }
@@ -64,7 +64,7 @@ func getListOrInitList(conn conn.Conn, db *redis.RedisDB, args [][]byte) (*list.
 func ExecLLen(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 	l, err := getListOrInitList(conn, db, args)
 	if err != nil {
-		return resp.MakeErrorResponse("(error) WRONGTYPE Operation against a key holding the wrong kind of value")
+		return resp.MakeErrorResponse(err.Error())
 	}
 	return resp.MakeNumberResponse(int64(l.Len()))
 }
