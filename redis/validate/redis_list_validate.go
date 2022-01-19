@@ -2,6 +2,7 @@ package validate
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/chenjiayao/goredistraning/interface/conn"
 	"github.com/chenjiayao/goredistraning/redis"
@@ -26,6 +27,11 @@ func ValidateLPop(conn conn.Conn, args [][]byte) error {
 func ValidateLIndex(conn conn.Conn, args [][]byte) error {
 	if len(args) != 2 {
 		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Lindex)
+	}
+	indexs := args[1]
+	_, err := strconv.Atoi(string(indexs))
+	if err != nil {
+		return fmt.Errorf("(error) ERR value is not an integer or out of range")
 	}
 	return nil
 }
