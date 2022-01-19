@@ -14,6 +14,7 @@ import (
 func init() {
 	redis.RegisterExecCommand(redis.Lpop, ExecLPop, validate.ValidateLPop)
 	redis.RegisterExecCommand(redis.Lpush, ExecLPush, validate.ValidateLPush)
+	redis.RegisterExecCommand(redis.Llen, ExecLLen, validate.ValidateLLen)
 }
 
 func ExecLPop(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
@@ -58,4 +59,12 @@ func getListOrInitList(conn conn.Conn, db *redis.RedisDB, args [][]byte) (*list.
 		return list.MakeList(), nil
 	}
 	return l, err
+}
+
+func ExecLLen(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
+	l, err := getListOrInitList(conn, db, args)
+	if err != nil {
+		return resp.MakeErrorResponse("(error) WRONGTYPE Operation against a key holding the wrong kind of value")
+	}
+	return resp.MakeNumberResponse(int64(l.Len()))
 }
