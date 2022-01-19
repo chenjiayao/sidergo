@@ -1,5 +1,9 @@
 package list
 
+import (
+	"math"
+)
+
 type List struct {
 	head *Node
 	tail *Node
@@ -62,6 +66,51 @@ func (l *List) InsertIfNotExist(val interface{}) {
 	if !l.Exist(val) {
 		l.InsertLast(val)
 	}
+}
+
+func (l *List) PopFromHead() interface{} {
+	if l.head == nil {
+		return nil
+	}
+
+	headNode := l.head
+	l.head = l.head.next
+	return headNode
+}
+
+func (l *List) GetElementByIndex(index int) interface{} {
+	if l.head == nil {
+		return nil
+	}
+
+	if index == 0 {
+		return l.head.val
+	}
+
+	var from *Node
+
+	var fromTail bool
+	if index >= 0 {
+		from = l.head
+		fromTail = false
+	} else {
+		from = l.tail
+		fromTail = true
+		index = int(math.Abs(float64(index)))
+	}
+
+	for i := 1; i <= index; i++ {
+		if fromTail {
+			from = from.prev
+		} else {
+			from = from.next
+		}
+
+		if from == nil {
+			return nil
+		}
+	}
+	return from.val
 }
 
 func (l *List) Remove(val interface{}) {
