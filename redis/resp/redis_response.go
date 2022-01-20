@@ -14,8 +14,9 @@ const (
 )
 
 var (
-	NullMultiResponse = MakeMultiResponse(nil)
-	OKSimpleResponse  = MakeSimpleResponse("OK")
+	NullMultiResponse  = MakeMultiResponse(nil)
+	OKSimpleResponse   = MakeSimpleResponse("OK")
+	EmptyArrayResponse = MakeArrayResponse(nil)
 )
 
 // 错误：以"-" 开始，如："-ERR Invalid Synatx\r\n"
