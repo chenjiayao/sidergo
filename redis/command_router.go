@@ -34,6 +34,7 @@ const (
 	Rpushx    = "rpushx"
 	Lpop      = "lpop"
 	Rpop      = "rpop"
+	Ltrim     = "ltrim"
 	Rpoplpush = "rpoplpush"
 	Lrem      = "lrem"
 	Llen      = "llen"

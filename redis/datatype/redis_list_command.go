@@ -18,6 +18,34 @@ func init() {
 	redis.RegisterExecCommand(redis.Llen, ExecLLen, validate.ValidateLLen)
 	redis.RegisterExecCommand(redis.Lindex, ExecLIndex, validate.ValidateLIndex)
 	redis.RegisterExecCommand(redis.Lpushx, ExecLPushx, validate.ValidateLPushx)
+	redis.RegisterExecCommand(redis.Ltrim, ExecLtrim, validate.ValidateLTrim)
+}
+
+/**
+
+1. key 可以不存在
+2. start 和 stop 两者之间没有任何约束关系
+3. start 和 stop 可以是负数
+	1. start +，stop -
+	2. start +，stop +
+	3. start -， stop+
+	4. start -， stop-
+4. start 和 stop 都是闭区间：[start, stop]
+5. start > stop 那么返回空列表，
+*/
+func ExecLtrim(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
+
+	l, err := getList(conn, db, args)
+	if err != nil {
+		return resp.MakeErrorResponse(err.Error())
+	}
+	if l == nil {
+		return resp.OKSimpleResponse
+	}
+	key := string(args[0])
+	start, _ := strconv.Atoi(string(args[1]))
+	stop, _ := strconv.Atoi(string(args[2]))
+	return nil
 }
 
 func ExecLPushx(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
@@ -83,7 +111,7 @@ func getList(conn conn.Conn, db *redis.RedisDB, args [][]byte) (*list.List, erro
 	key := string(args[0])
 
 	val, exist := db.Dataset.Get(key)
-	if exist {
+	if !exist {
 		return nil, nil
 	}
 	l, ok := val.(*list.List)

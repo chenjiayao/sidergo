@@ -49,3 +49,18 @@ func ValidateLPushx(conn conn.Conn, args [][]byte) error {
 	}
 	return nil
 }
+
+func ValidateLTrim(conn conn.Conn, args [][]byte) error {
+	if len(args) != 3 {
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Ltrim)
+	}
+	_, err := strconv.Atoi(string(args[1]))
+	if err != nil {
+		return fmt.Errorf("(error) ERR value is not an integer or out of range")
+	}
+
+	_, err = strconv.Atoi(string(args[2]))
+	if err != nil {
+		return fmt.Errorf("(error) ERR value is not an integer or out of range")
+	}
+}
