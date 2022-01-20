@@ -19,6 +19,27 @@ func init() {
 	redis.RegisterExecCommand(redis.Lindex, ExecLIndex, validate.ValidateLIndex)
 	redis.RegisterExecCommand(redis.Lpushx, ExecLPushx, validate.ValidateLPushx)
 	redis.RegisterExecCommand(redis.Ltrim, ExecLtrim, validate.ValidateLTrim)
+	redis.RegisterExecCommand(redis.Lrange, ExecLrange, validate.ValidateLrange)
+}
+
+func ExecLrange(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
+	l, err := getList(conn, db, args)
+	if err != nil {
+		return resp.MakeErrorResponse(err.Error())
+	}
+	if l == nil {
+		return resp.EmptyArrayResponse
+	}
+	start, _ := strconv.Atoi(string(args[1]))
+	stop, _ := strconv.Atoi(string(args[2]))
+
+	elements := l.Range(start, stop)
+
+	simpleResponses := make([]response.Response, len(elements))
+	for i := 0; i < len(elements); i++ {
+		simpleResponses[i] = resp.MakeSimpleResponse(elements[i].(string))
+	}
+	return resp.MakeArrayResponse(simpleResponses)
 }
 
 /**
@@ -42,9 +63,10 @@ func ExecLtrim(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respon
 	if l == nil {
 		return resp.OKSimpleResponse
 	}
-	key := string(args[0])
 	start, _ := strconv.Atoi(string(args[1]))
 	stop, _ := strconv.Atoi(string(args[2]))
+
+	//trim 方式，不管 start 和 stop 是否为负数，统一转换成正数后在处理
 	return nil
 }
 
