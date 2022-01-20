@@ -40,7 +40,15 @@ func (l *List) InsertHead(val interface{}) {
 		prev: nil,
 		next: l.head,
 	}
+	if l.head != nil {
+		l.head.prev = n
+	} else {
+		l.tail = n
+	}
+
 	l.head = n
+	l.size++
+
 }
 
 func (l *List) InsertLast(val interface{}) {
@@ -82,39 +90,31 @@ func (l *List) PopFromHead() interface{} {
 	return headNode
 }
 
+// start from 0
 func (l *List) GetElementByIndex(index int) interface{} {
 	if l.head == nil {
 		return nil
 	}
 
-	if index == 0 {
-		return l.head.val
+	stop := index
+	if index < 0 {
+		stop = l.Len() + index
 	}
 
-	var from *Node
-
-	var fromTail bool
-	if index >= 0 {
-		from = l.head
-		fromTail = false
-	} else {
-		from = l.tail
-		fromTail = true
-		index = int(math.Abs(float64(index)))
-	}
-
-	for i := 1; i <= index; i++ {
-		if fromTail {
-			from = from.prev
-		} else {
-			from = from.next
+	from := l.head
+	for i := 0; ; {
+		if i == stop {
+			break
 		}
+		i++
+		from = from.Next()
 
 		if from == nil {
 			return nil
 		}
 	}
-	return from.val
+
+	return from.Element()
 }
 
 func (l *List) Remove(val interface{}) {
