@@ -30,6 +30,10 @@ func (node *Node) Next() *Node {
 	return node.next
 }
 
+func (node *Node) Prev() *Node {
+	return node.prev
+}
+
 func (l *List) InsertHead(val interface{}) {
 	n := &Node{
 		val:  val,
@@ -136,6 +140,10 @@ func (l *List) First() *Node {
 	return l.head
 }
 
+func (l *List) Last() *Node {
+	return l.tail
+}
+
 func (l *List) Exist(val interface{}) bool {
 
 	exist := false
@@ -152,6 +160,48 @@ func (l *List) Exist(val interface{}) bool {
 		cur = cur.next
 	}
 	return exist
+}
+
+func (l *List) Range(start int, stop int) []interface{} {
+	hits := make([]interface{}, 0)
+
+	//先处理边界
+	if start > l.Len() || stop+l.Len() < 0 {
+		return hits
+	}
+
+	startNode := l.First()
+	stopNode := l.Last()
+
+	if start > 0 {
+		for i := 0; i < start; i++ {
+			startNode = startNode.Next()
+		}
+	} else {
+		for i := 1; i <= int(math.Abs(float64(start))); i++ {
+			startNode = startNode.Prev()
+		}
+	}
+
+	if stop > 0 {
+		for i := 0; i < stop; i++ {
+			stopNode = stopNode.Next()
+		}
+	} else {
+		for i := 1; i <= int(math.Abs(float64(stop))); i++ {
+			stopNode = stopNode.Prev()
+		}
+	}
+
+	for {
+		hits = append(hits, startNode.Element())
+
+		if startNode == stopNode {
+			break
+		}
+		startNode = startNode.Next()
+	}
+	return hits
 }
 
 func MakeList() *List {
