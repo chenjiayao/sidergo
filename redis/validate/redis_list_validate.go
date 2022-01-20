@@ -63,4 +63,9 @@ func ValidateLTrim(conn conn.Conn, args [][]byte) error {
 	if err != nil {
 		return fmt.Errorf("(error) ERR value is not an integer or out of range")
 	}
+	return nil
+}
+
+func ValidateLrange(conn conn.Conn, args [][]byte) error {
+	return ValidateLTrim(conn, args)
 }
