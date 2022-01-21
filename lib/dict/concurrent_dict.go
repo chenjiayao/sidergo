@@ -29,8 +29,10 @@ func (d *ConcurrentDict) Get(key string) (interface{}, bool) {
 	index := d.spread(hashKey)
 	fragment := d.getFragment(int(index))
 
-	fragment.lock.RLock()
-	defer fragment.lock.RUnlock()
+	//TODO 这里即使是 Get 也不能使用 RLock，对于 list 之类的，虽然是 get，但是后续仍然会修改 list
+	// 后续考虑如何优化
+	fragment.lock.Lock()
+	defer fragment.lock.Unlock()
 
 	val, exists := fragment.data[key]
 	return val, exists
