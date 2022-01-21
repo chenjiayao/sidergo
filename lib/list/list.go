@@ -3,7 +3,7 @@ package list
 type List struct {
 	head *Node
 	tail *Node
-	size int
+	size int64
 }
 
 /**
@@ -66,7 +66,7 @@ func (l *List) InsertLast(val interface{}) {
 	l.size++
 }
 
-func (l *List) Len() int {
+func (l *List) Len() int64 {
 	return l.size
 }
 
@@ -86,7 +86,54 @@ func (l *List) PopFromHead() interface{} {
 	return headNode
 }
 
-func (l *List) getNodeByIndex(index int) *Node {
+func (l *List) InsertBeforePiovt(pivot interface{}, val interface{}) int64 {
+	pivotNode := l.getNodeByElement(pivot)
+	if pivotNode == nil {
+		return -1
+	}
+
+	node := &Node{
+		val:  val,
+		next: pivotNode,
+		prev: pivotNode.prev,
+	}
+	pivotNode.prev = node
+	l.size++
+	return l.Len()
+}
+
+func (l *List) InsertAfterPiovt(pivot interface{}, val interface{}) int64 {
+	pivotNode := l.getNodeByElement(pivot)
+	if pivotNode == nil {
+		return -1
+	}
+
+	node := &Node{
+		val:  val,
+		next: pivotNode.next,
+		prev: pivotNode,
+	}
+	pivotNode.next = node
+	l.size++
+	return l.Len()
+}
+
+func (l *List) getNodeByElement(pivot interface{}) *Node {
+
+	node := l.head
+	for {
+		if node == nil {
+			return nil
+		}
+		if node.Element() == pivot {
+			return node
+		}
+		node = node.Next()
+	}
+
+}
+
+func (l *List) getNodeByIndex(index int64) *Node {
 	if l.head == nil {
 		return nil
 	}
@@ -98,7 +145,7 @@ func (l *List) getNodeByIndex(index int) *Node {
 
 	from := l.head
 	for i := 0; ; {
-		if i == stop {
+		if int64(i) == stop {
 			break
 		}
 		i++
@@ -112,7 +159,7 @@ func (l *List) getNodeByIndex(index int) *Node {
 
 // start from 0
 // 因为 redis lindex 可以返回 nil，所以 GetElementByIndex 可以返回 nil
-func (l *List) GetElementByIndex(index int) interface{} {
+func (l *List) GetElementByIndex(index int64) interface{} {
 	node := l.getNodeByIndex(index)
 	if node == nil {
 		return nil
@@ -137,6 +184,27 @@ func (l *List) Remove(val interface{}) {
 
 		currentNode = currentNode.next
 	}
+}
+
+func (l *List) Trim(start, stop int64) {
+
+	if stop < 0 {
+		stop = l.Len() + stop
+	}
+	if start < 0 {
+		start = l.Len() + start
+	}
+
+	if stop < start {
+		l = MakeList()
+		return
+	}
+
+	startNode := l.getNodeByIndex(start)
+	stopNode := l.getNodeByIndex(stop)
+	l.head = startNode
+	l.tail = stopNode
+
 }
 
 func (l *List) First() *Node {
@@ -166,9 +234,18 @@ func (l *List) Exist(val interface{}) bool {
 }
 
 // lrange 可以返回空数组，所以这了只能返回数组
-func (l *List) Range(start int, stop int) []interface{} {
+func (l *List) Range(start, stop int64) []interface{} {
 	hits := make([]interface{}, 0)
-	if start > stop {
+
+	if start < 0 {
+		start = l.Len() + start
+	}
+
+	if stop < 0 {
+		stop = l.Len() + stop
+	}
+
+	if stop < start {
 		return hits
 	}
 
