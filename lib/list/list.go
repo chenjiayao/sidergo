@@ -111,8 +111,12 @@ func (l *List) getNodeByIndex(index int) *Node {
 }
 
 // start from 0
+// 因为 redis lindex 可以返回 nil，所以 GetElementByIndex 可以返回 nil
 func (l *List) GetElementByIndex(index int) interface{} {
 	node := l.getNodeByIndex(index)
+	if node == nil {
+		return nil
+	}
 	return node.Element()
 }
 
@@ -161,11 +165,15 @@ func (l *List) Exist(val interface{}) bool {
 	return exist
 }
 
+// lrange 可以返回空数组，所以这了只能返回数组
 func (l *List) Range(start int, stop int) []interface{} {
+	hits := make([]interface{}, 0)
+	if start > stop {
+		return hits
+	}
+
 	startNode := l.getNodeByIndex(start)
 	stopNode := l.getNodeByIndex(stop)
-
-	hits := make([]interface{}, 0)
 
 	for {
 
