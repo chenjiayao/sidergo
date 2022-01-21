@@ -96,7 +96,7 @@ func TestList_GetElementByIndex(t *testing.T) {
 
 	v = l.GetElementByIndex(-10)
 	if v != nil {
-		t.Errorf("l.GetElementByIndex(-1) = %d, want 1", got)
+		t.Errorf("l.GetElementByIndex(-10) = %d, want 1", got)
 	}
 }
 
@@ -154,6 +154,61 @@ func TestList_Range(t *testing.T) {
 	want = []int{}
 	if !SliceEqual(got, want) {
 		t.Errorf("l.Range(-1, -4) = %v, want %v", got, want)
+	}
+
+	/////////
+	v = l.Range(3, -1)
+	got = make([]int, len(v))
+	for i := 0; i < len(v); i++ {
+		got[i] = v[i].(int)
+	}
+	want = []int{1}
+	if !SliceEqual(got, want) {
+		t.Errorf("l.Range(3, -1) = %v, want %v", got, want)
+	}
+
+	/////////
+	v = l.Range(3, 1)
+	got = make([]int, len(v))
+	for i := 0; i < len(v); i++ {
+		got[i] = v[i].(int)
+	}
+	want = []int{}
+	if !SliceEqual(got, want) {
+		t.Errorf("l.Range(3, -1) = %v, want %v", got, want)
+	}
+
+	/////////
+	v = l.Range(3, -3)
+	got = make([]int, len(v))
+	for i := 0; i < len(v); i++ {
+		got[i] = v[i].(int)
+	}
+	want = []int{}
+	if !SliceEqual(got, want) {
+		t.Errorf("l.Range(3, -3) = %v, want %v", got, want)
+	}
+
+	/////////
+	v = l.Range(-3, 3)
+	got = make([]int, len(v))
+	for i := 0; i < len(v); i++ {
+		got[i] = v[i].(int)
+	}
+	want = []int{3, 2, 1}
+	if !SliceEqual(got, want) {
+		t.Errorf("l.Range(-3, 3) = %v, want %v", got, want)
+	}
+
+	/////////
+	v = l.Range(-3, 30)
+	got = make([]int, len(v))
+	for i := 0; i < len(v); i++ {
+		got[i] = v[i].(int)
+	}
+	want = []int{3, 2, 1}
+	if !SliceEqual(got, want) {
+		t.Errorf("l.Range(-3, 30) = %v, want %v", got, want)
 	}
 }
 
