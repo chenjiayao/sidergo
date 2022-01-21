@@ -196,15 +196,22 @@ func (l *List) Trim(start, stop int64) {
 	}
 
 	if stop < start {
-		l = MakeList()
+		*l = *MakeList()
 		return
 	}
 
 	startNode := l.getNodeByIndex(start)
 	stopNode := l.getNodeByIndex(stop)
+
+	if stop > l.Len() {
+		stop = l.Len() - 1
+	}
+	if start > l.Len() {
+		start = l.Len() - 1
+	}
+	l.size = stop - start + 1
 	l.head = startNode
 	l.tail = stopNode
-
 }
 
 func (l *List) First() *Node {
