@@ -59,7 +59,7 @@ func TestList_Remove(t *testing.T) {
 }
 
 func TestList_GetElementByIndex(t *testing.T) {
-	l := MakeList()
+	l := MakeList() // 4 3 2 1
 	l.InsertHead(1)
 	l.InsertHead(2)
 	l.InsertHead(3)
@@ -86,6 +86,12 @@ func TestList_GetElementByIndex(t *testing.T) {
 	got = v.(int)
 	if got != 1 {
 		t.Errorf("l.GetElementByIndex(-1) = %d, want 1", got)
+	}
+
+	v = l.GetElementByIndex(-4)
+	got = v.(int)
+	if got != 4 {
+		t.Errorf("l.GetElementByIndex(-4) = %d, want 4", got)
 	}
 
 	v = l.GetElementByIndex(-10)
@@ -137,6 +143,17 @@ func TestList_Range(t *testing.T) {
 	want = []int{1}
 	if !SliceEqual(got, want) {
 		t.Errorf("l.Range(-1, 4) = %v, want %v", got, want)
+	}
+
+	////////////////
+	v = l.Range(-1, -4)
+	got = make([]int, len(v))
+	for i := 0; i < len(v); i++ {
+		got[i] = v[i].(int)
+	}
+	want = []int{}
+	if !SliceEqual(got, want) {
+		t.Errorf("l.Range(-1, -4) = %v, want %v", got, want)
 	}
 }
 
