@@ -1,9 +1,5 @@
 package list
 
-import (
-	"math"
-)
-
 type List struct {
 	head *Node
 	tail *Node
@@ -90,8 +86,7 @@ func (l *List) PopFromHead() interface{} {
 	return headNode
 }
 
-// start from 0
-func (l *List) GetElementByIndex(index int) interface{} {
+func (l *List) getNodeByIndex(index int) *Node {
 	if l.head == nil {
 		return nil
 	}
@@ -108,13 +103,17 @@ func (l *List) GetElementByIndex(index int) interface{} {
 		}
 		i++
 		from = from.Next()
-
 		if from == nil {
 			return nil
 		}
 	}
+	return from
+}
 
-	return from.Element()
+// start from 0
+func (l *List) GetElementByIndex(index int) interface{} {
+	node := l.getNodeByIndex(index)
+	return node.Element()
 }
 
 func (l *List) Remove(val interface{}) {
@@ -163,39 +162,18 @@ func (l *List) Exist(val interface{}) bool {
 }
 
 func (l *List) Range(start int, stop int) []interface{} {
+	startNode := l.getNodeByIndex(start)
+	stopNode := l.getNodeByIndex(stop)
+
 	hits := make([]interface{}, 0)
 
-	//先处理边界
-	if start > l.Len() || stop+l.Len() < 0 {
-		return hits
-	}
-
-	startNode := l.First()
-	stopNode := l.Last()
-
-	if start > 0 {
-		for i := 0; i < start; i++ {
-			startNode = startNode.Next()
-		}
-	} else {
-		for i := 1; i <= int(math.Abs(float64(start))); i++ {
-			startNode = startNode.Prev()
-		}
-	}
-
-	if stop > 0 {
-		for i := 0; i < stop; i++ {
-			stopNode = stopNode.Next()
-		}
-	} else {
-		for i := 1; i <= int(math.Abs(float64(stop))); i++ {
-			stopNode = stopNode.Prev()
-		}
-	}
-
 	for {
-		hits = append(hits, startNode.Element())
 
+		if startNode == nil {
+			return hits
+		}
+
+		hits = append(hits, startNode.Element())
 		if startNode == stopNode {
 			break
 		}
