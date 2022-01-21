@@ -40,6 +40,7 @@ const (
 	Llen      = "llen"
 	Lindex    = "lindex"
 	Lset      = "lset"
+	Linsert   = "linsert"
 	Lrange    = "lrange"
 	Blpop     = "blpop"
 	Brpop     = "brpop"

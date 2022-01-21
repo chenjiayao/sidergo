@@ -3,6 +3,7 @@ package validate
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/chenjiayao/goredistraning/interface/conn"
 	"github.com/chenjiayao/goredistraning/redis"
@@ -68,4 +69,15 @@ func ValidateLTrim(conn conn.Conn, args [][]byte) error {
 
 func ValidateLrange(conn conn.Conn, args [][]byte) error {
 	return ValidateLTrim(conn, args)
+}
+
+func ValidateLInsert(conn conn.Conn, args [][]byte) error {
+	if len(args) != 4 {
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Ltrim)
+	}
+	pos := strings.ToUpper(string(args[1]))
+	if pos != "BEFORE" && pos != "AFTER" {
+		return fmt.Errorf("(error) ERR syntax error")
+	}
+	return nil
 }

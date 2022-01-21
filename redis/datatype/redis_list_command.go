@@ -3,6 +3,7 @@ package datatype
 import (
 	"errors"
 	"strconv"
+	"strings"
 
 	"github.com/chenjiayao/goredistraning/interface/conn"
 	"github.com/chenjiayao/goredistraning/interface/response"
@@ -20,6 +21,29 @@ func init() {
 	redis.RegisterExecCommand(redis.Lpushx, ExecLPushx, validate.ValidateLPushx)
 	redis.RegisterExecCommand(redis.Ltrim, ExecLtrim, validate.ValidateLTrim)
 	redis.RegisterExecCommand(redis.Lrange, ExecLrange, validate.ValidateLrange)
+	redis.RegisterExecCommand(redis.Linsert, ExecLinsert, validate.ValidateLInsert)
+}
+
+func ExecLinsert(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
+	l, err := getList(conn, db, args)
+	if err != nil {
+		return resp.MakeErrorResponse(err.Error())
+	}
+	if l == nil {
+		return resp.MakeNumberResponse(0)
+	}
+
+	pos := strings.ToUpper(string(args[1])) // before or after
+	pivot := string(args[2])
+	value := string(args[3])
+
+	var size int64
+	if pos == "BEFORE" {
+		size = l.InsertBeforePiovt(pivot, value)
+	} else if pos == "AFTER" {
+		size = l.InsertAfterPiovt(pivot, value)
+	}
+	return resp.MakeNumberResponse(size)
 }
 
 func ExecLrange(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
@@ -33,7 +57,7 @@ func ExecLrange(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 	start, _ := strconv.Atoi(string(args[1]))
 	stop, _ := strconv.Atoi(string(args[2]))
 
-	elements := l.Range(start, stop)
+	elements := l.Range(int64(start), int64(stop))
 
 	simpleResponses := make([]response.Response, len(elements))
 	for i := 0; i < len(elements); i++ {
@@ -65,9 +89,9 @@ func ExecLtrim(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respon
 	}
 	start, _ := strconv.Atoi(string(args[1]))
 	stop, _ := strconv.Atoi(string(args[2]))
+	l.Trim(int64(start), int64(stop))
 
-	//trim 方式，不管 start 和 stop 是否为负数，统一转换成正数后在处理
-	return nil
+	return resp.OKSimpleResponse
 }
 
 func ExecLPushx(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
@@ -88,7 +112,7 @@ func ExecLIndex(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 		return resp.MakeErrorResponse(err.Error())
 	}
 	i, _ := strconv.Atoi(string(args[1]))
-	val := l.GetElementByIndex(i)
+	val := l.GetElementByIndex(int64(i))
 	if val == nil {
 		return resp.NullMultiResponse
 	}
