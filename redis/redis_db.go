@@ -8,6 +8,7 @@ import (
 	"github.com/chenjiayao/goredistraning/interface/conn"
 	"github.com/chenjiayao/goredistraning/interface/db"
 	"github.com/chenjiayao/goredistraning/interface/response"
+	"github.com/chenjiayao/goredistraning/interface/server"
 	"github.com/chenjiayao/goredistraning/lib/dict"
 	"github.com/chenjiayao/goredistraning/lib/list"
 	"github.com/chenjiayao/goredistraning/redis/resp"
@@ -30,9 +31,11 @@ type RedisDB struct {
 
 	// 保存了一个 watched_keys 字典， 字典的键是这个数据库被监视的键， 而字典的值则是一个链表， 链表中保存了所有监视这个键的客户端。
 	WatchedKeys sync.Map
+
+	server server.Server
 }
 
-func NewDBInstance(index int) *RedisDB {
+func NewDBInstance(server server.Server, index int) *RedisDB {
 	rd := &RedisDB{
 		Dataset:  dict.NewDict(128),
 		Index:    index,
@@ -40,6 +43,7 @@ func NewDBInstance(index int) *RedisDB {
 		keyLocks: sync.Map{},
 
 		WatchedKeys: sync.Map{},
+		server:      server,
 	}
 	return rd
 }
@@ -176,7 +180,7 @@ type RedisDBs struct {
 	DBCount int
 }
 
-func NewDBs() *RedisDBs {
+func NewDBs(server server.Server) *RedisDBs {
 	dbCount := config.Config.Databases
 	rds := &RedisDBs{
 		DBs:     make([]*RedisDB, dbCount),
@@ -184,7 +188,7 @@ func NewDBs() *RedisDBs {
 	}
 
 	for i := 0; i < dbCount; i++ {
-		rds.DBs[i] = NewDBInstance(i)
+		rds.DBs[i] = NewDBInstance(server, i)
 	}
 	return rds
 }

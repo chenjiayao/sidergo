@@ -10,7 +10,7 @@ import (
 )
 
 func TestExecSet(t *testing.T) {
-	db := redis.NewDBInstance(0)
+	db := redis.NewDBInstance(nil, 0)
 
 	args := [][]byte{
 		[]byte("key"),
@@ -39,7 +39,7 @@ func TestExecSet(t *testing.T) {
 
 func TestExecGet(t *testing.T) {
 
-	db := redis.NewDBInstance(0)
+	db := redis.NewDBInstance(nil, 0)
 	key := "key"
 	value := "value"
 	db.Dataset.Put(key, value)
@@ -55,7 +55,7 @@ func TestExecGet(t *testing.T) {
 }
 
 func TestExecIncrBy(t *testing.T) {
-	db := redis.NewDBInstance(0)
+	db := redis.NewDBInstance(nil, 0)
 
 	args := [][]byte{
 		[]byte("key"),

@@ -9,7 +9,7 @@ import (
 )
 
 func TestExecSadd(t *testing.T) {
-	db := redis.NewDBInstance(0)
+	db := redis.NewDBInstance(nil, 0)
 
 	insertValue := [][]byte{
 		[]byte("value1"),
