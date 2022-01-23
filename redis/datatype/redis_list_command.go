@@ -22,6 +22,16 @@ func init() {
 	redis.RegisterExecCommand(redis.Ltrim, ExecLtrim, validate.ValidateLTrim)
 	redis.RegisterExecCommand(redis.Lrange, ExecLrange, validate.ValidateLrange)
 	redis.RegisterExecCommand(redis.Linsert, ExecLinsert, validate.ValidateLInsert)
+	redis.RegisterExecCommand(redis.Blpop, ExecBlpop, validate.ValidateBlpop)
+}
+
+func ExecBlpop(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
+
+	return nil
+}
+
+func pushGenericCommand(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
+
 }
 
 func ExecLinsert(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
@@ -162,7 +172,6 @@ func getList(conn conn.Conn, db *redis.RedisDB, args [][]byte) (*list.List, erro
 	}
 	l, ok := val.(*list.List)
 	if !ok {
-		//TODO报错不是 list 类型
 		return nil, errors.New("(error) WRONGTYPE Operation against a key holding the wrong kind of value")
 	}
 	return l, nil
