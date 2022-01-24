@@ -62,8 +62,12 @@ func (redisServer *RedisServer) CheckTimeoutConn() {
 						continue
 					}
 
+					// time.Now().Sub(blockAt) --> time - blockAt
+					// time.Until(blockAt) --> blockAt.Sub(time.Now()) --> blockAt - time.Now()
 					if time.Until(blockAt) > time.Duration(blockTime) {
 						conn.SetBlockingResponse(resp.NullMultiResponse)
+						conn.SetBlockingExec("", nil)
+						l.Remove(conn) //链接已经不再阻塞，从 list 中移除
 					}
 					node = node.Next()
 				}
