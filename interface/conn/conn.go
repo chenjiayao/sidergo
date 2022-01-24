@@ -1,6 +1,8 @@
 package conn
 
 import (
+	"time"
+
 	"github.com/chenjiayao/goredistraning/interface/response"
 )
 
@@ -28,12 +30,13 @@ type Conn interface {
 	GetDirtyCAS() bool
 
 	GetBlockingResponse() response.Response
-
 	SetBlockingResponse(content response.Response)
 
-	SetMaxBlockTime(timeout int64)
-
+	SetMaxBlockTime(blockTime int64)
 	GetMaxBlockTime() int64
+
+	SetBlockAt(timeoutAt time.Time)
+	GetBlockAt() time.Time
 
 	GetBlockingExec() (string, [][]byte)
 	SetBlockingExec(cmdName string, args [][]byte)

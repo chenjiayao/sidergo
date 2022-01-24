@@ -5,11 +5,14 @@ import (
 	"io"
 	"net"
 	"strings"
+	"time"
 
 	"github.com/chenjiayao/goredistraning/config"
+	"github.com/chenjiayao/goredistraning/interface/conn"
 	"github.com/chenjiayao/goredistraning/interface/response"
 	"github.com/chenjiayao/goredistraning/interface/server"
 	"github.com/chenjiayao/goredistraning/lib/atomic"
+	"github.com/chenjiayao/goredistraning/lib/list"
 	"github.com/chenjiayao/goredistraning/lib/logger"
 	"github.com/chenjiayao/goredistraning/parser"
 	"github.com/chenjiayao/goredistraning/redis/resp"
@@ -36,7 +39,39 @@ func MakeRedisServer() *RedisServer {
 		redisServer.aofHandler = MakeAofHandler(redisServer)
 	}
 
+	go redisServer.CheckTimeoutConn()
+
 	return redisServer
+}
+
+func (redisServer *RedisServer) CheckTimeoutConn() {
+	for {
+		for _, db := range redisServer.rds.DBs {
+			db.BlockingKeys.Range(func(key, value interface{}) bool {
+				l, _ := value.(*list.List)
+				node := l.First()
+				for {
+					if node == nil {
+						break
+					}
+					element := node.Element()
+					conn, _ := element.(conn.Conn)
+					blockAt := conn.GetBlockAt()
+					blockTime := conn.GetMaxBlockTime()
+					if blockTime == 0 {
+						continue
+					}
+
+					if time.Until(blockAt) > time.Duration(blockTime) {
+						conn.SetBlockingResponse(resp.NullMultiResponse)
+					}
+					node = node.Next()
+				}
+				return true
+			})
+		}
+	}
+
 }
 
 func (redisServer *RedisServer) Log() {

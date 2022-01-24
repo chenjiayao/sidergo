@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/chenjiayao/goredistraning/interface/conn"
 	"github.com/chenjiayao/goredistraning/interface/response"
@@ -52,6 +53,7 @@ func ExecBlpop(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respon
 	}
 
 	//keys 都不存在
+	conn.SetBlockAt(time.Now())
 	conn.SetMaxBlockTime(int64(timeout))
 	conn.SetBlockingExec(redis.Blpop, args)
 

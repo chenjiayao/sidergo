@@ -2,6 +2,7 @@ package redis
 
 import (
 	"net"
+	"time"
 
 	"github.com/chenjiayao/goredistraning/interface/conn"
 	"github.com/chenjiayao/goredistraning/interface/response"
@@ -29,7 +30,8 @@ type RedisConn struct {
 
 	redisDirtyCAS bool //标记当前事务是否被破坏 ----> watch 的 key 是否被更改了
 
-	maxBlockTime int64
+	blockAt   time.Time
+	blockTime int64
 
 	blockChan chan response.Response
 
@@ -119,12 +121,19 @@ func (rc *RedisConn) SetBlockingResponse(resp response.Response) {
 	rc.blockChan <- resp
 }
 
-func (rc *RedisConn) SetMaxBlockTime(timeout int64) {
-	rc.maxBlockTime = timeout
+func (rc *RedisConn) SetBlockAt(timeout time.Time) {
+	rc.blockAt = timeout
 }
 
+func (rc *RedisConn) GetBlockAt() time.Time {
+	return rc.blockAt
+}
+
+func (rc *RedisConn) SetMaxBlockTime(blockTime int64) {
+	rc.blockTime = blockTime
+}
 func (rc *RedisConn) GetMaxBlockTime() int64 {
-	return 0
+	return rc.blockTime
 }
 
 func (rc *RedisConn) GetBlockingExec() (string, [][]byte) {
