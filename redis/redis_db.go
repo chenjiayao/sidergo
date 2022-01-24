@@ -49,7 +49,7 @@ func NewDBInstance(server server.Server, index int) *RedisDB {
 		ReadyList: unboundedchan.MakeUnboundedChan(20),
 	}
 
-	go rd.WatchReadyKeys()
+	go rd.handleClientsBlockedOnLists()
 	return rd
 }
 
@@ -212,7 +212,7 @@ func (rd *RedisDB) AddReadyKey(key []byte) {
 
 ////////////////list block command 支持//////////////////
 
-func (rd *RedisDB) WatchReadyKeys() {
+func (rd *RedisDB) handleClientsBlockedOnLists() {
 	for o := range rd.ReadyList.Out {
 		key := string(o[0])
 		lv, ok := rd.BlockingKeys.Load(key)
