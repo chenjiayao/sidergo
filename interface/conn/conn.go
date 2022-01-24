@@ -1,5 +1,9 @@
 package conn
 
+import (
+	"github.com/chenjiayao/goredistraning/interface/response"
+)
+
 type Conn interface {
 	Close()
 	RemoteAddress() string
@@ -22,4 +26,15 @@ type Conn interface {
 
 	DirtyCAS(flag bool)
 	GetDirtyCAS() bool
+
+	GetBlockingResponse() response.Response
+
+	SetBlockingResponse(content response.Response)
+
+	SetMaxBlockTime(timeout int64)
+
+	GetMaxBlockTime() int64
+
+	GetBlockingExec() (string, [][]byte)
+	SetBlockingExec(cmdName string, args [][]byte)
 }

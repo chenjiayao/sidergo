@@ -25,13 +25,45 @@ func init() {
 	redis.RegisterExecCommand(redis.Blpop, ExecBlpop, validate.ValidateBlpop)
 }
 
+//先执行 pop，如果没有，阻塞
+/**
+1. 每个 db 都有一个 blockingKeys 的map map[string]*list.List ，key 为 list 的 key，value 为链表，保存了被阻塞的 conn
+	这样一个key 有没有被阻塞可以通过 blockingKeys[key] 判断
+
+2. 每个 db 也会保存一个  readyList，当 key 被 push 之后，会判断这个 key 在不在 blockingKeys 中，如果在那么创建一个链表(readyList)，将 key 放入链表中（在 go 中使用 channel 代替
+
+*/
 func ExecBlpop(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 
+	timeout, _ := strconv.Atoi(string(args[len(args)-1]))
+
+	for _, v := range args[:len(args)-1] {
+		l, err := getList(conn, db, [][]byte{v})
+		if err != nil {
+			return resp.MakeErrorResponse(err.Error())
+		}
+		if l != nil {
+			v := l.PopFromHead()
+			if v != nil {
+				content := v.(string)
+				return resp.MakeSimpleResponse(content)
+			}
+		}
+	}
+
+	//keys 都不存在
+	conn.SetMaxBlockTime(int64(timeout))
+	conn.SetBlockingExec(redis.Blpop, args)
+
+	for _, v := range args[:len(args)-1] {
+		db.AddBlockingConn(string(v), conn)
+	}
 	return nil
 }
 
+//push 的命令都在这里执行 :lpush,rpush，linsert
 func pushGenericCommand(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
-
+	return nil
 }
 
 func ExecLinsert(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
@@ -157,8 +189,12 @@ func ExecLPush(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respon
 	}
 
 	for _, v := range args[1:] {
-		l.InsertHead(string(v))
+		s := string(v)
+		l.InsertHead(s)
 	}
+
+	db.Dataset.PutIfNotExist(string(args[0]), l)
+	db.AddReadyKey(args[0])
 	return resp.MakeNumberResponse(int64(len(args[1:])))
 
 }

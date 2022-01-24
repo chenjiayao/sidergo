@@ -25,27 +25,35 @@ type RedisDB struct {
 	Index   int                  // 数据库 db 编号
 	TtlMap  *dict.ConcurrentDict //保存 key 和过期时间之间的关系
 
-	//一个协程来定时删除过期的key
-	//一个chan 来关闭「定时删除过期 key 的协程」
 	keyLocks sync.Map
 
-	// 保存了一个 watched_keys 字典， 字典的键是这个数据库被监视的键， 而字典的值则是一个链表， 链表中保存了所有监视这个键的客户端。
-	WatchedKeys sync.Map
+	WatchedKeys sync.Map // 保存了一个 watched_keys 字典， 字典的键是这个数据库被监视的键， 而字典的值则是一个链表， 链表中保存了所有监视这个键的客户端。
 
 	server server.Server
+
+	BlockingKeys sync.Map    // key 和被阻塞的「客户端链表」
+	ReadyList    chan string // 不再为空的 key 数组
 }
 
 func NewDBInstance(server server.Server, index int) *RedisDB {
 	rd := &RedisDB{
-		Dataset:  dict.NewDict(128),
-		Index:    index,
-		TtlMap:   dict.NewDict(128),
-		keyLocks: sync.Map{},
+		Dataset:      dict.NewDict(128),
+		Index:        index,
+		TtlMap:       dict.NewDict(128),
+		keyLocks:     sync.Map{},
+		BlockingKeys: sync.Map{},
+		WatchedKeys:  sync.Map{},
+		server:       server,
 
-		WatchedKeys: sync.Map{},
-		server:      server,
+		ReadyList: make(chan string),
 	}
+
+	go rd.WatchReadyKeys()
 	return rd
+}
+
+func (rd *RedisDB) CloseDB() {
+	close(rd.ReadyList)
 }
 
 func (rd *RedisDB) canPushMultiQueues(cmdName string) bool {
@@ -146,19 +154,7 @@ func (rd *RedisDB) UnLockKey(key string) {
 	defer rd.keyLocks.Delete(key)
 }
 
-func (rd *RedisDB) AddWatchKey(conn conn.Conn, key string) {
-
-	var link *list.List
-	val, exist := rd.WatchedKeys.Load(key)
-	if !exist {
-		link = list.MakeList()
-	} else {
-		link = val.(*list.List)
-	}
-	link.InsertIfNotExist(conn)
-	rd.WatchedKeys.Store(key, link)
-}
-
+////////////////事务相关命令支持//////////////////
 func (rd *RedisDB) RemoveWatchKey(conn conn.Conn, key string) {
 	var link *list.List
 	val, exist := rd.WatchedKeys.Load(key)
@@ -172,6 +168,77 @@ func (rd *RedisDB) RemoveWatchKey(conn conn.Conn, key string) {
 
 func (rd *RedisDB) RemoveAllWatchKey() {
 	rd.WatchedKeys = sync.Map{}
+}
+
+func (rd *RedisDB) AddWatchKey(conn conn.Conn, key string) {
+
+	var link *list.List
+	val, exist := rd.WatchedKeys.Load(key)
+	if !exist {
+		link = list.MakeList()
+	} else {
+		link = val.(*list.List)
+	}
+	link.InsertIfNotExist(conn)
+	rd.WatchedKeys.Store(key, link)
+}
+
+////////////////事务相关命令支持//////////////////
+
+////////////////list block command 支持//////////////////
+func (rd *RedisDB) AddBlockingConn(key string, conn conn.Conn) {
+
+	v, ok := rd.BlockingKeys.Load(key)
+	var l *list.List
+	if !ok {
+		l = list.MakeList()
+	} else {
+		l = v.(*list.List)
+	}
+	l.InsertLast(conn)
+	rd.BlockingKeys.Store(key, l)
+}
+
+func (rd *RedisDB) AddReadyKey(key []byte) {
+	k := string(key)
+	_, ok := rd.BlockingKeys.Load(k) //没有 conn 因为 key 不存在阻塞
+	if !ok {
+		return
+	}
+	//insert
+	rd.ReadyList <- k
+}
+
+////////////////list block command 支持//////////////////
+
+func (rd *RedisDB) WatchReadyKeys() {
+	for o := range rd.ReadyList {
+		key := o
+
+		lv, ok := rd.BlockingKeys.Load(key)
+		if !ok {
+			continue
+		}
+		l, _ := lv.(*list.List)
+		cv := l.GetElementByIndex(0)
+		if cv == nil {
+			continue
+		}
+		conn := cv.(conn.Conn)
+		cmdName, args := conn.GetBlockingExec()
+
+		command := CommandTables[cmdName]
+		res := command.CommandFunc(conn, rd, args)
+
+		if res == nil {
+			continue
+		}
+
+		conn.SetBlockingResponse(res) //设置回复
+		conn.SetMaxBlockTime(0)
+		conn.SetBlockingExec("", nil)
+		l.PopFromHead() // conn 不再阻塞
+	}
 }
 
 ////////////////
@@ -191,4 +258,10 @@ func NewDBs(server server.Server) *RedisDBs {
 		rds.DBs[i] = NewDBInstance(server, i)
 	}
 	return rds
+}
+
+func (rds *RedisDBs) CloseAllDB() {
+	for _, db := range rds.DBs {
+		db.CloseDB()
+	}
 }

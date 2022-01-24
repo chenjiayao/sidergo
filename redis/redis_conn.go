@@ -4,6 +4,7 @@ import (
 	"net"
 
 	"github.com/chenjiayao/goredistraning/interface/conn"
+	"github.com/chenjiayao/goredistraning/interface/response"
 )
 
 var _ conn.Conn = &RedisConn{}
@@ -22,10 +23,18 @@ type RedisConn struct {
 	selectedDB int
 	password   string
 
-	multiState     MultiState
+	multiState MultiState //是否处于事务状态
+
 	multiCmdQueues [][][]byte // 事务命令
 
 	redisDirtyCAS bool //标记当前事务是否被破坏 ----> watch 的 key 是否被更改了
+
+	maxBlockTime int64
+
+	blockChan chan response.Response
+
+	blockingCmdName string
+	blockingCmdArgs [][]byte
 }
 
 func MakeRedisConn(conn net.Conn) *RedisConn {
@@ -35,6 +44,7 @@ func MakeRedisConn(conn net.Conn) *RedisConn {
 		selectedDB:     0,
 		password:       "",
 		multiCmdQueues: make([][][]byte, 0),
+		blockChan:      make(chan response.Response),
 	}
 	return rc
 }
@@ -99,4 +109,29 @@ func (rc *RedisConn) GetSelectedDBIndex() int {
 
 func (rc *RedisConn) SetSelectedDBIndex(index int) {
 	rc.selectedDB = index
+}
+
+func (rc *RedisConn) GetBlockingResponse() response.Response {
+	return <-rc.blockChan
+}
+
+func (rc *RedisConn) SetBlockingResponse(resp response.Response) {
+	rc.blockChan <- resp
+}
+
+func (rc *RedisConn) SetMaxBlockTime(timeout int64) {
+	rc.maxBlockTime = timeout
+}
+
+func (rc *RedisConn) GetMaxBlockTime() int64 {
+	return 0
+}
+
+func (rc *RedisConn) GetBlockingExec() (string, [][]byte) {
+	return rc.blockingCmdName, rc.blockingCmdArgs
+}
+
+func (rc *RedisConn) SetBlockingExec(cmdName string, args [][]byte) {
+	rc.blockingCmdName = cmdName
+	rc.blockingCmdArgs = args
 }

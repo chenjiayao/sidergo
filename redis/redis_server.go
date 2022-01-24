@@ -31,10 +31,11 @@ func MakeRedisServer() *RedisServer {
 		closed: atomic.Boolean(0),
 	}
 
-	redisServer.rds = NewDBs()
+	redisServer.rds = NewDBs(redisServer)
 	if config.Config.Appendonly {
 		redisServer.aofHandler = MakeAofHandler(redisServer)
 	}
+
 	return redisServer
 }
 
@@ -88,11 +89,17 @@ func (redisServer *RedisServer) Handle(conn net.Conn) {
 		selectedDB := redisServer.rds.DBs[selectedDBIndex]
 
 		res = selectedDB.Exec(redisClient, cmdName, args)
-		err = redisServer.sendResponse(redisClient, res)
 
+		//返回空，表示 conn 执行的是阻塞命令，当前链接被阻塞
+		if res == nil {
+			res = redisClient.GetBlockingResponse()
+		}
+
+		err = redisServer.sendResponse(redisClient, res)
 		if res.ISOK() && config.Config.Appendonly {
 			redisServer.aofHandler.LogCmd(request.Args)
 		}
+
 		if err == io.EOF {
 			break
 		}
