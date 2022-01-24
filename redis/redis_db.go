@@ -11,6 +11,7 @@ import (
 	"github.com/chenjiayao/goredistraning/interface/server"
 	"github.com/chenjiayao/goredistraning/lib/dict"
 	"github.com/chenjiayao/goredistraning/lib/list"
+	"github.com/chenjiayao/goredistraning/lib/unboundedchan"
 	"github.com/chenjiayao/goredistraning/redis/resp"
 )
 
@@ -31,8 +32,8 @@ type RedisDB struct {
 
 	server server.Server
 
-	BlockingKeys sync.Map    // key 和被阻塞的「客户端链表」
-	ReadyList    chan string // 不再为空的 key 数组
+	BlockingKeys sync.Map                     // key 和被阻塞的「客户端链表」
+	ReadyList    *unboundedchan.UnboundedChan // 不再为空的 key 数组
 }
 
 func NewDBInstance(server server.Server, index int) *RedisDB {
@@ -45,7 +46,7 @@ func NewDBInstance(server server.Server, index int) *RedisDB {
 		WatchedKeys:  sync.Map{},
 		server:       server,
 
-		ReadyList: make(chan string),
+		ReadyList: unboundedchan.MakeUnboundedChan(20),
 	}
 
 	go rd.WatchReadyKeys()
@@ -53,7 +54,7 @@ func NewDBInstance(server server.Server, index int) *RedisDB {
 }
 
 func (rd *RedisDB) CloseDB() {
-	close(rd.ReadyList)
+	close(rd.ReadyList.In)
 }
 
 func (rd *RedisDB) canPushMultiQueues(cmdName string) bool {
@@ -206,15 +207,14 @@ func (rd *RedisDB) AddReadyKey(key []byte) {
 		return
 	}
 	//insert
-	rd.ReadyList <- k
+	rd.ReadyList.In <- [][]byte{key}
 }
 
 ////////////////list block command 支持//////////////////
 
 func (rd *RedisDB) WatchReadyKeys() {
-	for o := range rd.ReadyList {
-		key := o
-
+	for o := range rd.ReadyList.Out {
+		key := string(o[0])
 		lv, ok := rd.BlockingKeys.Load(key)
 		if !ok {
 			continue

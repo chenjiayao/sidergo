@@ -83,7 +83,7 @@ func (l *List) PopFromHead() interface{} {
 
 	headNode := l.head
 	l.head = l.head.next
-	return headNode
+	return headNode.Element()
 }
 
 func (l *List) InsertBeforePiovt(pivot interface{}, val interface{}) int64 {
