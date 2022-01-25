@@ -152,7 +152,7 @@ func ExecSet(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response
 	if helper.ContainWithoutCaseSensitive(ss, "NX") != -1 {
 		ok := db.Dataset.PutIfNotExist(key, value)
 		if ok {
-			SetKeyTTL(conn, db, [][]byte{
+			expire(conn, db, [][]byte{
 				args[0],
 				[]byte(ttls),
 			})
@@ -165,7 +165,7 @@ func ExecSet(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response
 	if helper.ContainWithoutCaseSensitive(ss, "XX") != -1 {
 		ok := db.Dataset.PutIfExist(key, value)
 		if ok {
-			SetKeyTTL(conn, db, [][]byte{
+			expire(conn, db, [][]byte{
 				args[0],
 				[]byte(ttls),
 			})
@@ -224,7 +224,7 @@ get 执行之前要考虑 redis 的过期策略
 func ExecGet(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 
 	//key 不存在，或者已经到过期时间了
-	if ExecTTL(conn, db, [][]byte{args[0]}) < -1 {
+	if ttl(db, [][]byte{args[0]}) < -1 {
 		// TODO 删除 key
 		return resp.NullMultiResponse
 	}

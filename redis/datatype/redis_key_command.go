@@ -8,21 +8,30 @@ import (
 	"github.com/chenjiayao/goredistraning/interface/response"
 	"github.com/chenjiayao/goredistraning/redis"
 	"github.com/chenjiayao/goredistraning/redis/resp"
+	"github.com/chenjiayao/goredistraning/redis/validate"
 )
 
 const (
 	UnlimitTTL = int64(-1)
 )
 
+func init() {
+	redis.RegisterExecCommand(redis.Ttl, ExecTTL, validate.ValidateTtl)
+	redis.RegisterExecCommand(redis.Expire, ExecExpire, validate.ValidateExpire)
+}
+
 func ExecExpire(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
-	ExecTTL(conn, db, args)
+	expire(conn, db, args)
 	return resp.MakeNumberResponse(1)
 }
 
 // ttl = -2  key 不存在
 // ttl = -1 永久有效
-func ExecTTL(conn conn.Conn, db *redis.RedisDB, args [][]byte) int64 {
+func ExecTTL(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
+	return resp.MakeNumberResponse(ttl(db, args))
+}
 
+func ttl(db *redis.RedisDB, args [][]byte) int64 {
 	key := string(args[0])
 
 	_, exist := db.Dataset.Get(key)
@@ -35,9 +44,12 @@ func ExecTTL(conn conn.Conn, db *redis.RedisDB, args [][]byte) int64 {
 	if !ok {
 		return -1
 	}
-	expiredAt, _ := res.(int64)
+	expiredTimestamp, _ := res.(int64)
 	now := time.Now().UnixNano() / 1e6
-	ttl := (expiredAt - now) / 1000
+	ttl := (expiredTimestamp - now) / 1000
+	if ttl < 0 {
+		return -2
+	}
 	return int64(ttl)
 }
 
@@ -46,7 +58,7 @@ func ExecTTL(conn conn.Conn, db *redis.RedisDB, args [][]byte) int64 {
 	保存到 TtlMap 中的是过期的时间
 	ttl : 毫秒，以字符串形式传递
 */
-func SetKeyTTL(conn conn.Conn, db *redis.RedisDB, args [][]byte) {
+func expire(conn conn.Conn, db *redis.RedisDB, args [][]byte) {
 	key := string(args[0])
 	ttls := string(args[1])
 
@@ -55,6 +67,8 @@ func SetKeyTTL(conn conn.Conn, db *redis.RedisDB, args [][]byte) {
 	if int64(ttl) == UnlimitTTL {
 		return
 	}
-	expiredAt := time.Now().UnixNano()/1e6 + int64(ttl)
-	db.TtlMap.Put(string(key), expiredAt)
+
+	currentTimestamp := time.Now().UnixNano() / 1e6
+	expiredTimestamp := currentTimestamp + int64(ttl)
+	db.TtlMap.Put(string(key), expiredTimestamp)
 }
