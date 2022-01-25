@@ -178,7 +178,7 @@ func ExecSet(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response
 	ok := db.Dataset.Put(key, value)
 
 	if ok {
-		ExecTTL(conn, db, [][]byte{
+		ExecExpire(conn, db, [][]byte{
 			args[0],
 			[]byte(ttls),
 		})
@@ -284,6 +284,7 @@ func ExecIncrBy(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 
 	return resp.MakeSimpleResponse(val)
 }
+
 func ExecIncrByFloat(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 	key := string(args[0])
 	steps := string(args[1])
