@@ -63,6 +63,7 @@ const (
 
 	Auth   = "auth"
 	Select = "select"
+	Ttl    = "ttl"
 )
 
 var (
