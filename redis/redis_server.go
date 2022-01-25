@@ -50,6 +50,7 @@ func (redisServer *RedisServer) CheckTimeoutConn() {
 			db.BlockingKeys.Range(func(key, value interface{}) bool {
 				l, _ := value.(*list.List)
 				node := l.First()
+
 				for {
 					if node == nil {
 						break
@@ -64,7 +65,10 @@ func (redisServer *RedisServer) CheckTimeoutConn() {
 
 					// time.Now().Sub(blockAt) --> time - blockAt
 					// time.Until(blockAt) --> blockAt.Sub(time.Now()) --> blockAt - time.Now()
-					if time.Until(blockAt) > time.Duration(blockTime) {
+					//  blockTime < time.Now() - blockAt
+
+					logger.Info(time.Since(blockAt), time.Duration(blockTime))
+					if time.Since(blockAt).Seconds() > float64(blockTime) {
 						conn.SetBlockingResponse(resp.NullMultiResponse)
 						conn.SetBlockingExec("", nil)
 						l.Remove(conn) //链接已经不再阻塞，从 list 中移除
