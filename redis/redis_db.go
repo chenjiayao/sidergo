@@ -23,8 +23,9 @@ var _ db.DB = &RedisDB{}
 //保存了一个 watched_keys 字典， 字典的键是这个数据库被监视的键， 而字典的值则是一个链表， 链表中保存了所有监视这个键的客户端。
 type RedisDB struct {
 	Dataset *dict.ConcurrentDict
-	Index   int                  // 数据库 db 编号
-	TtlMap  *dict.ConcurrentDict //保存 key 和过期时间之间的关系
+	Index   int // 数据库 db 编号
+
+	TtlMap *dict.ConcurrentDict //保存 key 和过期时间之间的关系 key ---> unix timestamp
 
 	keyLocks sync.Map
 
@@ -120,7 +121,6 @@ func (rd *RedisDB) parseCommandKeyFromArgs(args [][]byte) string {
 
 //将有 watch key 的 client 的 dirtyCAS 设置为 true
 func (rd *RedisDB) setWatchedKeyClientCASDirty(key string) {
-
 	val, exist := rd.WatchedKeys.Load(key)
 	if !exist {
 		return
@@ -253,7 +253,6 @@ func NewDBs(server server.Server) *RedisDBs {
 		DBs:     make([]*RedisDB, dbCount),
 		DBCount: dbCount,
 	}
-
 	for i := 0; i < dbCount; i++ {
 		rds.DBs[i] = NewDBInstance(server, i)
 	}
