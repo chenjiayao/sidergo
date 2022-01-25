@@ -31,7 +31,7 @@ func TestExecSet(t *testing.T) {
 		t.Errorf("set store value, but got = %s", res)
 	}
 
-	ttl := ExecTTL(nil, db, [][]byte{[]byte("key")})
+	ttl := ttl(db, [][]byte{[]byte("key")})
 	if ttl != -1 {
 		t.Errorf("set key  ttl = -1, but got = %d", ttl)
 	}
