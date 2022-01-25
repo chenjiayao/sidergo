@@ -1,8 +1,10 @@
 package dict
 
 import (
+	"math/rand"
 	"sync"
 	"sync/atomic"
+	"time"
 )
 
 const prime32 = uint32(16777619)
@@ -18,6 +20,31 @@ type ConcurrentDict struct {
 type Fragment struct {
 	data map[string]interface{}
 	lock sync.RWMutex
+}
+
+func (d *ConcurrentDict) RandomKey() interface{} {
+	rand.Seed(time.Now().Unix())
+
+	if d.fragmentCount <= 0 {
+		return nil
+	}
+	randFragmentIndex := rand.Intn(d.fragmentCount)
+	randFragment := d.fragments[randFragmentIndex]
+
+	l := len(randFragment.data)
+	if l <= 0 {
+		return nil
+	}
+	dataRandIndex := rand.Intn(l)
+
+	index := 0
+	for key, _ := range randFragment.data {
+		if index == dataRandIndex {
+			return key
+		}
+		index++
+	}
+	return nil
 }
 
 func (d *ConcurrentDict) Get(key string) (interface{}, bool) {
