@@ -47,6 +47,19 @@ func (l *List) InsertHead(val interface{}) {
 
 }
 
+func (l *List) SetPositoinValue(pos int, val interface{}) {
+
+	if pos > int(l.Len())-1 {
+		return
+	}
+
+	node := l.First()
+	for i := 0; i < pos; i++ {
+		node = node.Next()
+	}
+	node.val = val
+}
+
 func (l *List) InsertLast(val interface{}) {
 
 	n := &Node{
