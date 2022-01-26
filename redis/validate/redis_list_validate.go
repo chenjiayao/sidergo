@@ -1,6 +1,7 @@
 package validate
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -63,6 +64,13 @@ func ValidateLPushx(conn conn.Conn, args [][]byte) error {
 	return nil
 }
 
+func ValidateRPushx(conn conn.Conn, args [][]byte) error {
+	if len(args) != 2 {
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Rpushx)
+	}
+	return nil
+}
+
 func ValidateLTrim(conn conn.Conn, args [][]byte) error {
 	if len(args) != 3 {
 		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Ltrim)
@@ -90,6 +98,18 @@ func ValidateLInsert(conn conn.Conn, args [][]byte) error {
 	pos := strings.ToUpper(string(args[1]))
 	if pos != "BEFORE" && pos != "AFTER" {
 		return fmt.Errorf("(error) ERR syntax error")
+	}
+	return nil
+}
+
+func ValidateLset(conn conn.Conn, args [][]byte) error {
+	if len(args) != 3 {
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Lset)
+	}
+
+	_, err := strconv.Atoi(string(args[1]))
+	if err != nil {
+		return errors.New("(error) WRONGTYPE Operation against a key holding the wrong kind of value")
 	}
 	return nil
 }

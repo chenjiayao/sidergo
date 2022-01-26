@@ -15,18 +15,56 @@ import (
 )
 
 func init() {
-	redis.RegisterExecCommand(redis.Lpop, ExecLPop, validate.ValidateLPop)
-	redis.RegisterExecCommand(redis.Rpop, ExecRpop, validate.ValidateRPop)
-	redis.RegisterExecCommand(redis.Lpush, ExecLPush, validate.ValidateLPush)
-	redis.RegisterExecCommand(redis.Rpush, ExecRPush, validate.ValidateRPush)
+
 	redis.RegisterExecCommand(redis.Llen, ExecLLen, validate.ValidateLLen)
 	redis.RegisterExecCommand(redis.Lindex, ExecLIndex, validate.ValidateLIndex)
-	redis.RegisterExecCommand(redis.Lpushx, ExecLPushx, validate.ValidateLPushx)
 	redis.RegisterExecCommand(redis.Ltrim, ExecLtrim, validate.ValidateLTrim)
 	redis.RegisterExecCommand(redis.Lrange, ExecLrange, validate.ValidateLrange)
 	redis.RegisterExecCommand(redis.Linsert, ExecLinsert, validate.ValidateLInsert)
+	redis.RegisterExecCommand(redis.Lset, ExecLset, validate.ValidateLset)
+
+	redis.RegisterExecCommand(redis.Lpush, ExecLPush, validate.ValidateLPush)
+	redis.RegisterExecCommand(redis.Rpush, ExecRPush, validate.ValidateRPush)
+
+	redis.RegisterExecCommand(redis.Lpop, ExecLPop, validate.ValidateLPop)
+	redis.RegisterExecCommand(redis.Rpop, ExecRpop, validate.ValidateRPop)
+
 	redis.RegisterExecCommand(redis.Blpop, ExecBlpop, validate.ValidateBlpop)
 	redis.RegisterExecCommand(redis.Brpop, ExecBrpop, validate.ValidateBrpop)
+
+	redis.RegisterExecCommand(redis.Rpushx, ExecRPushx, validate.ValidateRPushx)
+	redis.RegisterExecCommand(redis.Lpushx, ExecLPushx, validate.ValidateLPushx)
+
+}
+
+func ExecLset(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
+	l, err := getList(conn, db, args)
+	if err != nil {
+		return resp.MakeErrorResponse(err.Error())
+	}
+	if l == nil {
+		return resp.MakeErrorResponse("(error) ERR no such key")
+	}
+
+	index, _ := strconv.Atoi(string(args[1]))
+	if index > int(l.Len())-1 {
+		return resp.MakeErrorResponse("(error) ERR index out of range")
+	}
+
+	val := string(args[2])
+	l.SetPositoinValue(index, val)
+	return resp.MakeSimpleResponse("OK")
+}
+
+func ExecRPushx(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
+	l, err := getList(conn, db, args)
+	if err != nil {
+		return resp.MakeErrorResponse(err.Error())
+	}
+	if l == nil {
+		return resp.NullMultiResponse
+	}
+	return ExecRPush(conn, db, args)
 }
 
 func ExecRpop(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
