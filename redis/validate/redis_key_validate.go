@@ -35,3 +35,10 @@ func ValidateDel(conn conn.Conn, args [][]byte) error {
 	}
 	return nil
 }
+
+func ValidateRename(conn conn.Conn, args [][]byte) error {
+	if len(args) != 2 {
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Rename)
+	}
+	return nil
+}

@@ -48,6 +48,7 @@ const (
 	//common
 	Expire = "expire"
 	Del    = "del"
+	Rename = "rename"
 
 	//set
 	Sadd      = "sadd"

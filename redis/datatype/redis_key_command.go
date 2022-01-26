@@ -19,6 +19,35 @@ func init() {
 	redis.RegisterExecCommand(redis.Ttl, ExecTTL, validate.ValidateTtl)
 	redis.RegisterExecCommand(redis.Expire, ExecExpire, validate.ValidateExpire)
 	redis.RegisterExecCommand(redis.Del, ExecDel, validate.ValidateDel)
+	redis.RegisterExecCommand(redis.Rename, ExecRename, validate.ValidateRename)
+}
+
+/**
+TODO 这里要考虑是否需要加锁
+*/
+func ExecRename(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
+	key := string(args[0])
+	newkey := string(args[1])
+	value, exist := db.Dataset.Get(key)
+	if !exist {
+		return resp.MakeErrorResponse("(error) ERR no such key")
+	}
+
+	//不管有没有，删除 newkey 的数据
+	db.Dataset.Del(newkey)
+	db.TtlMap.Del(newkey)
+
+	//删除 old name key
+	db.Dataset.Del(key)
+
+	db.Dataset.Put(newkey, value)
+
+	ttl, exist := db.TtlMap.Get(key)
+	if exist {
+		db.TtlMap.Put(newkey, ttl)
+	}
+
+	return resp.MakeSimpleResponse("OK")
 }
 
 func ExecExpire(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
