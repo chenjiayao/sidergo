@@ -22,6 +22,7 @@ type Fragment struct {
 	lock sync.RWMutex
 }
 
+// TODO 这里有问题：randFragmentIndex 定位到的 randFrament 可能是空的，那么返回 nil，如果一直 rand 到空 fragment，永远得不到 key
 func (d *ConcurrentDict) RandomKey() interface{} {
 	rand.Seed(time.Now().Unix())
 
