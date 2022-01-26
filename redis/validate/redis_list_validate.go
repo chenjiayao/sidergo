@@ -126,5 +126,12 @@ func ValidateBlpop(conn conn.Conn, args [][]byte) error {
 }
 
 func ValidateBrpop(conn conn.Conn, args [][]byte) error {
-	return ValidateBlpop(conn, args)
+	if len(args) < 2 {
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Brpop)
+	}
+	_, err := strconv.Atoi(string(args[len(args)-1]))
+	if err != nil {
+		return fmt.Errorf("(error) ERR value is not an integer or out of range")
+	}
+	return nil
 }
