@@ -26,6 +26,7 @@ func init() {
 	redis.RegisterExecCommand(redis.Lrange, ExecLrange, validate.ValidateLrange)
 	redis.RegisterExecCommand(redis.Linsert, ExecLinsert, validate.ValidateLInsert)
 	redis.RegisterExecCommand(redis.Blpop, ExecBlpop, validate.ValidateBlpop)
+	redis.RegisterExecCommand(redis.Brpop, ExecBrpop, validate.ValidateBrpop)
 }
 
 func ExecRpop(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
@@ -81,6 +82,35 @@ func ExecBlpop(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respon
 		}
 		if l != nil {
 			v := l.PopFromHead()
+			if v != nil {
+				content := v.(string)
+				return resp.MakeSimpleResponse(content)
+			}
+		}
+	}
+
+	//keys 都不存在
+	conn.SetBlockAt(time.Now())
+	conn.SetMaxBlockTime(int64(timeout))
+	conn.SetBlockingExec(redis.Blpop, args)
+
+	for _, v := range args[:len(args)-1] {
+		db.AddBlockingConn(string(v), conn)
+	}
+	return nil
+}
+
+func ExecBrpop(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
+
+	timeout, _ := strconv.Atoi(string(args[len(args)-1]))
+
+	for _, v := range args[:len(args)-1] {
+		l, err := getList(conn, db, [][]byte{v})
+		if err != nil {
+			return resp.MakeErrorResponse(err.Error())
+		}
+		if l != nil {
+			v := l.PopFromTail()
 			if v != nil {
 				content := v.(string)
 				return resp.MakeSimpleResponse(content)

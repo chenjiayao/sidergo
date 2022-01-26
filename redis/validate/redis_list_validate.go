@@ -104,3 +104,7 @@ func ValidateBlpop(conn conn.Conn, args [][]byte) error {
 	}
 	return nil
 }
+
+func ValidateBrpop(conn conn.Conn, args [][]byte) error {
+	return ValidateBlpop(conn, args)
+}
