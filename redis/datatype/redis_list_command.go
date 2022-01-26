@@ -17,6 +17,7 @@ import (
 func init() {
 	redis.RegisterExecCommand(redis.Lpop, ExecLPop, validate.ValidateLPop)
 	redis.RegisterExecCommand(redis.Lpush, ExecLPush, validate.ValidateLPush)
+	redis.RegisterExecCommand(redis.Rpush, ExecRPush, validate.ValidateRPush)
 	redis.RegisterExecCommand(redis.Llen, ExecLLen, validate.ValidateLLen)
 	redis.RegisterExecCommand(redis.Lindex, ExecLIndex, validate.ValidateLIndex)
 	redis.RegisterExecCommand(redis.Lpushx, ExecLPushx, validate.ValidateLPushx)
@@ -24,6 +25,26 @@ func init() {
 	redis.RegisterExecCommand(redis.Lrange, ExecLrange, validate.ValidateLrange)
 	redis.RegisterExecCommand(redis.Linsert, ExecLinsert, validate.ValidateLInsert)
 	redis.RegisterExecCommand(redis.Blpop, ExecBlpop, validate.ValidateBlpop)
+}
+
+//右到左的顺序依次插入到表尾
+// lpush key  a b c
+//LRANGE mylist 0 -1  ---> c b a
+func ExecRPush(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
+	l, err := getListOrInitList(conn, db, args)
+
+	if err != nil {
+		return resp.MakeErrorResponse(err.Error())
+	}
+
+	for _, v := range args[1:] {
+		s := string(v)
+		l.InsertLast(s)
+	}
+
+	db.Dataset.PutIfNotExist(string(args[0]), l)
+	db.AddReadyKey(args[0])
+	return resp.MakeNumberResponse(int64(len(args[1:])))
 }
 
 //先执行 pop，如果没有，阻塞
@@ -63,9 +84,25 @@ func ExecBlpop(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respon
 	return nil
 }
 
-//push 的命令都在这里执行 :lpush,rpush，linsert
-func pushGenericCommand(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
-	return nil
+//左到右的顺序依次插入到表头
+// lpush key  a b c
+//LRANGE mylist 0 -1  ---> c b a
+func ExecLPush(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
+	l, err := getListOrInitList(conn, db, args)
+
+	if err != nil {
+		return resp.MakeErrorResponse(err.Error())
+	}
+
+	for _, v := range args[1:] {
+		s := string(v)
+		l.InsertHead(s)
+	}
+
+	db.Dataset.PutIfNotExist(string(args[0]), l)
+	db.AddReadyKey(args[0])
+	return resp.MakeNumberResponse(int64(len(args[1:])))
+
 }
 
 func ExecLinsert(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
@@ -146,7 +183,6 @@ func ExecLPushx(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 	if l == nil {
 		return resp.NullMultiResponse
 	}
-
 	return ExecLPush(conn, db, args)
 }
 
@@ -178,27 +214,6 @@ func ExecLPop(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respons
 
 	s, _ := element.(string)
 	return resp.MakeSimpleResponse(s)
-}
-
-//左到右的顺序依次插入到表头
-// lpush key  a b c
-//LRANGE mylist 0 -1  ---> c b a
-func ExecLPush(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
-	l, err := getListOrInitList(conn, db, args)
-
-	if err != nil {
-		return resp.MakeErrorResponse(err.Error())
-	}
-
-	for _, v := range args[1:] {
-		s := string(v)
-		l.InsertHead(s)
-	}
-
-	db.Dataset.PutIfNotExist(string(args[0]), l)
-	db.AddReadyKey(args[0])
-	return resp.MakeNumberResponse(int64(len(args[1:])))
-
 }
 
 func getList(conn conn.Conn, db *redis.RedisDB, args [][]byte) (*list.List, error) {

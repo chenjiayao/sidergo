@@ -17,6 +17,14 @@ func ValidateLPush(conn conn.Conn, args [][]byte) error {
 	return nil
 }
 
+func ValidateRPush(conn conn.Conn, args [][]byte) error {
+
+	if len(args) < 1 {
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Lpush)
+	}
+	return nil
+}
+
 func ValidateLPop(conn conn.Conn, args [][]byte) error {
 
 	if len(args) != 1 {
