@@ -47,6 +47,7 @@ const (
 
 	//common
 	Expire = "expire"
+	Del    = "del"
 
 	//set
 	Sadd      = "sadd"

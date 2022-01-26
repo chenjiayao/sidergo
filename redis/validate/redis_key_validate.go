@@ -28,3 +28,10 @@ func ValidateExpire(conn conn.Conn, args [][]byte) error {
 
 	return nil
 }
+
+func ValidateDel(conn conn.Conn, args [][]byte) error {
+	if len(args) != 1 {
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Del)
+	}
+	return nil
+}

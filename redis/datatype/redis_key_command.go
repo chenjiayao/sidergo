@@ -18,6 +18,7 @@ const (
 func init() {
 	redis.RegisterExecCommand(redis.Ttl, ExecTTL, validate.ValidateTtl)
 	redis.RegisterExecCommand(redis.Expire, ExecExpire, validate.ValidateExpire)
+	redis.RegisterExecCommand(redis.Del, ExecDel, validate.ValidateDel)
 }
 
 func ExecExpire(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
@@ -71,4 +72,12 @@ func expire(db *redis.RedisDB, key string, ttl int64) {
 	currentTimestamp := time.Now().UnixNano() / 1e6
 	expiredTimestamp := currentTimestamp + ttl
 	db.TtlMap.Put(string(key), expiredTimestamp)
+}
+
+func ExecDel(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
+
+	key := string(args[0])
+	db.Dataset.Del(key)
+	db.TtlMap.Del(key)
+	return resp.MakeNumberResponse(0)
 }
