@@ -21,7 +21,12 @@ func init() {
 }
 
 func ExecExpire(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
-	expire(conn, db, args)
+	key := string(args[0])
+	ttls := string(args[1])
+
+	ttl, _ := strconv.Atoi(ttls)
+
+	expire(db, key, int64(ttl*1000))
 	return resp.MakeNumberResponse(1)
 }
 
@@ -56,19 +61,14 @@ func ttl(db *redis.RedisDB, args [][]byte) int64 {
 //设置key 的 ttl
 /*
 	保存到 TtlMap 中的是过期的时间
-	ttl : 毫秒，以字符串形式传递
+	ttl : 毫秒，
 */
-func expire(conn conn.Conn, db *redis.RedisDB, args [][]byte) {
-	key := string(args[0])
-	ttls := string(args[1])
-
-	ttl, _ := strconv.Atoi(ttls)
+func expire(db *redis.RedisDB, key string, ttl int64) {
 
 	if int64(ttl) == UnlimitTTL {
 		return
 	}
-
 	currentTimestamp := time.Now().UnixNano() / 1e6
-	expiredTimestamp := currentTimestamp + int64(ttl)
+	expiredTimestamp := currentTimestamp + ttl
 	db.TtlMap.Put(string(key), expiredTimestamp)
 }

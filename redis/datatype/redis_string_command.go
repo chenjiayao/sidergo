@@ -130,19 +130,18 @@ func ExecGetset(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 func ExecSet(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 
 	ttl := UnlimitTTL
-	ttls := fmt.Sprintf("%d", ttl)
 
 	ss := helper.BbyteToSString(args)
 	exFlagIndex := helper.ContainWithoutCaseSensitive(ss, "EX")
 	if exFlagIndex != -1 {
 		ttlStr := string(args[exFlagIndex+1])
-		ttli, _ := strconv.ParseInt(ttlStr, 10, 64)
-		ttls = fmt.Sprintf("%d", ttli*1000)
+		ttl, _ = strconv.ParseInt(ttlStr, 10, 64)
+		ttl *= 1000
 	}
 
 	pxFlagIndex := helper.ContainWithoutCaseSensitive(ss, "PX")
 	if pxFlagIndex != -1 {
-		ttls = string(args[pxFlagIndex+1])
+		ttl, _ = strconv.ParseInt(string(args[pxFlagIndex+1]), 10, 64)
 	}
 
 	key := string(args[0])
@@ -152,10 +151,7 @@ func ExecSet(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response
 	if helper.ContainWithoutCaseSensitive(ss, "NX") != -1 {
 		ok := db.Dataset.PutIfNotExist(key, value)
 		if ok {
-			expire(conn, db, [][]byte{
-				args[0],
-				[]byte(ttls),
-			})
+			expire(db, key, ttl)
 		} else {
 			return resp.NullMultiResponse
 		}
@@ -165,10 +161,7 @@ func ExecSet(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response
 	if helper.ContainWithoutCaseSensitive(ss, "XX") != -1 {
 		ok := db.Dataset.PutIfExist(key, value)
 		if ok {
-			expire(conn, db, [][]byte{
-				args[0],
-				[]byte(ttls),
-			})
+			expire(db, key, ttl)
 			return resp.OKSimpleResponse
 		} else {
 			return resp.NullMultiResponse
@@ -178,10 +171,8 @@ func ExecSet(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response
 	ok := db.Dataset.Put(key, value)
 
 	if ok {
-		ExecExpire(conn, db, [][]byte{
-			args[0],
-			[]byte(ttls),
-		})
+
+		expire(db, key, ttl)
 		return resp.OKSimpleResponse
 	}
 	return resp.NullMultiResponse
