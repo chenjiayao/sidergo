@@ -39,12 +39,51 @@ func MakeRedisServer() *RedisServer {
 		redisServer.aofHandler = MakeAofHandler(redisServer)
 	}
 
-	go redisServer.CheckTimeoutConn()
+	go redisServer.checkTimeoutConn()  //检查阻塞的链接是否超时返回 null
+	go redisServer.activeExpireCycle() //定时删除过期的 key
 
 	return redisServer
 }
 
-func (redisServer *RedisServer) CheckTimeoutConn() {
+//TODO 要处理协程退出
+func (redisServe *RedisServer) activeExpireCycle() {
+
+	/**
+	1. 从过期字段中随机 20 个 key
+	2. 删除这 20 个key 中过期的 key
+	3. 如果过期的 key 比率超过 1/4，那么重复步骤 1
+	*/
+	for {
+		for _, db := range redisServe.rds.DBs {
+
+			for {
+				delKeyCount := 0
+				for i := 0; i < 20; i++ {
+					k := db.TtlMap.RandomKey()
+					if k == nil {
+						break
+					}
+					key := k.(string)
+					v, _ := db.TtlMap.Get(key)
+					ttlUnixTimestamp := v.(int64)
+
+					if time.Now().Unix() > ttlUnixTimestamp {
+						//删除这个key
+						db.Dataset.Del(key)
+						delKeyCount++
+					}
+				}
+
+				if delKeyCount <= 5 {
+					break
+				}
+			}
+		}
+	}
+}
+
+//TODO 这里要做协程退出处理，不然会导致协程泄漏
+func (redisServer *RedisServer) checkTimeoutConn() {
 	for {
 		for _, db := range redisServer.rds.DBs {
 			db.BlockingKeys.Range(func(key, value interface{}) bool {
@@ -66,20 +105,18 @@ func (redisServer *RedisServer) CheckTimeoutConn() {
 					// time.Now().Sub(blockAt) --> time - blockAt
 					// time.Until(blockAt) --> blockAt.Sub(time.Now()) --> blockAt - time.Now()
 					//  blockTime < time.Now() - blockAt
-
-					logger.Info(time.Since(blockAt), time.Duration(blockTime))
 					if time.Since(blockAt).Seconds() > float64(blockTime) {
 						conn.SetBlockingResponse(resp.NullMultiResponse)
 						conn.SetBlockingExec("", nil)
 						l.Remove(conn) //链接已经不再阻塞，从 list 中移除
 					}
+
 					node = node.Next()
 				}
 				return true
 			})
 		}
 	}
-
 }
 
 func (redisServer *RedisServer) Log() {
