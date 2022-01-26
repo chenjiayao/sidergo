@@ -229,3 +229,39 @@ func SliceEqual(a, b []int) bool {
 	}
 	return true
 }
+
+func TestList_PopFromTail(t *testing.T) {
+	l := MakeList() // 4 3 2 1
+
+	got := l.PopFromTail()
+	if got != nil {
+		t.Errorf("l.PopFromTail() want null")
+	}
+
+	l.InsertHead(1)
+	l.InsertHead(2)
+	l.InsertHead(3)
+	l.InsertHead(4)
+	got = l.PopFromTail()
+	if got == nil {
+		t.Errorf("l.PopFromTail() got null")
+	}
+
+	v := got.(int)
+	want := 1
+	if v != 1 {
+		t.Errorf("l.PopFromTail() = %d, want %d", v, want)
+	}
+
+	////
+	got = l.PopFromTail()
+	if got == nil {
+		t.Errorf("l.PopFromTail() got null")
+	}
+
+	v = got.(int)
+	want = 2
+	if v != want {
+		t.Errorf("l.PopFromTail() = %d, want %d", v, want)
+	}
+}
