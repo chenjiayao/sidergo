@@ -86,6 +86,16 @@ func (l *List) PopFromHead() interface{} {
 	return headNode.Element()
 }
 
+func (l *List) PopFromTail() interface{} {
+	if l.tail == nil {
+		return nil
+	}
+
+	node := l.tail
+	l.tail = l.tail.prev
+	return node.Element()
+}
+
 func (l *List) InsertBeforePiovt(pivot interface{}, val interface{}) int64 {
 	pivotNode := l.getNodeByElement(pivot)
 	if pivotNode == nil {
