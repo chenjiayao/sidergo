@@ -16,6 +16,7 @@ import (
 
 func init() {
 	redis.RegisterExecCommand(redis.Lpop, ExecLPop, validate.ValidateLPop)
+	redis.RegisterExecCommand(redis.Rpop, ExecRpop, validate.ValidateRPop)
 	redis.RegisterExecCommand(redis.Lpush, ExecLPush, validate.ValidateLPush)
 	redis.RegisterExecCommand(redis.Rpush, ExecRPush, validate.ValidateRPush)
 	redis.RegisterExecCommand(redis.Llen, ExecLLen, validate.ValidateLLen)
@@ -25,6 +26,20 @@ func init() {
 	redis.RegisterExecCommand(redis.Lrange, ExecLrange, validate.ValidateLrange)
 	redis.RegisterExecCommand(redis.Linsert, ExecLinsert, validate.ValidateLInsert)
 	redis.RegisterExecCommand(redis.Blpop, ExecBlpop, validate.ValidateBlpop)
+}
+
+func ExecRpop(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
+	l, err := getListOrInitList(conn, db, args)
+	if err != nil {
+		return resp.MakeErrorResponse(err.Error())
+	}
+	element := l.PopFromTail()
+	if element == nil {
+		return resp.NullMultiResponse
+	}
+
+	s, _ := element.(string)
+	return resp.MakeSimpleResponse(s)
 }
 
 //右到左的顺序依次插入到表尾

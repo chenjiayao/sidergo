@@ -33,6 +33,10 @@ func ValidateLPop(conn conn.Conn, args [][]byte) error {
 	return nil
 }
 
+func ValidateRPop(conn conn.Conn, args [][]byte) error {
+	return ValidateLPop(conn, args)
+}
+
 func ValidateLIndex(conn conn.Conn, args [][]byte) error {
 	if len(args) != 2 {
 		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Lindex)
