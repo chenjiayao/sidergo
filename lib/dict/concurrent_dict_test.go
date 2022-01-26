@@ -85,3 +85,15 @@ func TestConcurrentDict_Put(t *testing.T) {
 		}
 	}
 }
+
+func TestConcurrentDict_RandomKey(t *testing.T) {
+	d := NewDict(6)
+	for i := 0; i < 100; i++ {
+		d.Put(fmt.Sprintf("test_%d", i), i)
+	}
+
+	k := d.RandomKey()
+	if k == nil {
+		t.Errorf("d.RandomKey() can not be null")
+	}
+}
