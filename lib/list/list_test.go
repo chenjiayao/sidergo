@@ -265,3 +265,28 @@ func TestList_PopFromTail(t *testing.T) {
 		t.Errorf("l.PopFromTail() = %d, want %d", v, want)
 	}
 }
+
+func TestList_InsertInPosition(t *testing.T) {
+	l := MakeList() // 4 3 2 1
+
+	l.SetPositoinValue(0, 23)
+	lgot := l.Len()
+	lwant := 0
+	if lgot > int64(lwant) {
+		t.Errorf("l.Len() = %d , want =%d", lgot, lwant)
+	}
+
+	l.InsertHead("1")
+	l.InsertHead("2")
+	l.InsertHead("3")
+	l.InsertHead("4") // 4 3 2 1
+
+	l.SetPositoinValue(0, "A")
+	v := l.GetElementByIndex(0)
+	got := v.(string)
+	want := "A"
+	if got != want {
+		t.Errorf("after l.InsertInPosition(0, 'A'), got = %s,  want =  %s", got, want)
+	}
+
+}
