@@ -6,12 +6,6 @@ type List struct {
 	size int64
 }
 
-/**
- *
- *
- *
- */
-
 type Node struct {
 	val  interface{}
 	prev *Node
@@ -60,7 +54,7 @@ func (l *List) SetPositoinValue(pos int, val interface{}) {
 	node.val = val
 }
 
-func (l *List) InsertLast(val interface{}) {
+func (l *List) InsertTail(val interface{}) {
 
 	n := &Node{
 		val:  val,
@@ -85,7 +79,7 @@ func (l *List) Len() int64 {
 
 func (l *List) InsertIfNotExist(val interface{}) {
 	if !l.Exist(val) {
-		l.InsertLast(val)
+		l.InsertTail(val)
 	}
 }
 

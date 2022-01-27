@@ -196,7 +196,7 @@ func (rd *RedisDB) AddBlockingConn(key string, conn conn.Conn) {
 	} else {
 		l = v.(*list.List)
 	}
-	l.InsertLast(conn)
+	l.InsertTail(conn)
 	rd.BlockingKeys.Store(key, l)
 }
 
