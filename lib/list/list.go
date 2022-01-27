@@ -66,19 +66,6 @@ func (l *List) InsertHead(val interface{}) {
 	l.size++
 }
 
-func (l *List) SetPositoinValue(pos int, val interface{}) {
-
-	if pos > int(l.Len())-1 {
-		return
-	}
-
-	node := l.HeadNode()
-	for i := 0; i < pos; i++ {
-		node = node.Next()
-	}
-	node.val = val
-}
-
 func (l *List) Len() int64 {
 	return l.size
 }
@@ -135,7 +122,7 @@ func (l *List) getNodeByElement(pivot interface{}) *Node {
 
 }
 
-func (l *List) getNodeByIndex(index int64) *Node {
+func (l *List) GetNodeByIndex(index int64) *Node {
 	if l.head == nil {
 		return nil
 	}
@@ -146,8 +133,8 @@ func (l *List) getNodeByIndex(index int64) *Node {
 	}
 
 	from := l.head
-	for i := 0; ; {
-		if int64(i) == stop {
+	for i := int64(0); ; {
+		if i == stop {
 			break
 		}
 		i++
@@ -162,7 +149,7 @@ func (l *List) getNodeByIndex(index int64) *Node {
 // start from 0
 // 因为 redis lindex 可以返回 nil，所以 GetElementByIndex 可以返回 nil
 func (l *List) GetElementByIndex(index int64) interface{} {
-	node := l.getNodeByIndex(index)
+	node := l.GetNodeByIndex(index)
 	if node == nil {
 		return nil
 	}
@@ -201,8 +188,8 @@ func (l *List) Trim(start, stop int64) {
 		return
 	}
 
-	startNode := l.getNodeByIndex(start)
-	stopNode := l.getNodeByIndex(stop)
+	startNode := l.GetNodeByIndex(start)
+	stopNode := l.GetNodeByIndex(stop)
 
 	if stop > l.Len() {
 		stop = l.Len() - 1
@@ -249,8 +236,8 @@ func (l *List) Range(start, stop int64) []interface{} {
 		return hits
 	}
 
-	startNode := l.getNodeByIndex(start)
-	stopNode := l.getNodeByIndex(stop)
+	startNode := l.GetNodeByIndex(start)
+	stopNode := l.GetNodeByIndex(stop)
 
 	for {
 
@@ -285,6 +272,10 @@ type Node struct {
 
 func (node *Node) Element() interface{} {
 	return node.val
+}
+
+func (node *Node) SetElement(val interface{}) {
+	node.val = val
 }
 
 func (node *Node) Next() *Node {

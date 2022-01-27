@@ -46,13 +46,15 @@ func ExecLset(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respons
 		return resp.MakeErrorResponse("(error) ERR no such key")
 	}
 
-	index, _ := strconv.Atoi(string(args[1]))
-	if index > int(l.Len())-1 {
+	index, _ := strconv.ParseInt(string(args[1]), 10, 64)
+	if index > l.Len()-1 {
 		return resp.MakeErrorResponse("(error) ERR index out of range")
 	}
 
 	val := string(args[2])
-	l.SetPositoinValue(index, val)
+
+	node := l.GetNodeByIndex(index)
+	node.SetElement(val)
 	return resp.MakeSimpleResponse("OK")
 }
 
@@ -93,7 +95,7 @@ func ExecRPush(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respon
 
 	for _, v := range args[1:] {
 		s := string(v)
-		l.InsertLast(s)
+		l.InsertTail(s)
 	}
 
 	db.Dataset.PutIfNotExist(string(args[0]), l)
