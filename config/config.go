@@ -34,7 +34,7 @@ func LoadDefaultConfig() {
 	Config = &ServerConfig{
 		Bind:           "127.0.0.1",
 		Port:           3101,
-		Databases:      16,
+		Databases:      3,
 		RequirePass:    "",
 		Appendonly:     false,
 		AppendFilename: "",
