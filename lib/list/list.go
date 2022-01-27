@@ -6,34 +6,12 @@ type List struct {
 	size int64
 }
 
-func (l *List) InsertHead(val interface{}) {
-	n := &Node{
-		val:  val,
-		prev: nil,
-		next: l.head,
-	}
-	if l.head != nil {
-		l.head.prev = n
-	} else {
-		l.tail = n
-	}
-
-	l.head = n
-	l.size++
-
+func (l *List) HeadNode() *Node {
+	return l.head
 }
 
-func (l *List) SetPositoinValue(pos int, val interface{}) {
-
-	if pos > int(l.Len())-1 {
-		return
-	}
-
-	node := l.HeadNode()
-	for i := 0; i < pos; i++ {
-		node = node.Next()
-	}
-	node.val = val
+func (l *List) TailNode() *Node {
+	return l.tail
 }
 
 func (l *List) InsertTail(val interface{}) {
@@ -49,20 +27,8 @@ func (l *List) InsertTail(val interface{}) {
 	} else {
 		l.tail.next = n
 	}
-
 	l.tail = n
-
 	l.size++
-}
-
-func (l *List) Len() int64 {
-	return l.size
-}
-
-func (l *List) InsertIfNotExist(val interface{}) {
-	if !l.Exist(val) {
-		l.InsertTail(val)
-	}
 }
 
 func (l *List) PopFromHead() interface{} {
@@ -83,6 +49,44 @@ func (l *List) PopFromTail() interface{} {
 	node := l.tail
 	l.tail = l.tail.prev
 	return node.Element()
+}
+
+func (l *List) InsertHead(val interface{}) {
+	n := &Node{
+		val:  val,
+		prev: nil,
+		next: l.head,
+	}
+	if l.head != nil {
+		l.head.prev = n
+	} else {
+		l.tail = n
+	}
+	l.head = n
+	l.size++
+}
+
+func (l *List) SetPositoinValue(pos int, val interface{}) {
+
+	if pos > int(l.Len())-1 {
+		return
+	}
+
+	node := l.HeadNode()
+	for i := 0; i < pos; i++ {
+		node = node.Next()
+	}
+	node.val = val
+}
+
+func (l *List) Len() int64 {
+	return l.size
+}
+
+func (l *List) InsertIfNotExist(val interface{}) {
+	if !l.Exist(val) {
+		l.InsertTail(val)
+	}
 }
 
 func (l *List) InsertBeforePiovt(pivot interface{}, val interface{}) int64 {
@@ -118,7 +122,6 @@ func (l *List) InsertAfterPiovt(pivot interface{}, val interface{}) int64 {
 }
 
 func (l *List) getNodeByElement(pivot interface{}) *Node {
-
 	node := l.head
 	for {
 		if node == nil {
@@ -166,7 +169,7 @@ func (l *List) GetElementByIndex(index int64) interface{} {
 	return node.Element()
 }
 
-func (l *List) Remove(val interface{}) {
+func (l *List) RemoveNode(val interface{}) {
 	currentNode := l.head
 	for {
 		if currentNode == nil {
@@ -180,7 +183,6 @@ func (l *List) Remove(val interface{}) {
 				currentNode.prev.next = currentNode.next
 			}
 		}
-
 		currentNode = currentNode.next
 	}
 }
@@ -211,14 +213,6 @@ func (l *List) Trim(start, stop int64) {
 	l.size = stop - start + 1
 	l.head = startNode
 	l.tail = stopNode
-}
-
-func (l *List) HeadNode() *Node {
-	return l.head
-}
-
-func (l *List) TailNode() *Node {
-	return l.tail
 }
 
 func (l *List) Exist(val interface{}) bool {

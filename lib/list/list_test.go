@@ -34,7 +34,7 @@ func TestList_Exist(t *testing.T) {
 	}
 }
 
-func TestList_Remove(t *testing.T) {
+func TestList_RemoveNode(t *testing.T) {
 	l := MakeList()
 	l.InsertTail(1)
 	l.InsertTail(2)
@@ -45,16 +45,16 @@ func TestList_Remove(t *testing.T) {
 		t.Errorf("l.Exist(2) = %v, but want true", exist)
 	}
 
-	l.Remove(2)
+	l.RemoveNode(2)
 	exist = l.Exist(2)
 	if exist {
-		t.Errorf("l.Remove(2) = falied")
+		t.Errorf("l.RemoveNode(2) = falied")
 	}
 
-	l.Remove(1)
+	l.RemoveNode(1)
 	exist = l.Exist(1)
 	if exist {
-		t.Errorf("l.Remove(1) = falied")
+		t.Errorf("l.RemoveNode(1) = falied")
 	}
 }
 

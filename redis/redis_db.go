@@ -164,7 +164,7 @@ func (rd *RedisDB) RemoveWatchKey(conn conn.Conn, key string) {
 	} else {
 		link = val.(*list.List)
 	}
-	link.Remove(conn)
+	link.RemoveNode(conn)
 }
 
 func (rd *RedisDB) RemoveAllWatchKey() {

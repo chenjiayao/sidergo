@@ -108,7 +108,7 @@ func (redisServer *RedisServer) checkTimeoutConn() {
 					if time.Since(blockAt).Seconds() > float64(blockTime) {
 						conn.SetBlockingResponse(resp.NullMultiResponse)
 						conn.SetBlockingExec("", nil)
-						l.Remove(conn) //链接已经不再阻塞，从 list 中移除
+						l.RemoveNode(conn) //链接已经不再阻塞，从 list 中移除
 					}
 
 					node = node.Next()
