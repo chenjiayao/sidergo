@@ -6,24 +6,6 @@ type List struct {
 	size int64
 }
 
-type Node struct {
-	val  interface{}
-	prev *Node
-	next *Node
-}
-
-func (node *Node) Element() interface{} {
-	return node.val
-}
-
-func (node *Node) Next() *Node {
-	return node.next
-}
-
-func (node *Node) Prev() *Node {
-	return node.prev
-}
-
 func (l *List) InsertHead(val interface{}) {
 	n := &Node{
 		val:  val,
@@ -300,4 +282,22 @@ func MakeList() *List {
 	}
 
 	return l
+}
+
+type Node struct {
+	val  interface{}
+	prev *Node
+	next *Node
+}
+
+func (node *Node) Element() interface{} {
+	return node.val
+}
+
+func (node *Node) Next() *Node {
+	return node.next
+}
+
+func (node *Node) Prev() *Node {
+	return node.prev
 }
