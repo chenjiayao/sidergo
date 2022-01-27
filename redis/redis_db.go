@@ -127,7 +127,7 @@ func (rd *RedisDB) setWatchedKeyClientCASDirty(key string) {
 	}
 
 	link := val.(*list.List)
-	node := link.First()
+	node := link.HeadNode()
 	for {
 		if node == nil {
 			break

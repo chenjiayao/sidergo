@@ -88,7 +88,7 @@ func (redisServer *RedisServer) checkTimeoutConn() {
 		for _, db := range redisServer.rds.DBs {
 			db.BlockingKeys.Range(func(key, value interface{}) bool {
 				l, _ := value.(*list.List)
-				node := l.First()
+				node := l.HeadNode()
 
 				for {
 					if node == nil {

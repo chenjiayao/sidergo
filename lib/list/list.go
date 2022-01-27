@@ -29,7 +29,7 @@ func (l *List) SetPositoinValue(pos int, val interface{}) {
 		return
 	}
 
-	node := l.First()
+	node := l.HeadNode()
 	for i := 0; i < pos; i++ {
 		node = node.Next()
 	}
@@ -213,11 +213,11 @@ func (l *List) Trim(start, stop int64) {
 	l.tail = stopNode
 }
 
-func (l *List) First() *Node {
+func (l *List) HeadNode() *Node {
 	return l.head
 }
 
-func (l *List) Last() *Node {
+func (l *List) TailNode() *Node {
 	return l.tail
 }
 
@@ -280,7 +280,6 @@ func MakeList() *List {
 		tail: nil,
 		size: 0,
 	}
-
 	return l
 }
 
