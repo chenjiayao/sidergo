@@ -139,6 +139,11 @@ func ExecRpop(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respons
 */
 func ExecBlpop(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 
+	// 在事务状态下 blpop == lpop
+	if conn.IsInMultiState() {
+		return ExecLPop(conn, db, args)
+	}
+
 	timeout, _ := strconv.Atoi(string(args[len(args)-1]))
 
 	for _, v := range args[:len(args)-1] {
@@ -167,6 +172,10 @@ func ExecBlpop(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respon
 }
 
 func ExecBrpop(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
+	// 在事务状态下 blpop == lpop
+	if conn.IsInMultiState() {
+		return ExecRpop(conn, db, args)
+	}
 
 	timeout, _ := strconv.Atoi(string(args[len(args)-1]))
 
