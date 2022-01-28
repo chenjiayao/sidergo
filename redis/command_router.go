@@ -67,6 +67,7 @@ const (
 	Select  = "select"
 	Ttl     = "ttl"
 	Persist = "Persist"
+	Exist   = "Exist"
 )
 
 var (

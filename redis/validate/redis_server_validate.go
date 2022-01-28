@@ -39,7 +39,14 @@ func ValidateSelect(conn conn.Conn, args [][]byte) error {
 
 func ValidatePersist(conn conn.Conn, args [][]byte) error {
 	if len(args) != 1 {
-		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Select)
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Persist)
+	}
+	return nil
+}
+
+func ValidateExist(conn conn.Conn, args [][]byte) error {
+	if len(args) != 1 {
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Exist)
 	}
 	return nil
 }
