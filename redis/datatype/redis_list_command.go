@@ -129,26 +129,6 @@ func ExecRpop(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respons
 	return resp.MakeSimpleResponse(s)
 }
 
-//右到左的顺序依次插入到表尾
-// lpush key  a b c
-//LRANGE mylist 0 -1  ---> c b a
-func ExecRPush(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
-	l, err := getListOrInitList(conn, db, args)
-
-	if err != nil {
-		return resp.MakeErrorResponse(err.Error())
-	}
-
-	for _, v := range args[1:] {
-		s := string(v)
-		l.InsertTail(s)
-	}
-
-	db.Dataset.PutIfNotExist(string(args[0]), l)
-	db.AddReadyKey(args[0])
-	return resp.MakeNumberResponse(int64(len(args[1:])))
-}
-
 //先执行 pop，如果没有，阻塞
 /**
 1. 每个 db 都有一个 blockingKeys 的map map[string]*list.List ，key 为 list 的 key，value 为链表，保存了被阻塞的 conn
@@ -215,6 +195,25 @@ func ExecBrpop(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respon
 	return nil
 }
 
+//右到左的顺序依次插入到表尾
+// lpush key  a b c
+func ExecRPush(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
+	l, err := getListOrInitList(conn, db, args)
+
+	if err != nil {
+		return resp.MakeErrorResponse(err.Error())
+	}
+
+	for _, v := range args[1:] {
+		s := string(v)
+		l.InsertTail(s)
+	}
+
+	db.Dataset.PutIfNotExist(string(args[0]), l)
+	db.AddReadyKey(args[0])
+	return resp.MakeNumberResponse(l.Len())
+}
+
 //左到右的顺序依次插入到表头
 // lpush key  a b c
 //LRANGE mylist 0 -1  ---> c b a
@@ -232,7 +231,7 @@ func ExecLPush(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respon
 
 	db.Dataset.PutIfNotExist(string(args[0]), l)
 	db.AddReadyKey(args[0])
-	return resp.MakeNumberResponse(int64(len(args[1:])))
+	return resp.MakeNumberResponse(l.Len())
 
 }
 
@@ -299,9 +298,9 @@ func ExecLtrim(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respon
 	if l == nil {
 		return resp.OKSimpleResponse
 	}
-	start, _ := strconv.Atoi(string(args[1]))
-	stop, _ := strconv.Atoi(string(args[2]))
-	l.Trim(int64(start), int64(stop))
+	start, _ := strconv.ParseInt(string(args[1]), 10, 64)
+	stop, _ := strconv.ParseInt(string(args[2]), 10, 64)
+	l.Trim(start, stop)
 
 	return resp.OKSimpleResponse
 }
