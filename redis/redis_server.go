@@ -152,8 +152,12 @@ func (redisServer *RedisServer) Handle(conn net.Conn) {
 		var res response.Response
 		var err error
 
+		if len(request.Args) == 0 {
+			continue
+		}
+
 		cmd := request.Args
-		cmdName := redisServer.parseCommand(request.Args)
+		cmdName := redisServer.parseCommand(cmd)
 		args := cmd[1:]
 
 		if cmdName != "auth" && !redisServer.isAuthenticated(redisClient) {

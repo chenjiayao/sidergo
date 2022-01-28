@@ -32,10 +32,16 @@ func (h *AofHandler) writeToAofFile(cmd [][]byte) {
 		return
 	}
 
-	simpleResponse := resp.MakeMultiResponse(cmd)
-	asArrayResponse := resp.MakeArrayResponse([]response.Response{simpleResponse})
-	asBytes := asArrayResponse.ToContentByte()
-	_, err := h.aofFile.Write(asBytes)
+	multiResponses := make([]response.Response, len(cmd))
+
+	for i, v := range cmd {
+		multiResponse := resp.MakeMultiResponse(string(v))
+		multiResponses[i] = multiResponse
+	}
+
+	arrayResponse := resp.MakeArrayResponse(multiResponses)
+
+	_, err := h.aofFile.Write(arrayResponse.ToContentByte())
 	if err != nil {
 		logger.Info("write aof failed :", err.Error())
 	}
@@ -59,6 +65,12 @@ func MakeAofHandler(server server.Server) *AofHandler {
 	}
 	aofFileName := config.Config.AppendFilename
 	file, err := os.OpenFile(aofFileName, os.O_APPEND|os.O_WRONLY, 0664)
+	if os.IsNotExist(err) {
+		file, err = os.Create(aofFileName)
+		if err != nil {
+			panic(err)
+		}
+	}
 
 	//TODO 这里优化 aof 文件判断
 	if err != nil {
@@ -68,6 +80,7 @@ func MakeAofHandler(server server.Server) *AofHandler {
 	return handler
 }
 
+//TODO 这里要记录所有 write 命令
 func (h *AofHandler) isWriteCmd(cmdName []byte) bool {
 	return true
 }

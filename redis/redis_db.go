@@ -39,9 +39,9 @@ type RedisDB struct {
 
 func NewDBInstance(server server.Server, index int) *RedisDB {
 	rd := &RedisDB{
-		Dataset:      dict.NewDict(128),
+		Dataset:      dict.NewDict(2),
 		Index:        index,
-		TtlMap:       dict.NewDict(128),
+		TtlMap:       dict.NewDict(2),
 		keyLocks:     sync.Map{},
 		BlockingKeys: sync.Map{},
 		WatchedKeys:  sync.Map{},

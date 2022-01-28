@@ -270,11 +270,11 @@ func ExecLrange(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 
 	elements := l.Range(int64(start), int64(stop))
 
-	simpleResponses := make([]response.Response, len(elements))
+	multiResponses := make([]response.Response, len(elements))
 	for i := 0; i < len(elements); i++ {
-		simpleResponses[i] = resp.MakeSimpleResponse(elements[i].(string))
+		multiResponses[i] = resp.MakeMultiResponse(elements[i].(string))
 	}
-	return resp.MakeArrayResponse(simpleResponses)
+	return resp.MakeArrayResponse(multiResponses)
 }
 
 /**

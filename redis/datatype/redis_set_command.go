@@ -104,11 +104,11 @@ func ExecSmembers(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Res
 	}
 
 	members := setValue.Members()
-	simpleResponses := make([]response.Response, len(members))
+	multiResponses := make([]response.Response, len(members))
 	for i := 0; i < len(members); i++ {
-		simpleResponses[i] = resp.MakeSimpleResponse(string(members[i]))
+		multiResponses[i] = resp.MakeMultiResponse(string(members[i]))
 	}
-	return resp.MakeArrayResponse(simpleResponses)
+	return resp.MakeArrayResponse(multiResponses)
 }
 
 //如果 key 不存在，会新建一个 set

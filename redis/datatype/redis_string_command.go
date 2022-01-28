@@ -58,16 +58,16 @@ func ExecMSet(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respons
 
 func ExecMGet(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 
-	res := make([][]byte, 0)
+	multiResponses := make([]response.Response, 0)
 	for i := 0; i < len(args); i++ {
 		r := getAsString(conn, db, args[i])
 		if r == "" {
-			res = append(res, nil)
+			multiResponses = append(multiResponses, resp.MakeMultiResponse(""))
 		} else {
-			res = append(res, []byte(r))
+			multiResponses = append(multiResponses, resp.MakeMultiResponse(r))
 		}
 	}
-	return resp.MakeMultiResponse(res)
+	return resp.MakeArrayResponse(multiResponses)
 }
 
 func ExecMSetNX(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {

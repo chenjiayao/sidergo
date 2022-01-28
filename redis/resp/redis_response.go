@@ -3,6 +3,7 @@ package resp
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/chenjiayao/goredistraning/interface/response"
 )
@@ -14,7 +15,7 @@ const (
 )
 
 var (
-	NullMultiResponse  = MakeMultiResponse(nil)
+	NullMultiResponse  = MakeMultiResponse("")
 	OKSimpleResponse   = MakeSimpleResponse("OK")
 	EmptyArrayResponse = MakeArrayResponse(nil)
 )
@@ -70,15 +71,29 @@ func MakeSimpleResponse(content string) response.Response {
 }
 
 //////多行数据 $ 开头
+/**
+
+$8
+codehole
+
+*/
 type RedisMultiLineResponse struct {
-	Content [][]byte
+	Content string
 }
 
 func (rmls *RedisMultiLineResponse) ToContentByte() []byte {
-	if rmls.Content == nil {
+	if rmls.Content == "" {
 		return []byte("$-1\r\n")
 	}
-	return []byte{}
+
+	prefix := fmt.Sprintf("$%d", len(rmls.Content))
+
+	var buffer strings.Builder
+	buffer.Write([]byte(prefix))
+	buffer.WriteString(CRLF)
+	buffer.WriteString(rmls.Content)
+	buffer.WriteString(CRLF)
+	return []byte(buffer.String())
 }
 
 func (rmls *RedisMultiLineResponse) ToErrorByte() []byte {
@@ -89,7 +104,7 @@ func (rmls RedisMultiLineResponse) ISOK() bool {
 	return true
 }
 
-func MakeMultiResponse(content [][]byte) response.Response {
+func MakeMultiResponse(content string) response.Response {
 
 	return &RedisMultiLineResponse{
 		Content: content,
