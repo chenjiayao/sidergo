@@ -73,8 +73,39 @@ var (
 	CommandTables = make(map[string]Command)
 
 	WriteCommands = map[string]string{
-		Set:   Set,
-		Setex: Setex,
+		Set:       "",
+		Setnx:     "",
+		Setex:     "",
+		Persist:   "",
+		Psetex:    "",
+		Expire:    "",
+		Del:       "",
+		Lpush:     "",
+		Lpushx:    "",
+		Rpush:     "",
+		Rpushx:    "",
+		Lpop:      "",
+		Rpop:      "",
+		Ltrim:     "",
+		Rpoplpush: "",
+		Lrem:      "",
+		Lindex:    "",
+		Lset:      "",
+		Linsert:   "",
+		Blpop:     "",
+		Brpop:     "",
+
+		Mset:    "",
+		Msetnx:  "",
+		Getset:  "",
+		Incr:    "",
+		Incrby:  "",
+		Incrbyf: "",
+		Decr:    "",
+		Spop:    "",
+		Sadd:    "",
+		Decrby:  "",
+		Rename:  "",
 	}
 )
 
