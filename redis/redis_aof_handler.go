@@ -82,5 +82,6 @@ func MakeAofHandler(server server.Server) *AofHandler {
 
 //TODO 这里要记录所有 write 命令
 func (h *AofHandler) isWriteCmd(cmdName []byte) bool {
-	return true
+	_, is := WriteCommands[string(cmdName)]
+	return is
 }
