@@ -36,8 +36,8 @@ func LoadDefaultConfig() {
 		Port:           3101,
 		Databases:      3,
 		RequirePass:    "",
-		Appendonly:     false,
-		AppendFilename: "",
+		Appendonly:     true,
+		AppendFilename: "./redis.aof",
 	}
 }
 
