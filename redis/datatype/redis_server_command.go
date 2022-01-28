@@ -21,8 +21,12 @@ func ExecPersist(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Resp
 
 	key := string(args[0])
 
+	_, exist := db.TtlMap.Get(key)
+	if !exist {
+		return resp.MakeNumberResponse(0)
+	}
 	db.TtlMap.Del(key)
-	return resp.OKSimpleResponse
+	return resp.MakeNumberResponse(1)
 }
 func ExecAuth(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 
