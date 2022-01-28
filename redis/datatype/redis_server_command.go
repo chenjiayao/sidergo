@@ -12,8 +12,8 @@ import (
 )
 
 func init() {
-	redis.RegisterExecCommand(redis.Auth, ExecAuth, validate.ValidateAuthFunc)
-	redis.RegisterExecCommand(redis.Select, ExecSelect, validate.ValidateSelectFunc)
+	redis.RegisterExecCommand(redis.Auth, ExecAuth, validate.ValidateAuth)
+	redis.RegisterExecCommand(redis.Select, ExecSelect, validate.ValidateSelect)
 	redis.RegisterExecCommand(redis.Persist, ExecPersist, validate.ValidatePersist)
 }
 

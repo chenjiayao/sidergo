@@ -10,7 +10,7 @@ import (
 	"github.com/chenjiayao/goredistraning/redis"
 )
 
-func ValidateAuthFunc(con conn.Conn, args [][]byte) error {
+func ValidateAuth(con conn.Conn, args [][]byte) error {
 	if len(args) != 1 {
 		return errors.New("ERR wrong number of arguments for 'auth' command")
 	}
@@ -25,7 +25,7 @@ func ValidateAuthFunc(con conn.Conn, args [][]byte) error {
 	return nil
 }
 
-func ValidateSelectFunc(conn conn.Conn, args [][]byte) error {
+func ValidateSelect(conn conn.Conn, args [][]byte) error {
 	if len(args) != 1 {
 		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Select)
 	}
