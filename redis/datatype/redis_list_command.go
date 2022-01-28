@@ -328,5 +328,5 @@ func ExecLLen(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respons
 	if err != nil {
 		return resp.MakeErrorResponse(err.Error())
 	}
-	return resp.MakeNumberResponse(int64(l.Len()))
+	return resp.MakeNumberResponse(l.Len())
 }
