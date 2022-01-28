@@ -31,26 +31,6 @@ func (l *List) InsertTail(val interface{}) {
 	l.size++
 }
 
-func (l *List) PopFromHead() interface{} {
-	if l.head == nil {
-		return nil
-	}
-
-	headNode := l.head
-	l.head = l.head.next
-	return headNode.Element()
-}
-
-func (l *List) PopFromTail() interface{} {
-	if l.tail == nil {
-		return nil
-	}
-
-	node := l.tail
-	l.tail = l.tail.prev
-	return node.Element()
-}
-
 func (l *List) InsertHead(val interface{}) {
 	n := &Node{
 		val:  val,
@@ -64,6 +44,28 @@ func (l *List) InsertHead(val interface{}) {
 	}
 	l.head = n
 	l.size++
+}
+
+func (l *List) PopFromHead() interface{} {
+	if l.head == nil {
+		return nil
+	}
+
+	headNode := l.head
+	l.head = l.head.next
+	l.size--
+	return headNode.Element()
+}
+
+func (l *List) PopFromTail() interface{} {
+	if l.tail == nil {
+		return nil
+	}
+
+	node := l.tail
+	l.tail = l.tail.prev
+	l.size--
+	return node.Element()
 }
 
 func (l *List) Len() int64 {
