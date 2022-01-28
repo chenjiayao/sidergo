@@ -110,13 +110,13 @@ func (l *List) InsertAfterPiovt(pivot interface{}, val interface{}) int64 {
 	return l.Len()
 }
 
-func (l *List) getNodeByElement(pivot interface{}) *Node {
+func (l *List) getNodeByElement(val interface{}) *Node {
 	node := l.head
 	for {
 		if node == nil {
 			return nil
 		}
-		if node.Element() == pivot {
+		if node.Element() == val {
 			return node
 		}
 		node = node.Next()
@@ -159,21 +159,24 @@ func (l *List) GetElementByIndex(index int64) interface{} {
 }
 
 func (l *List) RemoveNode(val interface{}) {
-	currentNode := l.head
-	for {
-		if currentNode == nil {
-			return
-		}
 
-		if currentNode.Element() == val {
-			if currentNode == l.head {
-				l.head = currentNode.next
-			} else {
-				currentNode.prev.next = currentNode.next
-			}
-		}
-		currentNode = currentNode.next
+	removeNode := l.getNodeByElement(val)
+	if removeNode == nil {
+		return
 	}
+
+	l.size--
+	if l.head == removeNode {
+		l.head = removeNode.Next()
+		removeNode.Next().prev = nil
+		return
+	}
+
+	if l.tail == removeNode {
+		l.tail = removeNode.Prev()
+	}
+
+	removeNode.Prev().next = removeNode.Next()
 }
 
 func (l *List) Trim(start, stop int64) {
