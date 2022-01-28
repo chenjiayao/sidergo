@@ -90,6 +90,11 @@ func (l *List) InsertBeforePiovt(pivot interface{}, val interface{}) int64 {
 		prev: pivotNode.prev,
 	}
 	pivotNode.prev = node
+
+	if pivotNode == l.head {
+		l.head = node
+	}
+
 	l.size++
 	return l.Len()
 }
@@ -105,6 +110,11 @@ func (l *List) InsertAfterPiovt(pivot interface{}, val interface{}) int64 {
 		next: pivotNode.next,
 		prev: pivotNode,
 	}
+
+	if pivotNode == l.tail {
+		l.tail = node
+	}
+
 	pivotNode.next = node
 	l.size++
 	return l.Len()
@@ -179,6 +189,7 @@ func (l *List) RemoveNode(val interface{}) {
 	removeNode.Prev().next = removeNode.Next()
 }
 
+//保留[start, stop]
 func (l *List) Trim(start, stop int64) {
 
 	if stop < 0 {
@@ -202,9 +213,13 @@ func (l *List) Trim(start, stop int64) {
 	if start > l.Len() {
 		start = l.Len() - 1
 	}
+
 	l.size = stop - start + 1
 	l.head = startNode
 	l.tail = stopNode
+
+	startNode.prev = nil
+	stopNode.next = nil
 }
 
 func (l *List) Exist(val interface{}) bool {
