@@ -19,9 +19,12 @@ func init() {
 	redis.RegisterExecCommand(redis.Llen, ExecLLen, validate.ValidateLLen)
 	redis.RegisterExecCommand(redis.Lindex, ExecLIndex, validate.ValidateLIndex)
 	redis.RegisterExecCommand(redis.Ltrim, ExecLtrim, validate.ValidateLTrim)
+
 	redis.RegisterExecCommand(redis.Lrange, ExecLrange, validate.ValidateLrange)
 	redis.RegisterExecCommand(redis.Linsert, ExecLinsert, validate.ValidateLInsert)
+
 	redis.RegisterExecCommand(redis.Lset, ExecLset, validate.ValidateLset)
+	redis.RegisterExecCommand(redis.Lrem, ExecLrem, validate.ValidateLrem)
 
 	redis.RegisterExecCommand(redis.Lpush, ExecLPush, validate.ValidateLPush)
 	redis.RegisterExecCommand(redis.Rpush, ExecRPush, validate.ValidateRPush)
@@ -35,6 +38,49 @@ func init() {
 	redis.RegisterExecCommand(redis.Rpushx, ExecRPushx, validate.ValidateRPushx)
 	redis.RegisterExecCommand(redis.Lpushx, ExecLPushx, validate.ValidateLPushx)
 
+}
+
+/**
+count > 0 : 从表头开始向表尾搜索，移除与 value 相等的元素，数量为 count 。
+count < 0 : 从表尾开始向表头搜索，移除与 value 相等的元素，数量为 count 的绝对值。
+count = 0 : 移除表中所有与 value 相等的值。
+
+*/
+func ExecLrem(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
+
+	l, err := getList(conn, db, args)
+	if err != nil {
+		return resp.MakeErrorResponse(err.Error())
+	}
+	if l == nil {
+		return resp.MakeNumberResponse(0)
+	}
+
+	removeCount := 0
+	count, _ := strconv.ParseInt(string(args[1]), 10, 64)
+	value := string(args[2])
+
+	if count > l.Len() {
+		count = l.Len()
+	}
+	fromTail := false
+	if removeCount < 0 {
+		fromTail = true
+	}
+
+	node := l.HeadNode()
+	if fromTail {
+		node = l.TailNode()
+	}
+
+	// TODO 这里的效率没有 O(N)，需要优化
+	for i := int64(0); i < count; i++ {
+		if node.Element() == value {
+			l.RemoveNode(node)
+			removeCount++
+		}
+	}
+	return resp.MakeNumberResponse(int64(removeCount))
 }
 
 func ExecLset(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
@@ -276,8 +322,8 @@ func ExecLIndex(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 	if err != nil {
 		return resp.MakeErrorResponse(err.Error())
 	}
-	i, _ := strconv.Atoi(string(args[1]))
-	val := l.GetElementByIndex(int64(i))
+	i, _ := strconv.ParseInt(string(args[1]), 10, 64)
+	val := l.GetElementByIndex(i)
 	if val == nil {
 		return resp.NullMultiResponse
 	}
