@@ -56,6 +56,7 @@ func TestList_RemoveNode(t *testing.T) {
 	if exist {
 		t.Errorf("l.RemoveNode(1) = falied")
 	}
+	l.RemoveNode(6)
 }
 
 func TestList_GetElementByIndex(t *testing.T) {
