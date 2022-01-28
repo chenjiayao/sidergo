@@ -63,9 +63,10 @@ const (
 	Watch   = "watch"
 	Exec    = "exec"
 
-	Auth   = "auth"
-	Select = "select"
-	Ttl    = "ttl"
+	Auth    = "auth"
+	Select  = "select"
+	Ttl     = "ttl"
+	Persist = "Persist"
 )
 
 var (

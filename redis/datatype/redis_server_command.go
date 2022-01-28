@@ -14,8 +14,16 @@ import (
 func init() {
 	redis.RegisterExecCommand(redis.Auth, ExecAuth, validate.ValidateAuthFunc)
 	redis.RegisterExecCommand(redis.Select, ExecSelect, validate.ValidateSelectFunc)
+	redis.RegisterExecCommand(redis.Persist, ExecPersist, validate.ValidatePersist)
 }
 
+func ExecPersist(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
+
+	key := string(args[0])
+
+	db.TtlMap.Del(key)
+	return resp.OKSimpleResponse
+}
 func ExecAuth(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 
 	password := string(args[0])
