@@ -22,7 +22,6 @@ const (
 )
 
 var (
-	logPrefix  = ""
 	logPrefixs = []string{"DEBUG", "INFO", "WARNING", "ERROR", "FATAL"}
 )
 
