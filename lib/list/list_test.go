@@ -266,3 +266,82 @@ func TestList_PopFromTail(t *testing.T) {
 		t.Errorf("l.PopFromTail() = %d, want %d", v, want)
 	}
 }
+
+func TestList_Trim(t *testing.T) {
+	l := MakeList()
+	l.InsertHead(0)
+	l.InsertHead(1)
+	l.InsertHead(2)
+	l.InsertHead(3)
+	l.InsertHead(4) // 4 3 2 1 0
+
+	l.Trim(1, 2)
+	v := l.Range(0, l.Len())
+	got := make([]int, len(v))
+	for i := 0; i < len(v); i++ {
+		got[i] = v[i].(int)
+	}
+	want := []int{
+		3, 2,
+	}
+	if !SliceEqual(got, want) {
+		t.Errorf("l.Trim(1, 2) failed, got =%v", got)
+	}
+
+	///////////
+	l = MakeList()
+	l.InsertHead(0)
+	l.InsertHead(1)
+	l.InsertHead(2)
+	l.InsertHead(3)
+	l.InsertHead(4) // 4 3 2 1 0
+
+	l.Trim(10, 2)
+	v = l.Range(0, l.Len())
+	got = make([]int, len(v))
+	for i := 0; i < len(v); i++ {
+		got[i] = v[i].(int)
+	}
+	want = []int{}
+	if !SliceEqual(got, want) {
+		t.Errorf("l.Trim(10, 2) failed, got =%v", got)
+	}
+
+	///////////
+	l = MakeList()
+	l.InsertHead(0)
+	l.InsertHead(1)
+	l.InsertHead(2)
+	l.InsertHead(3)
+	l.InsertHead(4) // 4 3 2 1 0
+
+	l.Trim(-1, 2)
+	v = l.Range(0, l.Len())
+	got = make([]int, len(v))
+	for i := 0; i < len(v); i++ {
+		got[i] = v[i].(int)
+	}
+	want = []int{}
+	if !SliceEqual(got, want) {
+		t.Errorf("l.Trim(-1, 2) failed, got =%v", got)
+	}
+
+	///////////
+	l = MakeList()
+	l.InsertHead(0)
+	l.InsertHead(1)
+	l.InsertHead(2)
+	l.InsertHead(3)
+	l.InsertHead(4) // 4 3 2 1 0
+
+	l.Trim(-1, -2)
+	v = l.Range(0, l.Len())
+	got = make([]int, len(v))
+	for i := 0; i < len(v); i++ {
+		got[i] = v[i].(int)
+	}
+	want = []int{}
+	if !SliceEqual(got, want) {
+		t.Errorf("l.Trim(-1, -2) failed, got =%v", got)
+	}
+}
