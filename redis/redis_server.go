@@ -46,7 +46,7 @@ func MakeRedisServer() *RedisServer {
 }
 
 //TODO 要处理协程退出
-func (redisServe *RedisServer) activeExpireCycle() {
+func (redisServer *RedisServer) activeExpireCycle() {
 
 	/**
 	1. 从过期字段中随机 20 个 key
@@ -54,8 +54,7 @@ func (redisServe *RedisServer) activeExpireCycle() {
 	3. 如果过期的 key 比率超过 1/4，那么重复步骤 1
 	*/
 	for {
-		for _, db := range redisServe.rds.DBs {
-
+		for _, db := range redisServer.rds.DBs {
 			for {
 				delKeyCount := 0
 				for i := 0; i < 20; i++ {
@@ -71,6 +70,14 @@ func (redisServe *RedisServer) activeExpireCycle() {
 						//删除这个key
 						db.Dataset.Del(key)
 						delKeyCount++
+
+						if config.Config.Appendonly {
+							deleteCmd := [][]byte{
+								[]byte("DEL"),
+								[]byte(key),
+							}
+							redisServer.aofHandler.LogCmd(deleteCmd)
+						}
 					}
 				}
 
@@ -190,6 +197,7 @@ func (redisServer *RedisServer) Handle(conn net.Conn) {
 	}
 }
 
+//FIXME 如果没有设置密码，那么任意密码都可以登录，这里需要改下
 func (redisServer *RedisServer) isAuthenticated(redisClient *RedisConn) bool {
 	return config.Config.RequirePass == redisClient.GetPassword()
 }
