@@ -11,6 +11,22 @@ type ExecCommandFunc func(conn conn.Conn, db *RedisDB, args [][]byte) response.R
 type ValidateDBCmdArgsFunc func(conn conn.Conn, args [][]byte) error
 
 const (
+
+	//
+	DEL          = "del"
+	HEXISTS      = "hexists"
+	HGET         = "hget"
+	HGETALL      = "hgetall"
+	HINCRBY      = "hincrby"
+	HINCRBYFLOAT = "hincrbyfloat"
+	HKEYS        = "hkeys"
+	HLEN         = "hlen"
+	HMGET        = "hmget"
+	HMSET        = "hmset"
+	HSET         = "hset"
+	HSETNX       = "hsetnx"
+	HVALS        = "hvals"
+
 	//string
 	Set     = "set"
 	Setnx   = "setnx"
