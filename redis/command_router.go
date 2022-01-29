@@ -13,7 +13,7 @@ type ValidateDBCmdArgsFunc func(conn conn.Conn, args [][]byte) error
 const (
 
 	//
-	DEL          = "del"
+	HDEL         = "hdel"
 	HEXISTS      = "hexists"
 	HGET         = "hget"
 	HGETALL      = "hgetall"
