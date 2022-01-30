@@ -77,7 +77,7 @@ func ValidateHgetall(conn conn.Conn, args [][]byte) error {
 	return nil
 }
 
-func ValidateHval(conn conn.Conn, args [][]byte) error {
+func ValidateHvals(conn conn.Conn, args [][]byte) error {
 
 	if len(args) != 1 {
 		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.HVALS)
