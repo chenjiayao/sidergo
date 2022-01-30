@@ -31,6 +31,49 @@ func init() {
 	redis.RegisterExecCommand(redis.HLEN, ExecHlen, validate.ValidateHlen)
 	redis.RegisterExecCommand(redis.HMGET, ExecHmget, validate.ValidateHmget)
 	redis.RegisterExecCommand(redis.HMSET, ExecHmget, validate.ValidateHmset)
+	redis.RegisterExecCommand(redis.HSETNX, ExecHsetnx, validate.ValidateHsetnx)
+	redis.RegisterExecCommand(redis.HVALS, ExecHvals, validate.ValidateHvals)
+
+}
+
+func ExecHvals(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
+	key := string(args[0])
+
+	v, exist := db.Dataset.Get(key)
+
+	if !exist {
+		return resp.MakeArrayResponse(nil)
+	}
+
+	kvmap := v.(map[string]string)
+
+	multiResponses := make([]response.Response, len(kvmap))
+	index := 0
+	for _, v := range kvmap {
+		multiResponses[index] = resp.MakeMultiResponse(v)
+		index++
+	}
+	return resp.MakeArrayResponse(multiResponses)
+}
+
+func ExecHsetnx(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
+	key := string(args[0])
+	field := string(args[1])
+	value := string(args[2])
+
+	kvmap, err := getOrInitHash(db, key)
+	if err != nil {
+		return resp.MakeErrorResponse(err.Error())
+	}
+
+	_, ok := kvmap[field]
+	if ok {
+		return resp.MakeNumberResponse(0)
+	}
+
+	kvmap[field] = value
+	return resp.MakeNumberResponse(1)
+
 }
 func ExecHmset(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 
