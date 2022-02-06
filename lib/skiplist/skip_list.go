@@ -6,7 +6,7 @@ type SkipList struct {
 	level  int
 	header *Node
 	tail   *Node
-	lenght int //最底层链表的长度
+	length int //最底层链表的长度
 }
 
 type Node struct {
@@ -17,4 +17,19 @@ type Node struct {
 type Element struct {
 	Member string
 	Score  float64
+}
+
+func MakeSkipList() *SkipList {
+	header := &Node{
+		Element: nil,
+		NextNodes: []*Node{
+			nil,
+		},
+	}
+	return &SkipList{
+		level:  0,
+		header: header,
+		tail:   nil,
+		length: 0,
+	}
 }
