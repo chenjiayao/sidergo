@@ -1,1 +1,182 @@
 package validate
+
+import (
+	"errors"
+	"strconv"
+	"strings"
+
+	"github.com/chenjiayao/goredistraning/interface/conn"
+)
+
+func ValidateZadd(conn conn.Conn, args [][]byte) error {
+	if len(args) < 2 || len(args)/2 == 0 {
+		return errors.New("(error) ERR wrong number of arguments for 'zadd' command")
+	}
+
+	for i := 1; i < len(args); i += 2 {
+		scoreValue := string(args[i])
+		_, err := strconv.ParseFloat(scoreValue, 64)
+		if err != nil {
+			return errors.New("(error) ERR value is not a valid float")
+		}
+	}
+	return nil
+}
+
+func ValidateZcard(conn conn.Conn, args [][]byte) error {
+	if len(args) != 1 {
+		return errors.New("(error) ERR wrong number of arguments for 'zcard' command")
+	}
+	return nil
+}
+
+func ValidateZrank(conn conn.Conn, args [][]byte) error {
+	if len(args) != 2 {
+		return errors.New("(error) ERR wrong number of arguments for 'zrank' command")
+	}
+	return nil
+}
+func ValidateZrevrank(conn conn.Conn, args [][]byte) error {
+	if len(args) != 2 {
+		return errors.New("(error) ERR wrong number of arguments for 'zrevrank' command")
+	}
+	return nil
+}
+
+func ValidateZscore(conn conn.Conn, args [][]byte) error {
+	if len(args) != 2 {
+		return errors.New("(error) ERR wrong number of arguments for 'zscore' command")
+	}
+	return nil
+}
+
+func ValidateZrem(conn conn.Conn, args [][]byte) error {
+	if len(args) < 2 {
+		return errors.New("(error) ERR wrong number of arguments for 'zrem' command")
+	}
+	return nil
+}
+
+func ValidateZremrangebyrank(conn conn.Conn, args [][]byte) error {
+	if len(args) != 3 {
+		return errors.New("(error) ERR wrong number of arguments for 'zremrangebyrank' command")
+	}
+
+	startValue := string(args[1])
+	stopValue := string(args[2])
+
+	_, err := strconv.ParseInt(startValue, 10, 64)
+	if err != nil {
+		return errors.New("(error) ERR value is not an integer or out of range")
+	}
+
+	_, err = strconv.ParseInt(stopValue, 10, 64)
+	if err != nil {
+		return errors.New("(error) ERR value is not an integer or out of range")
+	}
+
+	return nil
+}
+
+func ValidateZremrangebyscore(conn conn.Conn, args [][]byte) error {
+	if len(args) != 3 {
+		return errors.New("(error) ERR wrong number of arguments for 'zremrangebyscore' command")
+	}
+
+	minValue := string(args[1])
+	maxValue := string(args[2])
+
+	_, err := strconv.ParseFloat(minValue, 64)
+	if err != nil {
+		return errors.New("(error) ERR value is not an integer or out of range")
+	}
+
+	_, err = strconv.ParseFloat(maxValue, 64)
+	if err != nil {
+		return errors.New("(error) ERR value is not an integer or out of range")
+	}
+
+	return nil
+}
+
+func ValidateZcount(conn conn.Conn, args [][]byte) error {
+	if len(args) != 3 {
+		return errors.New("(error) ERR wrong number of arguments for 'zcount' command")
+	}
+
+	minValue := string(args[1])
+	maxValue := string(args[2])
+
+	_, err := strconv.ParseInt(minValue, 10, 64)
+	if err != nil {
+		return errors.New("(error) ERR min or max is not a float")
+	}
+
+	_, err = strconv.ParseInt(maxValue, 10, 64)
+	if err != nil {
+		return errors.New("(error) ERR min or max is not a float")
+	}
+	return nil
+}
+
+func ValidateZincrby(conn conn.Conn, args [][]byte) error {
+	if len(args) != 3 {
+		return errors.New("(error) ERR wrong number of arguments for 'zincrby' command")
+	}
+	incrementValue := string(args[1])
+	_, err := strconv.ParseFloat(incrementValue, 64)
+	if err != nil {
+		return errors.New("(error) ERR value is not a valid float")
+	}
+	return nil
+}
+
+func ValidateZrange(conn conn.Conn, args [][]byte) error {
+	if len(args) != 3 || len(args) != 4 {
+		return errors.New("(error) ERR wrong number of arguments for 'zrange' command")
+	}
+
+	startValue := string(args[1])
+	stopValue := string(args[2])
+
+	_, err := strconv.ParseInt(startValue, 10, 64)
+	if err != nil {
+		return errors.New("(error) ERR value is not an integer or out of range")
+	}
+
+	_, err = strconv.ParseInt(stopValue, 10, 64)
+	if err != nil {
+		return errors.New("(error) ERR value is not an integer or out of range")
+	}
+
+	if len(args) == 4 && strings.ToLower(string(args[3])) != "withscores" {
+		return errors.New("(error) ERR syntax error")
+	}
+
+	return nil
+}
+
+func ValidateZrevrange(conn conn.Conn, args [][]byte) error {
+	if len(args) != 3 || len(args) != 4 {
+		return errors.New("(error) ERR wrong number of arguments for 'zrevrange' command")
+	}
+
+	startValue := string(args[1])
+	stopValue := string(args[2])
+
+	_, err := strconv.ParseInt(startValue, 10, 64)
+	if err != nil {
+		return errors.New("(error) ERR value is not an integer or out of range")
+	}
+
+	_, err = strconv.ParseInt(stopValue, 10, 64)
+	if err != nil {
+		return errors.New("(error) ERR value is not an integer or out of range")
+	}
+
+	if len(args) == 4 && strings.ToLower(string(args[3])) != "withscores" {
+		return errors.New("(error) ERR syntax error")
+	}
+
+	return nil
+}
