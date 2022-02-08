@@ -30,7 +30,7 @@ func ExecZadd(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respons
 		score, _ := strconv.ParseFloat(scoreValue, 64)
 		ss.Add(member, score)
 	}
-	return resp.MakeNumberResponse(len(args[1:] / 2))
+	return resp.MakeNumberResponse(int64(len(args[1:]) / 2))
 }
 
 func getSortedSetOrInit(db *redis.RedisDB, key string) (*sortedset.SortedSet, error) {
