@@ -141,7 +141,7 @@ func ExecHkeys(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respon
 	multiResponses := make([]response.Response, len(kvmap))
 	index := 0
 
-	for k, _ := range kvmap {
+	for k := range kvmap {
 		multiResponses[index] = resp.MakeMultiResponse(k)
 		index++
 	}
