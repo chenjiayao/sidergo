@@ -9,10 +9,25 @@ import (
 	"github.com/chenjiayao/goredistraning/lib/sortedset"
 	"github.com/chenjiayao/goredistraning/redis"
 	"github.com/chenjiayao/goredistraning/redis/resp"
+	"github.com/chenjiayao/goredistraning/redis/validate"
 )
 
 func init() {
+	redis.RegisterExecCommand(redis.ZADD, ExecZadd, validate.ValidateZadd)
+	redis.RegisterExecCommand(redis.ZCARD, ExecZcard, validate.ValidateZcard)
+}
 
+func ExecZcard(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
+	key := string(args[0])
+
+	ss, err := getSortedSet(db, key)
+	if err != nil {
+		return resp.MakeErrorResponse(err.Error())
+	}
+	if ss == nil {
+		return resp.MakeNumberResponse(0)
+	}
+	return resp.MakeNumberResponse(ss.Len())
 }
 
 func ExecZadd(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
