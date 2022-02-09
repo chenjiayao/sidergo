@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/chenjiayao/goredistraning/interface/conn"
+	"github.com/chenjiayao/goredistraning/lib/border"
 )
 
 func ValidateZadd(conn conn.Conn, args [][]byte) error {
@@ -83,19 +84,15 @@ func ValidateZremrangebyscore(conn conn.Conn, args [][]byte) error {
 		return errors.New("(error) ERR wrong number of arguments for 'zremrangebyscore' command")
 	}
 
-	minValue := string(args[1])
-	maxValue := string(args[2])
-
-	_, err := strconv.ParseFloat(minValue, 64)
+	_, err := border.ParserBorder(string(args[1]))
 	if err != nil {
-		return errors.New("(error) ERR value is not an integer or out of range")
+		return err
 	}
 
-	_, err = strconv.ParseFloat(maxValue, 64)
+	_, err = border.ParserBorder(string(args[2]))
 	if err != nil {
-		return errors.New("(error) ERR value is not an integer or out of range")
+		return err
 	}
-
 	return nil
 }
 
@@ -104,17 +101,14 @@ func ValidateZcount(conn conn.Conn, args [][]byte) error {
 		return errors.New("(error) ERR wrong number of arguments for 'zcount' command")
 	}
 
-	minValue := string(args[1])
-	maxValue := string(args[2])
-
-	_, err := strconv.ParseInt(minValue, 10, 64)
+	_, err := border.ParserBorder(string(args[1]))
 	if err != nil {
-		return errors.New("(error) ERR min or max is not a float")
+		return err
 	}
 
-	_, err = strconv.ParseInt(maxValue, 10, 64)
+	_, err = border.ParserBorder(string(args[2]))
 	if err != nil {
-		return errors.New("(error) ERR min or max is not a float")
+		return err
 	}
 	return nil
 }
