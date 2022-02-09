@@ -24,10 +24,9 @@ func TestParserBorder(t *testing.T) {
 		t.Errorf("parase %s failed", s3)
 	}
 
-	//TODO 这里后续需要确认下 redis 对于 (-inf 的语义解释
 	s4 := "(-inf"
 	border4, _ := ParserBorder(s4)
-	if !(!border4.Include && border4.Inf == 0) {
+	if !(border4.Include && border4.Inf == -1) {
 		t.Errorf("parase %s failed", s4)
 	}
 }
