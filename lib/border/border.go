@@ -34,11 +34,14 @@ func (border *Border) Greater(value float64) bool {
 	return border.Value > value
 }
 
+/**
+(-inf 和 -inf 语义是一样的
+*/
 func ParserBorder(s string) (*Border, error) {
 
 	//是否为 inf/+inf 和 -inf
 
-	if strings.ToLower(s) == "-inf" {
+	if strings.ToLower(s) == "-inf" || strings.ToLower(s) == "(-inf" {
 		return &Border{
 			Value:   0,
 			Include: true,
@@ -46,7 +49,7 @@ func ParserBorder(s string) (*Border, error) {
 		}, nil
 	}
 
-	if strings.ToLower(s) == "inf" || strings.ToLower(s) == "+inf" {
+	if strings.ToLower(s) == "inf" || strings.ToLower(s) == "+inf" || strings.ToLower(s) == "(inf" || strings.ToLower(s) == "(+inf" {
 		return &Border{
 			Value:   0,
 			Include: true,
