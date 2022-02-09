@@ -1,6 +1,7 @@
 package border
 
 import (
+	"math"
 	"testing"
 )
 
@@ -28,5 +29,55 @@ func TestParserBorder(t *testing.T) {
 	border4, _ := ParserBorder(s4)
 	if !(border4.Include && border4.Inf == -1) {
 		t.Errorf("parase %s failed", s4)
+	}
+}
+
+func TestBorder_Greater(t *testing.T) {
+	b1 := &Border{
+		Inf: negativeInf,
+	}
+
+	if b1.Greater(math.Inf(-1)) {
+		t.Errorf("b1.Greater(math.Inf(-1)) failed")
+	}
+
+	if b1.Greater(math.Inf(1)) {
+		t.Errorf("b1.Greater(math.Inf(1)) failed")
+	}
+
+	////
+	b2 := &Border{
+		Inf:     0,
+		Include: true,
+		Value:   12,
+	}
+
+	if !b2.Greater(12) {
+		t.Errorf("b2.Greater(math.Inf(12)) failed")
+	}
+	if b2.Greater(13) {
+		t.Errorf("b2.Greater(math.Inf(13)) failed")
+	}
+
+	if !b2.Greater(11) {
+		t.Errorf("b2.Greater(math.Inf(11)) failed")
+	}
+
+	///
+	b3 := &Border{
+		Inf:     0,
+		Include: false,
+		Value:   12,
+	}
+
+	if b3.Greater(12) {
+		t.Errorf("b2.Greater(math.Inf(12)) failed")
+	}
+	if b3.Greater(13) {
+		t.Errorf("b3.Greater(math.Inf(13)) failed")
+	}
+
+	if !b3.Greater(11) {
+		t.Errorf("b3.Greater(math.Inf(11)) failed")
 	}
 }
