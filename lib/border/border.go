@@ -17,24 +17,32 @@ const (
 type Border struct {
 	Value   float64
 	Include bool
-	Inf     int
+	Inf     int //最大值或者最小值
+}
+
+func (border *Border) Greater(value float64) bool {
+	if border.Inf == negativeInf {
+		return false
+	}
+	if border.Inf == positiveInf {
+		return true
+	}
+	if border.Include {
+		return border.Value >= value
+	}
+
+	return border.Value > value
 }
 
 func ParserBorder(s string) (*Border, error) {
 
 	//是否为 inf/+inf 和 -inf
-	if strings.ToLower(s) == "(-inf" {
-		return &Border{
-			Value:   0,
-			Include: false,
-			Inf:     -1,
-		}, nil
-	}
+
 	if strings.ToLower(s) == "-inf" {
 		return &Border{
 			Value:   0,
 			Include: true,
-			Inf:     -1,
+			Inf:     negativeInf,
 		}, nil
 	}
 
@@ -42,57 +50,29 @@ func ParserBorder(s string) (*Border, error) {
 		return &Border{
 			Value:   0,
 			Include: true,
-			Inf:     1,
+			Inf:     positiveInf,
 		}, nil
 	}
 
-	if strings.ToLower(s) == "(inf" || strings.ToLower(s) == "(+inf" {
+	if s[0] == '(' {
+		value, err := strconv.ParseFloat(s[1:], 64)
+		if err != nil {
+			return nil, errors.New("ERR min or max is not a float")
+		}
 		return &Border{
-			Value:   0,
+			Value:   value,
 			Include: false,
-			Inf:     1,
+			Inf:     0,
 		}, nil
 	}
 
 	value, err := strconv.ParseFloat(s, 64)
-	if err == nil {
-		if value >= 0 {
-			return &Border{
-				Value:   value,
-				Include: true,
-				Inf:     1,
-			}, nil
-		} else {
-			return &Border{
-				Value:   value,
-				Include: true,
-				Inf:     -1,
-			}, nil
-		}
+	if err != nil {
+		return nil, errors.New("ERR min or max is not a float")
 	}
-
-	//是否包含 (
-	hasParentheses := strings.Contains(s, "(")
-	if hasParentheses {
-		value, err := strconv.ParseFloat(s[1:], 64)
-		if err != nil {
-			return nil, err
-		}
-
-		if value >= 0 {
-			return &Border{
-				Value:   value,
-				Include: false,
-				Inf:     1,
-			}, nil
-		} else {
-			return &Border{
-				Value:   value,
-				Include: false,
-				Inf:     -1,
-			}, nil
-		}
-	}
-
-	return nil, errors.New("(error) ERR min or max is not a float")
+	return &Border{
+		Inf:     0,
+		Value:   value,
+		Include: true,
+	}, nil
 }
