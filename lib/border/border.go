@@ -21,8 +21,40 @@ type Border struct {
 }
 
 func ParserBorder(s string) (*Border, error) {
-	value, err := strconv.ParseFloat(s, 64)
 
+	//是否为 inf/+inf 和 -inf
+	if strings.ToLower(s) == "(-inf" {
+		return &Border{
+			Value:   0,
+			Include: false,
+			Inf:     -1,
+		}, nil
+	}
+	if strings.ToLower(s) == "-inf" {
+		return &Border{
+			Value:   0,
+			Include: true,
+			Inf:     -1,
+		}, nil
+	}
+
+	if strings.ToLower(s) == "inf" || strings.ToLower(s) == "+inf" {
+		return &Border{
+			Value:   0,
+			Include: true,
+			Inf:     1,
+		}, nil
+	}
+
+	if strings.ToLower(s) == "(inf" || strings.ToLower(s) == "(+inf" {
+		return &Border{
+			Value:   0,
+			Include: false,
+			Inf:     1,
+		}, nil
+	}
+
+	value, err := strconv.ParseFloat(s, 64)
 	if err == nil {
 		if value >= 0 {
 			return &Border{
@@ -62,21 +94,5 @@ func ParserBorder(s string) (*Border, error) {
 		}
 	}
 
-	//是否为 inf/+inf 和 -inf
-	if strings.ToLower(s) == "-inf" {
-		return &Border{
-			Value:   0,
-			Include: true,
-			Inf:     -1,
-		}, nil
-	}
-
-	if strings.ToLower(s) == "inf" || strings.ToLower(s) == "+inf" {
-		return &Border{
-			Value:   0,
-			Include: true,
-			Inf:     1,
-		}, nil
-	}
 	return nil, errors.New("(error) ERR min or max is not a float")
 }
