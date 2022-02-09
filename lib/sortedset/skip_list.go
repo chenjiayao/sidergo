@@ -12,183 +12,86 @@ const (
 
 //跳跃表， sorted set 底层实现
 // http://zhangtielei.com/posts/blog-redis-skiplist.html
-type SkipList struct {
-	level  int
-	header *Node
-	tail   *Node
-	length int //最底层链表的长度
+
+type Element struct {
+	Score   float64
+	Memeber string
 }
 
 type Level struct {
-	next *Node // 指向同层中的下一个节点
-	span int64 // 到 next 跳过的节点数,这个数据用来计算 rank 排名
+	forward *Node // 同层的下一个节点
+	span    int64 // 跳过多少个元素
 }
-
 type Node struct {
 	Element
-	prev  *Node //前一个节点地址，这个只有最底层的链表才有，最底层的链表是一个双向链表
-	Level []*Level
+	levels   []*Level // len(levels) 是随机出来的
+	backward *Node    //  最底层的前一个节点
 }
 
-type Element struct {
-	Member string
-	Score  float64
+// skipList  的排序规则为：score, memeber asc
+type SkipList struct {
+	tail   *Node
+	header *Node
+	level  int
+	length int64
 }
 
-func (sl *SkipList) Foreach(f func(element *Element) bool) {
-	node := sl.header
-	for node != nil {
-		f(&node.Element)
-		node = node.Level[0].next
-	}
-}
+func (skipList *SkipList) insert(score float64, memeber string) *Node {
+	updateNode := make([]*Node, MAX_LEVEL)
 
-// insert node
-// update span
-// update length
-// (maybe) update level
-//  (maybe) update tail
-func (sl *SkipList) insert(member string, score float64) *Node {
+	updateSpan := make([]*Node, MAX_LEVEL)
 
-	update := make([]*Node, MAX_LEVEL) // link new node with node in `update`
-	rank := make([]int64, MAX_LEVEL)
+	node := skipList.header //node节点最终会定位到「被插入位置之前」
 
-	// find position to insert
-	node := sl.header
-	for i := sl.level - 1; i >= 0; i-- {
-		if i == sl.level-1 {
-			rank[i] = 0
-		} else {
-			rank[i] = rank[i+1] // store rank that is crossed to reach the insert position
+	for i := skipList.level - 1; i >= 0; i-- {
+
+		for node.levels[i] != nil && (node.Score < score || (node.Score == score && node.Memeber < memeber)) {
+			node = node.levels[i].forward
 		}
-		if node.Level[i] != nil {
-			// traverse the skip list
-			for node.Level[i].next != nil &&
-				(node.Level[i].next.Score < score ||
-					(node.Level[i].next.Score == score && node.Level[i].next.Member < member)) { // same score, different key
-				rank[i] += node.Level[i].span
-				node = node.Level[i].next
-			}
+
+		updateNode[i] = node
+	}
+	levelForNewNode := skipList.RandomLevel()
+	newNode := MakeNode(levelForNewNode, score, memeber)
+
+	/**
+	newNode 的 levels 可能会被分成两个部分
+	1. levelForNewNode > node.level 那么 node.levels 的每个forward 都指向 newNode，剩余的由更早的 node来指向
+	2. levelForNewNode <= node.level 那么 node.levels 从0 到 levelForNewNode 的 level 需要指向newNode
+	*/
+	if len(newNode.levels) <= len(node.levels) {
+		for i := len(node.levels) - 1; i >= 0; i-- {
+			newNode.levels[i].forward = node.levels[i].forward
+			node.levels[i].forward = newNode
 		}
-		update[i] = node
-	}
-
-	level := sl.RandomLevel()
-	// extend sl level
-	if level > sl.level {
-		for i := sl.level; i < level; i++ {
-			rank[i] = 0
-			update[i] = sl.header
-			update[i].Level[i].span = int64(sl.length)
-		}
-		sl.level = level
-	}
-
-	// make node and link into sl
-	node = makeNode(level, member, score)
-	for i := 0; i < level; i++ {
-		node.Level[i].next = update[i].Level[i].next
-		update[i].Level[i].next = node
-
-		// update span covered by update[i] as node is inserted here
-		node.Level[i].span = update[i].Level[i].span - (rank[0] - rank[i])
-		update[i].Level[i].span = (rank[0] - rank[i]) + 1
-	}
-
-	// increment span for untouched levels
-	for i := level; i < sl.level; i++ {
-		update[i].Level[i].span++
-	}
-
-	// set prev node
-	if update[0] == sl.header {
-		node.prev = nil
 	} else {
-		node.prev = update[0]
-	}
-	if node.Level[0].next != nil {
-		node.Level[0].next.prev = node
-	} else {
-		sl.tail = node
-	}
-	sl.length++
-	return node
-}
-
-func (sl *SkipList) remove(member string, score float64) bool {
-
-	//删除某个节点之后，需要更新 next 的指针
-	needUpdateNextPointNode := make([]*Node, sl.level)
-
-	node := sl.header
-
-	for i := sl.level - 1; i >= 0; i-- {
-		for node.Level[i].next != nil && (node.Level[i].next.Score < score || (node.Level[i].next.Score == score && node.Level[i].next.Member < member)) {
-			node = node.Level[i].next
+		for i := len(node.levels) - 1; i >= 0; i-- {
+			newNode.levels[i].forward = node.levels[i].forward
+			node.levels[i].forward = newNode
 		}
-		needUpdateNextPointNode[i] = node
-	}
-
-	mayNeedDelNode := node.Level[0].next
-
-	if mayNeedDelNode != nil && mayNeedDelNode.Member == member && mayNeedDelNode.Score == score {
-		delNode := mayNeedDelNode
-		sl.removeNode(delNode, needUpdateNextPointNode)
-		return true
-	}
-	return false
-}
-
-func (sl *SkipList) removeNode(delNode *Node, nodes []*Node) {
-	for i := 0; i < sl.level; i++ {
-		if nodes[i].Level[i].next == delNode {
-			nodes[i].Level[i].next = delNode.Level[i].next
-			nodes[i].Level[i].span += delNode.Level[i].span - 1
-		} else {
-			nodes[i].Level[i].span--
+		//剩余的由更早的 node 来指向，所以需要一个 updateNode 来保存更早的 node,但是那些更早的 node 只需要更新部分 level
+		for i := skipList.level - 1; i <= len(node.levels); i-- {
+			newNode.levels[i].forward = updateNode[i].levels[i].forward
+			updateNode[i].levels[i].forward = newNode
 		}
 	}
 
-	if delNode.Level[0].next == nil {
-		sl.tail = delNode.prev
-	} else {
-		//处理双向链表
-		delNode.Level[0].next.prev = delNode.prev
-	}
-	for sl.level > 1 && sl.header.Level[sl.level-1].next == nil {
-		sl.level--
+	//插入的新元素是最后一个
+	if node == skipList.tail {
+		skipList.tail = newNode
 	}
 
-	sl.length--
-}
+	newNode.backward = node
 
-//根据 rank 获取 node
-func (sl *SkipList) GetByRank(rank int64) *Node {
-
-	skipListLevel := sl.level
-
-	node := sl.header
-
-	j := int64(0)
-
-	for i := int64(skipListLevel - 1); i >= 0; i-- {
-		for node.Level[i].next != nil && i+node.Level[i].span <= rank {
-			node = node.Level[i].next
-			j += node.Level[i].span
-		}
-
-		if j == rank {
-			return node
-		}
+	skipList.length++
+	if skipList.level < levelForNewNode {
+		skipList.level = levelForNewNode
 	}
-	return nil
+
+	return newNode
 }
 
-func (sl *SkipList) Del(start int64, stop int64) []*Element {
-	return nil
-}
-
-func (sl *SkipList) RandomLevel() int {
+func (skipList *SkipList) RandomLevel() int {
 	level := 1
 	rand.Seed(time.Now().UnixNano())
 	for rand.Float32() < P && level < MAX_LEVEL {
@@ -197,26 +100,43 @@ func (sl *SkipList) RandomLevel() int {
 	return level
 }
 
-func makeSkipList() *SkipList {
-	header := makeNode(16, "", 0)
+func (skipList *SkipList) Find(member string) (float64, bool) {
+	node := skipList.header
+	for i := skipList.level - 1; i >= 0; i-- {
+		for node.levels[i] != nil && node.Memeber < member {
+			node = node.levels[i].forward
+		}
+
+		if node.Memeber == member {
+			return node.Score, true
+		}
+	}
+	return 0, false
+}
+
+func MakeSkipList() *SkipList {
 	return &SkipList{
+		tail:   nil,
+		header: MakeNode(0, 0, ""),
 		level:  0,
 		length: 0,
-		header: header,
 	}
 }
 
-func makeNode(level int, member string, score float64) *Node {
+func MakeNode(level int, score float64, memeber string) *Node {
 
-	n := &Node{
+	node := &Node{
 		Element: Element{
-			Member: member,
-			Score:  score,
+			Score:   score,
+			Memeber: memeber,
 		},
-		Level: make([]*Level, level),
+		levels: make([]*Level, level),
 	}
-	for i := range n.Level {
-		n.Level[i] = new(Level)
+	for i := 0; i < len(node.levels); i++ {
+		node.levels[i] = &Level{
+			forward: nil,
+			span:    0,
+		}
 	}
-	return n
+	return node
 }
