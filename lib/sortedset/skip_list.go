@@ -37,7 +37,7 @@ type SkipList struct {
 }
 
 func (skipList *SkipList) insert(score float64, memeber string) *Node {
-	updateNode := make([]*Node, MAX_LEVEL)
+	updateNodes := make([]*Node, MAX_LEVEL)
 
 	updateSpan := make([]*Node, MAX_LEVEL)
 
@@ -49,7 +49,7 @@ func (skipList *SkipList) insert(score float64, memeber string) *Node {
 			node = node.levels[i].forward
 		}
 
-		updateNode[i] = node
+		updateNodes[i] = node
 	}
 	levelForNewNode := skipList.RandomLevel()
 	newNode := MakeNode(levelForNewNode, score, memeber)
@@ -69,10 +69,10 @@ func (skipList *SkipList) insert(score float64, memeber string) *Node {
 			newNode.levels[i].forward = node.levels[i].forward
 			node.levels[i].forward = newNode
 		}
-		//剩余的由更早的 node 来指向，所以需要一个 updateNode 来保存更早的 node,但是那些更早的 node 只需要更新部分 level
+		//剩余的由更早的 node 来指向，所以需要一个 updateNodes 来保存更早的 node,但是那些更早的 node 只需要更新部分 level
 		for i := skipList.level - 1; i <= len(node.levels); i-- {
-			newNode.levels[i].forward = updateNode[i].levels[i].forward
-			updateNode[i].levels[i].forward = newNode
+			newNode.levels[i].forward = updateNodes[i].levels[i].forward
+			updateNodes[i].levels[i].forward = newNode
 		}
 	}
 
@@ -89,6 +89,49 @@ func (skipList *SkipList) insert(score float64, memeber string) *Node {
 	}
 
 	return newNode
+}
+
+func (skipList *SkipList) remove(score float64, member string) *Node {
+
+	updateNodes := make([]*Node, MAX_LEVEL)
+
+	node := skipList.header // node 的下一个节点就是要被删除的节点
+	for i := skipList.level - 1; i >= 0; i-- {
+		for node.levels[i] != nil && node.Score != score && node.Memeber != member {
+			node = node.levels[i].forward
+		}
+		updateNodes[i] = node
+	}
+	removeNode := node.levels[0].forward
+
+	node.levels[0].forward = removeNode.levels[0].forward
+	if skipList.tail != removeNode { //删除的不是最后一个元素
+		removeNode.backward = node
+	}
+
+	if len(node.levels) >= len(removeNode.levels) {
+		for i := 0; i < len(node.levels); i++ {
+			node.levels[i].forward = removeNode.levels[i].forward
+		}
+	} else {
+
+		for i := 0; i < len(node.levels); i++ {
+			node.levels[i].forward = removeNode.levels[i].forward
+		}
+
+		for i := len(node.levels); i < len(removeNode.levels)-1; i++ {
+			updateNodes[i].levels[i].forward = removeNode.levels[i].forward
+		}
+	}
+
+	skipList.length--
+
+	//重新获取最高的 level
+	for skipList.level > 0 && skipList.header.levels[skipList.level-1].forward == nil {
+		skipList.level--
+	}
+
+	return removeNode
 }
 
 func (skipList *SkipList) RandomLevel() int {
