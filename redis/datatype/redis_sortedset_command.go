@@ -2,6 +2,7 @@ package datatype
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/chenjiayao/goredistraning/interface/conn"
@@ -28,6 +29,48 @@ func ExecZcard(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respon
 		return resp.MakeNumberResponse(0)
 	}
 	return resp.MakeNumberResponse(ss.Len())
+}
+
+/*
+	zcount key min max
+	返回有序集 key 中， score 值在 min 和 max 之间(默认包括 score 值等于 min 或 max )的成员的数量。
+*/
+func ExecZcount(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
+	return nil
+}
+
+/*
+	zcount key increment member
+	为有序集 key 的成员 member 的 score 值加上增量 increment 。
+*/
+func ExecZincrby(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
+
+	key := string(args[0])
+	ss, err := getSortedSetOrInit(db, key)
+
+	if err != nil {
+		return resp.MakeErrorResponse(err.Error())
+	}
+
+	incrementValue := string(args[1])
+	increment, _ := strconv.ParseFloat(incrementValue, 64)
+	memeber := string(args[2])
+
+	el, exist := ss.Get(memeber)
+	if !exist {
+		ss.Add(memeber, increment)
+		return resp.MakeMultiResponse(incrementValue)
+	}
+	el.Score += increment
+	return resp.MakeMultiResponse(fmt.Sprintf("%f", el.Score))
+}
+
+/*
+	ZRANGE key start stop [WITHSCORES]
+	返回有序集 key 中，指定区间内的成员。
+*/
+func ExecZrange(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
+	return nil
 }
 
 func ExecZadd(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
