@@ -27,7 +27,7 @@ type Level struct {
 type Node struct {
 	Element
 	prev  *Node //前一个节点地址，这个只有最底层的链表才有，最底层的链表是一个双向链表
-	level []*Level
+	Level []*Level
 }
 
 type Element struct {
@@ -35,27 +35,105 @@ type Element struct {
 	Score  float64
 }
 
+func (sl *SkipList) Foreach(f func(element *Element) bool) {
+	node := sl.header
+	for node != nil {
+		f(&node.Element)
+		node = node.Level[0].next
+	}
+}
+
+// insert node
+// update span
+// update length
+// (maybe) update level
+//  (maybe) update tail
 func (sl *SkipList) insert(member string, score float64) *Node {
-	return nil
+
+	update := make([]*Node, MAX_LEVEL) // link new node with node in `update`
+	rank := make([]int64, MAX_LEVEL)
+
+	// find position to insert
+	node := sl.header
+	for i := sl.level - 1; i >= 0; i-- {
+		if i == sl.level-1 {
+			rank[i] = 0
+		} else {
+			rank[i] = rank[i+1] // store rank that is crossed to reach the insert position
+		}
+		if node.Level[i] != nil {
+			// traverse the skip list
+			for node.Level[i].next != nil &&
+				(node.Level[i].next.Score < score ||
+					(node.Level[i].next.Score == score && node.Level[i].next.Member < member)) { // same score, different key
+				rank[i] += node.Level[i].span
+				node = node.Level[i].next
+			}
+		}
+		update[i] = node
+	}
+
+	level := sl.RandomLevel()
+	// extend sl level
+	if level > sl.level {
+		for i := sl.level; i < level; i++ {
+			rank[i] = 0
+			update[i] = sl.header
+			update[i].Level[i].span = int64(sl.length)
+		}
+		sl.level = level
+	}
+
+	// make node and link into sl
+	node = makeNode(level, member, score)
+	for i := 0; i < level; i++ {
+		node.Level[i].next = update[i].Level[i].next
+		update[i].Level[i].next = node
+
+		// update span covered by update[i] as node is inserted here
+		node.Level[i].span = update[i].Level[i].span - (rank[0] - rank[i])
+		update[i].Level[i].span = (rank[0] - rank[i]) + 1
+	}
+
+	// increment span for untouched levels
+	for i := level; i < sl.level; i++ {
+		update[i].Level[i].span++
+	}
+
+	// set prev node
+	if update[0] == sl.header {
+		node.prev = nil
+	} else {
+		node.prev = update[0]
+	}
+	if node.Level[0].next != nil {
+		node.Level[0].next.prev = node
+	} else {
+		sl.tail = node
+	}
+	sl.length++
+	return node
 }
 
 func (sl *SkipList) remove(member string, score float64) bool {
 
 	//删除某个节点之后，需要更新 next 的指针
-	needUpdateNextPointNode := make([]*Node, MAX_LEVEL)
+	needUpdateNextPointNode := make([]*Node, sl.level)
+
 	node := sl.header
 
 	for i := sl.level - 1; i >= 0; i-- {
-		for node.level[i].next != nil && (node.level[i].next.Score < score || (node.level[i].next.Score == score && node.level[i].next.Member < member)) {
-			node = node.level[i].next
+		for node.Level[i].next != nil && (node.Level[i].next.Score < score || (node.Level[i].next.Score == score && node.Level[i].next.Member < member)) {
+			node = node.Level[i].next
 		}
 		needUpdateNextPointNode[i] = node
 	}
 
-	maybeNeedDelNode := node.level[0].next
+	mayNeedDelNode := node.Level[0].next
 
-	if maybeNeedDelNode != nil && maybeNeedDelNode.Member == member && maybeNeedDelNode.Score == score {
-		sl.removeNode(maybeNeedDelNode, needUpdateNextPointNode)
+	if mayNeedDelNode != nil && mayNeedDelNode.Member == member && mayNeedDelNode.Score == score {
+		delNode := mayNeedDelNode
+		sl.removeNode(delNode, needUpdateNextPointNode)
 		return true
 	}
 	return false
@@ -63,21 +141,21 @@ func (sl *SkipList) remove(member string, score float64) bool {
 
 func (sl *SkipList) removeNode(delNode *Node, nodes []*Node) {
 	for i := 0; i < sl.level; i++ {
-		if nodes[i].level[i].next == delNode {
-			nodes[i].level[i].next = delNode.level[i].next
-			nodes[i].level[i].span += delNode.level[i].span - 1
+		if nodes[i].Level[i].next == delNode {
+			nodes[i].Level[i].next = delNode.Level[i].next
+			nodes[i].Level[i].span += delNode.Level[i].span - 1
 		} else {
-			nodes[i].level[i].span--
+			nodes[i].Level[i].span--
 		}
 	}
 
-	if delNode.level[0].next == nil {
+	if delNode.Level[0].next == nil {
 		sl.tail = delNode.prev
 	} else {
 		//处理双向链表
-		delNode.level[0].next.prev = delNode.prev
+		delNode.Level[0].next.prev = delNode.prev
 	}
-	for sl.level > 1 && sl.header.level[sl.level-1].next == nil {
+	for sl.level > 1 && sl.header.Level[sl.level-1].next == nil {
 		sl.level--
 	}
 
@@ -94,9 +172,9 @@ func (sl *SkipList) GetByRank(rank int64) *Node {
 	j := int64(0)
 
 	for i := int64(skipListLevel - 1); i >= 0; i-- {
-		for node.level[i].next != nil && i+node.level[i].span <= rank {
-			node = node.level[i].next
-			j += node.level[i].span
+		for node.Level[i].next != nil && i+node.Level[i].span <= rank {
+			node = node.Level[i].next
+			j += node.Level[i].span
 		}
 
 		if j == rank {
@@ -135,10 +213,10 @@ func makeNode(level int, member string, score float64) *Node {
 			Member: member,
 			Score:  score,
 		},
-		level: make([]*Level, level),
+		Level: make([]*Level, level),
 	}
-	for i := range n.level {
-		n.level[i] = new(Level)
+	for i := range n.Level {
+		n.Level[i] = new(Level)
 	}
 	return n
 }

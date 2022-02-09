@@ -1,5 +1,7 @@
 package sortedset
 
+import "github.com/chenjiayao/goredistraning/lib/border"
+
 type SortedSet struct {
 	skipList *SkipList           //排序方式 order by score asc, member asc
 	dict     map[string]*Element //不会出现并发读写的问题  member => *Element
@@ -26,6 +28,7 @@ func (ss *SortedSet) Add(memeber string, score float64) bool {
 
 	if !ok {
 		//skipList.insert
+		ss.skipList.insert(memeber, score)
 		return true
 	}
 
@@ -33,6 +36,8 @@ func (ss *SortedSet) Add(memeber string, score float64) bool {
 	if element.Score != score {
 		// skipList 删掉旧的
 		// skipList 增加新的
+		ss.skipList.remove(memeber, score)
+		ss.skipList.insert(memeber, score)
 		return true
 	}
 
@@ -47,4 +52,14 @@ func (ss *SortedSet) Get(memeber string) (*Element, bool) {
 	return nil, false
 }
 
-func (ss *SortedSet) Count()
+func (ss *SortedSet) Count(minBorder, maxBorder *border.Border) int64 {
+	i := int64(0)
+	ss.skipList.Foreach(func(element *Element) bool {
+		if minBorder.Greater(element.Score) && maxBorder.Less(element.Score) {
+			i++
+			return true
+		}
+		return false
+	})
+	return i
+}

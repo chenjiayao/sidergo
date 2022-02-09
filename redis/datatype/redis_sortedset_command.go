@@ -7,6 +7,7 @@ import (
 
 	"github.com/chenjiayao/goredistraning/interface/conn"
 	"github.com/chenjiayao/goredistraning/interface/response"
+	"github.com/chenjiayao/goredistraning/lib/border"
 	"github.com/chenjiayao/goredistraning/lib/sortedset"
 	"github.com/chenjiayao/goredistraning/redis"
 	"github.com/chenjiayao/goredistraning/redis/resp"
@@ -16,6 +17,7 @@ import (
 func init() {
 	redis.RegisterExecCommand(redis.ZADD, ExecZadd, validate.ValidateZadd)
 	redis.RegisterExecCommand(redis.ZCARD, ExecZcard, validate.ValidateZcard)
+	redis.RegisterExecCommand(redis.ZCOUNT, ExecZcount, validate.ValidateZcount)
 }
 
 func ExecZcard(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
@@ -36,7 +38,21 @@ func ExecZcard(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respon
 	返回有序集 key 中， score 值在 min 和 max 之间(默认包括 score 值等于 min 或 max )的成员的数量。
 */
 func ExecZcount(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
-	return nil
+
+	key := string(args[0])
+	ss, err := getSortedSet(db, key)
+	if err != nil {
+		return resp.MakeErrorResponse(err.Error())
+	}
+	if ss == nil {
+		return resp.MakeNumberResponse(0)
+	}
+
+	minBorder, _ := border.ParserBorder(string(args[1]))
+	maxBorder, _ := border.ParserBorder(string(args[2]))
+
+	count := ss.Count(minBorder, maxBorder)
+	return resp.MakeNumberResponse(count)
 }
 
 /*

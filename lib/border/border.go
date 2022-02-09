@@ -34,6 +34,19 @@ func (border *Border) Greater(value float64) bool {
 	return border.Value > value
 }
 
+func (border *Border) Less(value float64) bool {
+	if border.Inf == negativeInf {
+		return true
+	}
+	if border.Inf == positiveInf {
+		return false
+	}
+	if border.Include {
+		return border.Value <= value
+	}
+	return border.Value < value
+}
+
 /**
 (-inf 和 -inf 语义是一样的
 */
