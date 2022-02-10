@@ -20,7 +20,7 @@ type Element struct {
 
 type Level struct {
 	forward *Node // 同层的下一个节点
-	span    int64 // 跳过多少个元素
+	span    int64 // 跳过多少个元素，如果两个元素相邻，那么前一个节点的 span 为 1
 }
 type Node struct {
 	Element
