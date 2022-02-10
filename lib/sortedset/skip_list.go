@@ -81,11 +81,16 @@ func (skipList *SkipList) insert(score float64, memeber string) *Node {
 	newNode.backward = node
 
 	skipList.length++
-	if skipList.level < levelForNewNode {
-		skipList.level = levelForNewNode
-	}
+	skipList.calculateMaxLevel()
 
 	return newNode
+}
+
+//重新计算 skipList 的最大 level
+func (skipList *SkipList) calculateMaxLevel() {
+	for skipList.header.levels[skipList.level-1].forward == nil && skipList.level > 1 {
+		skipList.level--
+	}
 }
 
 func (skipList *SkipList) remove(score float64, member string) *Node {
@@ -124,9 +129,7 @@ func (skipList *SkipList) remove(score float64, member string) *Node {
 	skipList.length--
 
 	//重新获取最高的 level
-	for skipList.level > 0 && skipList.header.levels[skipList.level-1].forward == nil {
-		skipList.level--
-	}
+	skipList.calculateMaxLevel()
 
 	return removeNode
 }
