@@ -174,3 +174,43 @@ func ValidateZrevrange(conn conn.Conn, args [][]byte) error {
 
 	return nil
 }
+
+//ZRANGEBYSCORE key min max [WITHSCORES] [LIMIT offset count]
+func ValidateZrangebyscore(conn conn.Conn, args [][]byte) error {
+	if !(len(args) == 3 || len(args) == 6) {
+		return errors.New("(error) ERR wrong number of arguments for 'zrangebyscore' command")
+	}
+	minValue := string(args[1])
+	maxValue := string(args[2])
+
+	_, err := border.ParserBorder(minValue)
+	if err != nil {
+		return errors.New("(error) ERR value is not an integer or out of range")
+	}
+	_, err = border.ParserBorder(maxValue)
+	if err != nil {
+		return errors.New("(error) ERR value is not an integer or out of range")
+	}
+
+	if len(args) == 3 {
+		return nil
+	}
+
+	if strings.ToLower(string(args[3])) != "withscores" {
+		return errors.New("(error) ERR syntax error")
+	}
+	if strings.ToLower(string(args[4])) != "limit" {
+		return errors.New("(error) ERR syntax error")
+	}
+
+	_, err = strconv.ParseInt(string(args[5]), 10, 64)
+	if err != nil {
+		return errors.New("(error) ERR value is not an integer or out of range")
+	}
+
+	_, err = strconv.ParseInt(string(args[6]), 10, 64)
+	if err != nil {
+		return errors.New("(error) ERR value is not an integer or out of range")
+	}
+	return nil
+}
