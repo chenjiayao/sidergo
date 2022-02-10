@@ -18,6 +18,30 @@ func init() {
 	redis.RegisterExecCommand(redis.ZADD, ExecZadd, validate.ValidateZadd)
 	redis.RegisterExecCommand(redis.ZCARD, ExecZcard, validate.ValidateZcard)
 	redis.RegisterExecCommand(redis.ZCOUNT, ExecZcount, validate.ValidateZcount)
+	redis.RegisterExecCommand(redis.ZRANK, ExecZrank, validate.ValidateZrank)
+}
+
+//获取 member 的排名，按照从小到大的顺序
+// 排名以 0 为底，score 最小的成员排名为 0
+func ExecZrank(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
+	key := string(args[0])
+	ss, err := getSortedSet(db, key)
+	if err != nil {
+		return resp.MakeErrorResponse(err.Error())
+	}
+
+	member := string(args[1])
+	element, exist := ss.Get(member)
+	if !exist {
+		return resp.NullMultiResponse
+	}
+	rank := ss.GetRank(element.Memeber, element.Score)
+
+	//正常情况下，不会返回 -1，因为前面已经做过 exist 判断了
+	if rank == -1 {
+		return resp.NullMultiResponse
+	}
+	return resp.MakeNumberResponse(rank)
 }
 
 func ExecZcard(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {

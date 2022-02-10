@@ -57,3 +57,7 @@ func (ss *SortedSet) Count(minBorder, maxBorder *border.Border) int64 {
 
 	return i
 }
+
+func (ss *SortedSet) GetRank(member string, score float64) int64 {
+	return ss.skipList.GetRank(member, score)
+}

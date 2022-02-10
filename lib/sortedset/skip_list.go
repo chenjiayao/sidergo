@@ -39,8 +39,6 @@ type SkipList struct {
 func (skipList *SkipList) insert(score float64, memeber string) *Node {
 	updateNodes := make([]*Node, MAX_LEVEL)
 
-	updateSpan := make([]*Node, MAX_LEVEL)
-
 	node := skipList.header //node节点最终会定位到「被插入位置之前」
 
 	for i := skipList.level - 1; i >= 0; i-- {
@@ -143,6 +141,25 @@ func (skipList *SkipList) RandomLevel() int {
 	return level
 }
 
+//如果没有找到，那么返回 -1
+func (skipList *SkipList) GetRank(member string, score float64) int64 {
+	span := int64(0)
+	node := skipList.header
+
+	for i := skipList.level - 1; i >= 0; i-- {
+		for node.levels[i].forward != nil && (node.levels[i].forward.Score < score || (node.levels[i].forward.Score == score && node.levels[i].forward.Memeber < member)) {
+			span += node.levels[i].span
+			node = node.levels[i].forward
+		}
+
+		if node.levels[i].forward.Memeber == member {
+			span += node.levels[i].span
+			return span
+		}
+	}
+	return -1
+}
+
 func (skipList *SkipList) Find(member string) (float64, bool) {
 	node := skipList.header
 	for i := skipList.level - 1; i >= 0; i-- {
@@ -160,7 +177,7 @@ func (skipList *SkipList) Find(member string) (float64, bool) {
 func MakeSkipList() *SkipList {
 	return &SkipList{
 		tail:   nil,
-		header: MakeNode(0, 0, ""),
+		header: MakeNode(MAX_LEVEL, 0, ""),
 		level:  0,
 		length: 0,
 	}
