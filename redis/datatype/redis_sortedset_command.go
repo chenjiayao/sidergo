@@ -27,7 +27,7 @@ func init() {
 //返回有序集 key 中，成员 member 的 score 值。
 func ExecZscore(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 	key := string(args[0])
-	ss, err := getSortedSet(db, key)
+	ss, err := getAsSortedSet(db, key)
 	if err != nil {
 		return resp.MakeErrorResponse(err.Error())
 	}
@@ -46,7 +46,7 @@ func ExecZscore(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 func ExecZrem(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 
 	key := string(args[0])
-	ss, err := getSortedSet(db, key)
+	ss, err := getAsSortedSet(db, key)
 	if err != nil {
 		return resp.MakeErrorResponse(err.Error())
 	}
@@ -66,7 +66,7 @@ func ExecZrem(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respons
 // 排名以 0 为底，score 最小的成员排名为 0
 func ExecZrank(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 	key := string(args[0])
-	ss, err := getSortedSet(db, key)
+	ss, err := getAsSortedSet(db, key)
 	if err != nil {
 		return resp.MakeErrorResponse(err.Error())
 	}
@@ -88,7 +88,7 @@ func ExecZrank(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respon
 func ExecZcard(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 	key := string(args[0])
 
-	ss, err := getSortedSet(db, key)
+	ss, err := getAsSortedSet(db, key)
 	if err != nil {
 		return resp.MakeErrorResponse(err.Error())
 	}
@@ -105,7 +105,7 @@ func ExecZcard(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respon
 func ExecZcount(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 
 	key := string(args[0])
-	ss, err := getSortedSet(db, key)
+	ss, err := getAsSortedSet(db, key)
 	if err != nil {
 		return resp.MakeErrorResponse(err.Error())
 	}
@@ -177,7 +177,7 @@ func ExecZadd(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respons
 }
 
 func getSortedSetOrInit(db *redis.RedisDB, key string) (*sortedset.SortedSet, error) {
-	ss, err := getSortedSet(db, key)
+	ss, err := getAsSortedSet(db, key)
 	if err != nil {
 		return nil, err
 	}
@@ -187,7 +187,7 @@ func getSortedSetOrInit(db *redis.RedisDB, key string) (*sortedset.SortedSet, er
 	return ss, nil
 }
 
-func getSortedSet(db *redis.RedisDB, key string) (*sortedset.SortedSet, error) {
+func getAsSortedSet(db *redis.RedisDB, key string) (*sortedset.SortedSet, error) {
 	entity, exist := db.Dataset.Get(key)
 	if !exist {
 		return nil, nil
