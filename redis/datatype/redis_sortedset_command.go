@@ -21,6 +21,7 @@ func init() {
 	redis.RegisterExecCommand(redis.ZRANK, ExecZrank, validate.ValidateZrank)
 	redis.RegisterExecCommand(redis.ZREM, ExecZrem, validate.ValidateZrem)
 	redis.RegisterExecCommand(redis.ZSCORE, ExecZscore, validate.ValidateZscore)
+	redis.RegisterExecCommand(redis.ZINCRBY, ExecZincrby, validate.ValidateIncrBy)
 }
 
 //返回有序集 key 中，成员 member 的 score 值。
@@ -136,13 +137,17 @@ func ExecZincrby(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Resp
 	increment, _ := strconv.ParseFloat(incrementValue, 64)
 	memeber := string(args[2])
 
-	el, exist := ss.Get(memeber)
+	element, exist := ss.Get(memeber)
 	if !exist {
 		ss.Add(memeber, increment)
 		return resp.MakeMultiResponse(incrementValue)
 	}
-	el.Score += increment
-	return resp.MakeMultiResponse(fmt.Sprintf("%f", el.Score))
+
+	newScore := element.Score + increment
+	ss.Remove(element.Memeber)
+	ss.Add(element.Memeber, newScore)
+	return resp.MakeMultiResponse(fmt.Sprintf("%f", newScore))
+
 }
 
 /*
