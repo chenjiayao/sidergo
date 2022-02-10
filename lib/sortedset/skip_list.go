@@ -37,7 +37,7 @@ type SkipList struct {
 }
 
 func (skipList *SkipList) insert(score float64, memeber string) *Node {
-	updateNodes := make([]*Node, MAX_LEVEL)
+	updateForwardNodes := make([]*Node, MAX_LEVEL) // 插入新的节点之后，需要更新 forward 指针的节点
 
 	node := skipList.header //node节点最终会定位到「被插入位置之前」
 
@@ -46,7 +46,7 @@ func (skipList *SkipList) insert(score float64, memeber string) *Node {
 		for node.levels[i].forward != nil && (node.levels[i].forward.Score < score || (node.levels[i].forward.Score == score && node.levels[i].forward.Memeber < memeber)) {
 			node = node.levels[i].forward
 		}
-		updateNodes[i] = node
+		updateForwardNodes[i] = node
 	}
 	levelForNewNode := skipList.RandomLevel()
 	newNode := MakeNode(levelForNewNode, score, memeber)
@@ -68,8 +68,8 @@ func (skipList *SkipList) insert(score float64, memeber string) *Node {
 		}
 		//剩余的由更早的 node 来指向，所以需要一个 updateNodes 来保存更早的 node,但是那些更早的 node 只需要更新部分 level
 		for i := skipList.level - 1; i <= len(node.levels); i-- {
-			newNode.levels[i].forward = updateNodes[i].levels[i].forward
-			updateNodes[i].levels[i].forward = newNode
+			newNode.levels[i].forward = updateForwardNodes[i].levels[i].forward
+			updateForwardNodes[i].levels[i].forward = newNode
 		}
 	}
 
