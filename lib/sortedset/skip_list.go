@@ -43,10 +43,9 @@ func (skipList *SkipList) insert(score float64, memeber string) *Node {
 
 	for i := skipList.level - 1; i >= 0; i-- {
 
-		for node.levels[i] != nil && (node.Score < score || (node.Score == score && node.Memeber < memeber)) {
+		for node.levels[i].forward != nil && (node.levels[i].forward.Score < score || (node.levels[i].forward.Score == score && node.levels[i].forward.Memeber < memeber)) {
 			node = node.levels[i].forward
 		}
-
 		updateNodes[i] = node
 	}
 	levelForNewNode := skipList.RandomLevel()
