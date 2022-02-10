@@ -20,6 +20,26 @@ func init() {
 	redis.RegisterExecCommand(redis.ZCOUNT, ExecZcount, validate.ValidateZcount)
 	redis.RegisterExecCommand(redis.ZRANK, ExecZrank, validate.ValidateZrank)
 	redis.RegisterExecCommand(redis.ZREM, ExecZrem, validate.ValidateZrem)
+	redis.RegisterExecCommand(redis.ZSCORE, ExecZscore, validate.ValidateZscore)
+}
+
+//返回有序集 key 中，成员 member 的 score 值。
+func ExecZscore(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
+	key := string(args[0])
+	ss, err := getSortedSet(db, key)
+	if err != nil {
+		return resp.MakeErrorResponse(err.Error())
+	}
+	if ss == nil {
+		return resp.NullMultiResponse
+	}
+
+	member := string(args[1])
+	element, exist := ss.Get(member)
+	if !exist {
+		return resp.NullMultiResponse
+	}
+	return resp.MakeMultiResponse(fmt.Sprintf("%f", element.Score))
 }
 
 func ExecZrem(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
