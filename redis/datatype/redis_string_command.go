@@ -241,7 +241,7 @@ func getAsString(conn conn.Conn, db *redis.RedisDB, key []byte) (string, error) 
 	}
 	commo, ok := res.(string)
 	if !ok {
-		return "", errors.New("(error) WRONGTYPE Operation against a key holding the wrong kind of value")
+		return "", errors.New("WRONGTYPE Operation against a key holding the wrong kind of value")
 	}
 	return commo, nil
 }
