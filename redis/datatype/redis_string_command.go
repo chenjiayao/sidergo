@@ -1,6 +1,7 @@
 package datatype
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"strconv"
@@ -60,7 +61,10 @@ func ExecMGet(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respons
 
 	multiResponses := make([]response.Response, 0)
 	for i := 0; i < len(args); i++ {
-		r := getAsString(conn, db, args[i])
+		r, err := getAsString(conn, db, args[i])
+		if err != nil {
+			multiResponses = append(multiResponses, resp.NullMultiResponse)
+		}
 		if r == "" {
 			multiResponses = append(multiResponses, resp.MakeMultiResponse(""))
 		} else {
@@ -88,8 +92,8 @@ func ExecMSetNX(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 
 	//检查是否有哪个 key 已经存在
 	for i := 0; i < len(args); i += 2 {
-		s := getAsString(conn, db, args[i])
-		if s != "" {
+		_, exist := db.Dataset.Get(string(args[i]))
+		if exist { //说明 db 中存在这个 key，不管这个 key 是不是 string 类型
 			return resp.MakeNumberResponse(0)
 		}
 	}
@@ -220,24 +224,26 @@ func ExecGet(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response
 		return resp.NullMultiResponse
 	}
 
-	s := getAsString(conn, db, args[0])
+	s, err := getAsString(conn, db, args[0])
+	if err != nil {
+		return resp.MakeErrorResponse(err.Error())
+	}
 	if s == "" {
 		return resp.NullMultiResponse
 	}
 	return resp.MakeSimpleResponse(s)
 }
 
-func getAsString(conn conn.Conn, db *redis.RedisDB, key []byte) string {
+func getAsString(conn conn.Conn, db *redis.RedisDB, key []byte) (string, error) {
 	res, ok := db.Dataset.Get(string(key))
 	if !ok {
-		return ""
+		return "", nil
 	}
-
 	commo, ok := res.(string)
 	if !ok {
-		return ""
+		return "", errors.New("(error) WRONGTYPE Operation against a key holding the wrong kind of value")
 	}
-	return commo
+	return commo, nil
 }
 
 //如果 incr 的key 不存在，那么 set 为1
@@ -255,7 +261,10 @@ func ExecIncrBy(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 	defer db.UnLockKey(key)
 
 	//get
-	s := getAsString(conn, db, args[0])
+	s, err := getAsString(conn, db, args[0])
+	if err != nil {
+		return resp.MakeErrorResponse(err.Error())
+	}
 
 	val := ""
 	//incr
@@ -285,7 +294,10 @@ func ExecIncrByFloat(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.
 	defer db.UnLockKey(key)
 
 	//get
-	s := getAsString(conn, db, args[0])
+	s, err := getAsString(conn, db, args[0])
+	if err != nil {
+		return resp.MakeErrorResponse(err.Error())
+	}
 
 	val := ""
 	//incr

@@ -91,7 +91,7 @@ func TestExecGetset(t *testing.T) {
 	if string(string(want.ToContentByte())) != string(res.ToContentByte()) {
 		t.Errorf("execgetSet = %s, want = %s", string(res.ToContentByte()), "+value")
 	}
-	s := getAsString(nil, db, []byte(key))
+	s, _ := getAsString(nil, db, []byte(key))
 	if newValue != s {
 		t.Errorf("execgetset store %s , but get %s", "newvalue", s)
 	}
