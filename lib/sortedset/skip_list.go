@@ -93,31 +93,31 @@ func (skipList *SkipList) remove(score float64, member string) *Node {
 
 	updateNodes := make([]*Node, MAX_LEVEL)
 
-	node := skipList.header // node 的下一个节点就是要被删除的节点
+	backwardDelNode := skipList.header // node 的下一个节点就是要被删除的节点
 	for i := skipList.level - 1; i >= 0; i-- {
-		for node.levels[i] != nil && node.Score != score && node.Memeber != member {
-			node = node.levels[i].forward
+		for backwardDelNode.levels[i].forward != nil && (backwardDelNode.levels[i].forward.Score < score || (backwardDelNode.levels[i].forward.Score == score && backwardDelNode.levels[i].forward.Memeber < member)) {
+			backwardDelNode = backwardDelNode.levels[i].forward
 		}
-		updateNodes[i] = node
+		updateNodes[i] = backwardDelNode
 	}
-	removeNode := node.levels[0].forward
+	removeNode := backwardDelNode.levels[0].forward
 
-	node.levels[0].forward = removeNode.levels[0].forward
+	backwardDelNode.levels[0].forward = removeNode.levels[0].forward
 	if skipList.tail != removeNode { //删除的不是最后一个元素
-		removeNode.backward = node
+		removeNode.backward = backwardDelNode
 	}
 
-	if len(node.levels) >= len(removeNode.levels) {
-		for i := 0; i < len(node.levels); i++ {
-			node.levels[i].forward = removeNode.levels[i].forward
+	if len(backwardDelNode.levels) >= len(removeNode.levels) {
+		for i := 0; i < len(backwardDelNode.levels); i++ {
+			backwardDelNode.levels[i].forward = removeNode.levels[i].forward
 		}
 	} else {
 
-		for i := 0; i < len(node.levels); i++ {
-			node.levels[i].forward = removeNode.levels[i].forward
+		for i := 0; i < len(backwardDelNode.levels); i++ {
+			backwardDelNode.levels[i].forward = removeNode.levels[i].forward
 		}
 
-		for i := len(node.levels); i < len(removeNode.levels)-1; i++ {
+		for i := len(backwardDelNode.levels); i < len(removeNode.levels)-1; i++ {
 			updateNodes[i].levels[i].forward = removeNode.levels[i].forward
 		}
 	}
