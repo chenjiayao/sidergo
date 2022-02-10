@@ -19,6 +19,26 @@ func init() {
 	redis.RegisterExecCommand(redis.ZCARD, ExecZcard, validate.ValidateZcard)
 	redis.RegisterExecCommand(redis.ZCOUNT, ExecZcount, validate.ValidateZcount)
 	redis.RegisterExecCommand(redis.ZRANK, ExecZrank, validate.ValidateZrank)
+	redis.RegisterExecCommand(redis.ZREM, ExecZrem, validate.ValidateZrem)
+}
+
+func ExecZrem(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
+
+	key := string(args[0])
+	ss, err := getSortedSet(db, key)
+	if err != nil {
+		return resp.MakeErrorResponse(err.Error())
+	}
+	if ss == nil {
+		return resp.MakeNumberResponse(0)
+	}
+
+	for i := 0; i < len(args[1:]); i++ {
+		member := string(args[i])
+		ss.Remove(member)
+	}
+
+	return nil
 }
 
 //获取 member 的排名，按照从小到大的顺序

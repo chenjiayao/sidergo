@@ -61,3 +61,10 @@ func (ss *SortedSet) Count(minBorder, maxBorder *border.Border) int64 {
 func (ss *SortedSet) GetRank(member string, score float64) int64 {
 	return ss.skipList.GetRank(member, score)
 }
+
+func (ss *SortedSet) Remove(member string) {
+	element := ss.dict[member]
+	ss.skipList.remove(element.Score, element.Memeber)
+
+	delete(ss.dict, member)
+}
