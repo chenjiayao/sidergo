@@ -19,6 +19,7 @@ func init() {
 	redis.RegisterExecCommand(redis.ZCARD, ExecZcard, validate.ValidateZcard)
 	redis.RegisterExecCommand(redis.ZCOUNT, ExecZcount, validate.ValidateZcount)
 	redis.RegisterExecCommand(redis.ZRANK, ExecZrank, validate.ValidateZrank)
+	redis.RegisterExecCommand(redis.ZREVRANGE, ExecZRevrank, validate.ValidateZrevrank)
 	redis.RegisterExecCommand(redis.ZREM, ExecZrem, validate.ValidateZrem)
 	redis.RegisterExecCommand(redis.ZSCORE, ExecZscore, validate.ValidateZscore)
 	redis.RegisterExecCommand(redis.ZINCRBY, ExecZincrby, validate.ValidateIncrBy)
@@ -83,6 +84,27 @@ func ExecZrank(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respon
 		return resp.NullMultiResponse
 	}
 	return resp.MakeNumberResponse(rank)
+}
+
+func ExecZRevrank(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
+	key := string(args[0])
+	ss, err := getAsSortedSet(db, key)
+	if err != nil {
+		return resp.MakeErrorResponse(err.Error())
+	}
+
+	member := string(args[1])
+	element, exist := ss.Get(member)
+	if !exist {
+		return resp.NullMultiResponse
+	}
+	rank := ss.GetRank(element.Memeber, element.Score)
+
+	//正常情况下，不会返回 -1，因为前面已经做过 exist 判断了
+	if rank == -1 {
+		return resp.NullMultiResponse
+	}
+	return resp.MakeNumberResponse(ss.Len() - rank - 1)
 }
 
 func ExecZcard(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
