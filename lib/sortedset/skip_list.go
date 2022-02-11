@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	MAX_LEVEL = 32
+	MAX_LEVEL = 3
 	P         = 0.25
 )
 
@@ -42,7 +42,6 @@ func (skipList *SkipList) insert(score float64, memeber string) *Node {
 	node := skipList.header //node节点最终会定位到「被插入位置之前」
 
 	for i := skipList.level - 1; i >= 0; i-- {
-
 		for node.levels[i].forward != nil && (node.levels[i].forward.Score < score || (node.levels[i].forward.Score == score && node.levels[i].forward.Memeber < memeber)) {
 			node = node.levels[i].forward
 		}
@@ -52,17 +51,17 @@ func (skipList *SkipList) insert(score float64, memeber string) *Node {
 	newNode := MakeNode(levelForNewNode, score, memeber)
 
 	/**
-	newNode 的 levels 可能会被分成两个部分
+	newNode 的 levels 会被分成两个部分
 	1. levelForNewNode > node.level 那么 node.levels 的每个forward 都指向 newNode，剩余的由更早的 node来指向
 	2. levelForNewNode <= node.level 那么 node.levels 从0 到 levelForNewNode 的 level 需要指向newNode
 	*/
 	if len(newNode.levels) <= len(node.levels) {
-		for i := len(node.levels) - 1; i >= 0; i-- {
+		for i := len(newNode.levels) - 1; i >= 0; i-- {
 			newNode.levels[i].forward = node.levels[i].forward
 			node.levels[i].forward = newNode
 		}
 	} else {
-		for i := len(node.levels) - 1; i >= 0; i-- {
+		for i := len(newNode.levels) - 1; i >= 0; i-- {
 			newNode.levels[i].forward = node.levels[i].forward
 			node.levels[i].forward = newNode
 		}
@@ -74,11 +73,32 @@ func (skipList *SkipList) insert(score float64, memeber string) *Node {
 	}
 
 	//插入的新元素是最后一个
-	if node == skipList.tail {
+	if newNode.levels[0].forward == nil {
 		skipList.tail = newNode
+	} else {
+		node.levels[0].forward.backward = newNode
 	}
 
-	newNode.backward = node
+	//插入的元素是第一个
+	if node == skipList.header {
+		newNode.backward = nil
+	} else {
+		newNode.backward = node
+	}
+
+	///////更新 span
+	/**
+	要更新的 span 分成两个部分
+	1. skipList.levels ~ newNode.levels 这部分只要自增就行
+	2. newNode.levels ~ 1 这部分执行「原来的 span」 - 「newNodes 到下一个节点的 span」+ 1
+	*/
+	for i := skipList.level - 1; i >= len(newNode.levels); i-- {
+		updateForwardNodes[i].levels[i].span++
+	}
+
+	for i := len(newNode.levels) - 1; i > 0; i++ {
+		updateForwardNodes[i].levels[i].span = updateForwardNodes[i].levels[i].span - newNode.levels[i].span + 1
+	}
 
 	skipList.length++
 	skipList.reCalculateMaxLevel()
@@ -180,7 +200,7 @@ func MakeSkipList() *SkipList {
 	return &SkipList{
 		tail:   nil,
 		header: MakeNode(MAX_LEVEL, 0, ""),
-		level:  0,
+		level:  1,
 		length: 0,
 	}
 }
