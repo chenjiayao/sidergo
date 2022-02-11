@@ -23,6 +23,34 @@ func init() {
 	redis.RegisterExecCommand(redis.ZREM, ExecZrem, validate.ValidateZrem)
 	redis.RegisterExecCommand(redis.ZSCORE, ExecZscore, validate.ValidateZscore)
 	redis.RegisterExecCommand(redis.ZINCRBY, ExecZincrby, validate.ValidateIncrBy)
+	redis.RegisterExecCommand(redis.ZRANGE, ExecZrange, validate.ValidateZrange)
+}
+
+func ExecZrange(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
+
+	key := string(args[0])
+	ss, err := getAsSortedSet(db, key)
+	if err != nil {
+		return resp.MakeErrorResponse(err.Error())
+	}
+	if ss == nil {
+		return resp.EmptyArrayResponse
+	}
+
+	withScores := false
+	if len(args) == 4 {
+		withScores = true
+	}
+	startValue := string(args[1])
+	start, _ := strconv.ParseInt(startValue, 10, 64)
+
+	stopValue := string(args[2])
+	stop, _ := strconv.ParseInt(stopValue, 10, 64)
+
+	if start > ss.Len() || start > stop {
+		return resp.EmptyArrayResponse
+	}
+
 }
 
 //返回有序集 key 中，成员 member 的 score 值。
@@ -170,14 +198,6 @@ func ExecZincrby(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Resp
 	ss.Add(element.Memeber, newScore)
 	return resp.MakeMultiResponse(fmt.Sprintf("%f", newScore))
 
-}
-
-/*
-	ZRANGE key start stop [WITHSCORES]
-	返回有序集 key 中，指定区间内的成员。
-*/
-func ExecZrange(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
-	return nil
 }
 
 func ExecZadd(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
