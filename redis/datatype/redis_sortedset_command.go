@@ -19,7 +19,7 @@ func init() {
 	redis.RegisterExecCommand(redis.ZCARD, ExecZcard, validate.ValidateZcard)
 	redis.RegisterExecCommand(redis.ZCOUNT, ExecZcount, validate.ValidateZcount)
 	redis.RegisterExecCommand(redis.ZRANK, ExecZrank, validate.ValidateZrank)
-	redis.RegisterExecCommand(redis.ZREVRANGE, ExecZRevrank, validate.ValidateZrevrank)
+	redis.RegisterExecCommand(redis.ZREVRANK, ExecZRevrank, validate.ValidateZrevrank)
 	redis.RegisterExecCommand(redis.ZREM, ExecZrem, validate.ValidateZrem)
 	redis.RegisterExecCommand(redis.ZSCORE, ExecZscore, validate.ValidateZscore)
 	redis.RegisterExecCommand(redis.ZINCRBY, ExecZincrby, validate.ValidateIncrBy)
