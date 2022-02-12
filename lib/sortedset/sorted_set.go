@@ -68,3 +68,16 @@ func (ss *SortedSet) Remove(member string) {
 
 	delete(ss.dict, member)
 }
+
+func (ss *SortedSet) Range(start, stop int64) []*Element {
+	elements := make([]*Element, stop-start+1)
+	i := 0
+	ss.skipList.ForEach(start, stop, func(e *Element) bool {
+
+		elements[i] = e
+		i++
+
+		return true
+	})
+	return elements
+}

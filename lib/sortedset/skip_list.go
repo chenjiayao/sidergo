@@ -196,6 +196,10 @@ func (skipList *SkipList) Find(member string) (float64, bool) {
 	return 0, false
 }
 
+func (skipList *SkipList) ForEach(start, stop int64, fun func(*Element) bool) {
+
+}
+
 func MakeSkipList() *SkipList {
 	return &SkipList{
 		tail:   nil,

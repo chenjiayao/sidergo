@@ -47,10 +47,50 @@ func ExecZrange(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 	stopValue := string(args[2])
 	stop, _ := strconv.ParseInt(stopValue, 10, 64)
 
+	//将 start stop 的语义转换成 slice 的用法
 	if start > ss.Len() || start > stop {
 		return resp.EmptyArrayResponse
 	}
 
+	//收缩边界
+	if start < ss.Len()*-1 {
+		start = 0
+	}
+	if start > ss.Len()-1 {
+		start = ss.Len() - 1
+	}
+
+	if stop < ss.Len()*-1 {
+		stop = -ss.Len()
+	}
+	if stop > ss.Len()-1 {
+		stop = ss.Len() - 1
+	}
+
+	if start < 0 {
+		start = ss.Len() + start
+	}
+	if stop < 0 {
+		stop = ss.Len() + stop
+	}
+
+	elements := ss.Range(start, stop)
+
+	var responses []response.Response
+	if withScores {
+		responses = make([]response.Response, len(elements)*2)
+		for i := 0; i < len(elements); i++ {
+			responses[i] = resp.MakeMultiResponse(elements[i].Memeber)
+			responses[i+1] = resp.MakeMultiResponse(fmt.Sprintf("%f", elements[i].Score))
+		}
+	} else {
+		responses = make([]response.Response, len(elements))
+		for i := 0; i < len(elements); i++ {
+			responses[i] = resp.MakeMultiResponse(elements[i].Memeber)
+		}
+	}
+
+	return resp.MakeArrayResponse(responses)
 }
 
 //返回有序集 key 中，成员 member 的 score 值。
