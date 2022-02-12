@@ -198,6 +198,21 @@ func (skipList *SkipList) Find(member string) (float64, bool) {
 
 func (skipList *SkipList) ForEach(start, stop int64, fun func(*Element) bool) {
 
+	node := skipList.header
+
+	index := int64(0)
+
+	for node.levels[0].forward != nil {
+		node = node.levels[0].forward
+		index++
+		if index >= start && index <= stop {
+			fun(&node.Element)
+		}
+
+		if index > stop {
+			break
+		}
+	}
 }
 
 func MakeSkipList() *SkipList {
