@@ -24,6 +24,74 @@ func init() {
 	redis.RegisterExecCommand(redis.ZSCORE, ExecZscore, validate.ValidateZscore)
 	redis.RegisterExecCommand(redis.ZINCRBY, ExecZincrby, validate.ValidateIncrBy)
 	redis.RegisterExecCommand(redis.ZRANGE, ExecZrange, validate.ValidateZrange)
+	redis.RegisterExecCommand(redis.ZREVRANGE, ExecZrevrange, validate.ValidateZrevrange)
+}
+
+func ExecZrevrange(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
+	key := string(args[0])
+	ss, err := getAsSortedSet(db, key)
+	if err != nil {
+		return resp.MakeErrorResponse(err.Error())
+	}
+	if ss == nil {
+		return resp.EmptyArrayResponse
+	}
+
+	withScores := false
+	if len(args) == 4 {
+		withScores = true
+	}
+	startValue := string(args[1])
+	start, _ := strconv.ParseInt(startValue, 10, 64)
+
+	stopValue := string(args[2])
+	stop, _ := strconv.ParseInt(stopValue, 10, 64)
+
+	//将 start stop 的语义转换成 slice 的用法
+	if start > ss.Len() || start > stop {
+		return resp.EmptyArrayResponse
+	}
+
+	//收缩边界
+	if start < ss.Len()*-1 {
+		start = 0
+	}
+	if start > ss.Len()-1 {
+		start = ss.Len() - 1
+	}
+
+	if stop < ss.Len()*-1 {
+		stop = -ss.Len()
+	}
+	if stop > ss.Len()-1 {
+		stop = ss.Len() - 1
+	}
+
+	if start < 0 {
+		start = ss.Len() + start
+	}
+	if stop < 0 {
+		stop = ss.Len() + stop
+	}
+
+	elements := ss.Range(start, stop)
+	elen := len(elements)
+
+	var responses []response.Response
+	if withScores {
+		responses = make([]response.Response, len(elements)*2)
+
+		for i := elen - 1; i >= 0; i-- {
+			responses[elen-i] = resp.MakeMultiResponse(elements[i].Memeber)
+			responses[elen-i+1] = resp.MakeMultiResponse(fmt.Sprintf("%f", elements[i].Score))
+		}
+	} else {
+		responses = make([]response.Response, len(elements))
+		for i := 0; i < len(elements); i++ {
+			responses[i] = resp.MakeMultiResponse(elements[i].Memeber)
+		}
+	}
+	return resp.MakeArrayResponse(responses)
 }
 
 func ExecZrange(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
