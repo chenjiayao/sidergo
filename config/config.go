@@ -16,6 +16,7 @@ type ServerConfig struct {
 	RequirePass    string `config:"require_pass"`
 	Appendonly     bool   `config:"appendonly"`      //是否开启 aof
 	AppendFilename string `config:"append_filename"` //aof 文件名称
+	EnableCluster  bool   `config:"enable_cluster"`
 }
 
 // golang 的 code style：如果一个变量是全局单例，直接设为全局变量

@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/chenjiayao/goredistraning"
+	"github.com/chenjiayao/goredistraning/cluster"
 	"github.com/chenjiayao/goredistraning/config"
 	"github.com/chenjiayao/goredistraning/interface/server"
 	"github.com/chenjiayao/goredistraning/lib/logger"
@@ -26,6 +27,11 @@ func main() {
 	goredistraning.ListenAndServe(s)
 }
 
+//TODO 根据 config 判断是否启动集群模式
 func makeServer() server.Server {
-	return redis.MakeRedisServer()
+	if config.Config.EnableCluster {
+		return cluster.MakeCluster()
+	} else {
+		return redis.MakeRedisServer()
+	}
 }
