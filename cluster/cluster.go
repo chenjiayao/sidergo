@@ -4,6 +4,7 @@ import (
 	"net"
 
 	"github.com/chenjiayao/goredistraning/interface/server"
+	"github.com/chenjiayao/goredistraning/redis"
 )
 
 /*
@@ -13,7 +14,19 @@ import (
 
 var _ server.Server = &Cluster{}
 
+type Node struct {
+	IPAddress   string
+	RedisServer *redis.RedisServer
+}
+
+///两个 node 节点是否为同一个节点
+func (node *Node) IsSelf(n *Node) bool {
+	return node.IPAddress == n.IPAddress
+}
+
 type Cluster struct {
+	self  *Node   //当前 node 节点
+	peers []*Node // 集群其他节点
 }
 
 func (cluster *Cluster) Handle(conn net.Conn) {
@@ -21,10 +34,13 @@ func (cluster *Cluster) Handle(conn net.Conn) {
 }
 
 func (cluster *Cluster) Close() error {
+	cluster.self.RedisServer.Close()
 	return nil
 }
 
-func (cluster *Cluster) Log() {}
+func (cluster *Cluster) Log() {
+	cluster.self.RedisServer.Log()
+}
 
 func MakeCluster() *Cluster {
 
