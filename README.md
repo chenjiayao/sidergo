@@ -12,6 +12,9 @@
 
 ```
 
+![](https://github.com/chenjiayao/sidergo/actions/workflows/master.yml/badge.svg)
+
+
 使用 golang 实现 redis 
 
 1. go run cmd/main.go，默认监听 3101 端口
