@@ -82,13 +82,13 @@ func ExecZrevrange(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Re
 		responses = make([]response.Response, len(elements)*2)
 
 		for i := elen - 1; i >= 0; i-- {
-			responses[elen-i] = resp.MakeMultiResponse(elements[i].Memeber)
+			responses[elen-i] = resp.MakeMultiResponse(elements[i].Member)
 			responses[elen-i+1] = resp.MakeMultiResponse(fmt.Sprintf("%f", elements[i].Score))
 		}
 	} else {
 		responses = make([]response.Response, len(elements))
 		for i := 0; i < len(elements); i++ {
-			responses[i] = resp.MakeMultiResponse(elements[i].Memeber)
+			responses[i] = resp.MakeMultiResponse(elements[i].Member)
 		}
 	}
 	return resp.MakeArrayResponse(responses)
@@ -148,13 +148,13 @@ func ExecZrange(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 	if withScores {
 		responses = make([]response.Response, len(elements)*2)
 		for i := 0; i < len(elements); i++ {
-			responses[i] = resp.MakeMultiResponse(elements[i].Memeber)
+			responses[i] = resp.MakeMultiResponse(elements[i].Member)
 			responses[i+1] = resp.MakeMultiResponse(fmt.Sprintf("%f", elements[i].Score))
 		}
 	} else {
 		responses = make([]response.Response, len(elements))
 		for i := 0; i < len(elements); i++ {
-			responses[i] = resp.MakeMultiResponse(elements[i].Memeber)
+			responses[i] = resp.MakeMultiResponse(elements[i].Member)
 		}
 	}
 
@@ -213,7 +213,7 @@ func ExecZrank(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respon
 	if !exist {
 		return resp.NullMultiResponse
 	}
-	rank := ss.GetRank(element.Memeber, element.Score)
+	rank := ss.GetRank(element.Member, element.Score)
 
 	//正常情况下，不会返回 -1，因为前面已经做过 exist 判断了
 	if rank == -1 {
@@ -234,7 +234,7 @@ func ExecZRevrank(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Res
 	if !exist {
 		return resp.NullMultiResponse
 	}
-	rank := ss.GetRank(element.Memeber, element.Score)
+	rank := ss.GetRank(element.Member, element.Score)
 
 	//正常情况下，不会返回 -1，因为前面已经做过 exist 判断了
 	if rank == -1 {
@@ -293,17 +293,17 @@ func ExecZincrby(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Resp
 
 	incrementValue := string(args[1])
 	increment, _ := strconv.ParseFloat(incrementValue, 64)
-	memeber := string(args[2])
+	member := string(args[2])
 
-	element, exist := ss.Get(memeber)
+	element, exist := ss.Get(member)
 	if !exist {
-		ss.Add(memeber, increment)
+		ss.Add(member, increment)
 		return resp.MakeMultiResponse(incrementValue)
 	}
 
 	newScore := element.Score + increment
-	ss.Remove(element.Memeber)
-	ss.Add(element.Memeber, newScore)
+	ss.Remove(element.Member)
+	ss.Add(element.Member, newScore)
 	return resp.MakeMultiResponse(fmt.Sprintf("%f", newScore))
 
 }

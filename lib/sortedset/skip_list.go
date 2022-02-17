@@ -14,8 +14,8 @@ const (
 // http://zhangtielei.com/posts/blog-redis-skiplist.html
 
 type Element struct {
-	Score   float64
-	Memeber string
+	Score  float64
+	Member string
 }
 
 type Level struct {
@@ -28,7 +28,7 @@ type Node struct {
 	backward *Node    //  最底层的前一个节点
 }
 
-// skipList  的排序规则为：score, memeber asc
+// skipList  的排序规则为：score, member asc
 type SkipList struct {
 	tail   *Node
 	header *Node
@@ -36,19 +36,19 @@ type SkipList struct {
 	length int64
 }
 
-func (skipList *SkipList) insert(score float64, memeber string) *Node {
+func (skipList *SkipList) insert(score float64, member string) *Node {
 	updateForwardNodes := make([]*Node, MAX_LEVEL) // 插入新的节点之后，需要更新 forward 指针的节点
 
 	node := skipList.header //node节点最终会定位到「被插入位置之前」
 
 	for i := skipList.level - 1; i >= 0; i-- {
-		for node.levels[i].forward != nil && (node.levels[i].forward.Score < score || (node.levels[i].forward.Score == score && node.levels[i].forward.Memeber < memeber)) {
+		for node.levels[i].forward != nil && (node.levels[i].forward.Score < score || (node.levels[i].forward.Score == score && node.levels[i].forward.Member < member)) {
 			node = node.levels[i].forward
 		}
 		updateForwardNodes[i] = node
 	}
 	levelForNewNode := skipList.RandomLevel()
-	newNode := MakeNode(levelForNewNode, score, memeber)
+	newNode := MakeNode(levelForNewNode, score, member)
 
 	/**
 	newNode 的 levels 会被分成两个部分
@@ -119,7 +119,7 @@ func (skipList *SkipList) remove(score float64, member string) *Node {
 
 	backwardDelNode := skipList.header // node 的下一个节点就是要被删除的节点
 	for i := skipList.level - 1; i >= 0; i-- {
-		for backwardDelNode.levels[i].forward != nil && (backwardDelNode.levels[i].forward.Score < score || (backwardDelNode.levels[i].forward.Score == score && backwardDelNode.levels[i].forward.Memeber < member)) {
+		for backwardDelNode.levels[i].forward != nil && (backwardDelNode.levels[i].forward.Score < score || (backwardDelNode.levels[i].forward.Score == score && backwardDelNode.levels[i].forward.Member < member)) {
 			backwardDelNode = backwardDelNode.levels[i].forward
 		}
 		updateNodes[i] = backwardDelNode
@@ -169,12 +169,12 @@ func (skipList *SkipList) GetRank(member string, score float64) int64 {
 	node := skipList.header
 
 	for i := skipList.level - 1; i >= 0; i-- {
-		for node.levels[i].forward != nil && (node.levels[i].forward.Score < score || (node.levels[i].forward.Score == score && node.levels[i].forward.Memeber < member)) {
+		for node.levels[i].forward != nil && (node.levels[i].forward.Score < score || (node.levels[i].forward.Score == score && node.levels[i].forward.Member < member)) {
 			span += node.levels[i].span
 			node = node.levels[i].forward
 		}
 
-		if node.levels[i].forward.Memeber == member {
+		if node.levels[i].forward.Member == member {
 			span += node.levels[i].span
 			return span
 		}
@@ -185,11 +185,11 @@ func (skipList *SkipList) GetRank(member string, score float64) int64 {
 func (skipList *SkipList) Find(member string) (float64, bool) {
 	node := skipList.header
 	for i := skipList.level - 1; i >= 0; i-- {
-		for node.levels[i] != nil && node.Memeber < member {
+		for node.levels[i] != nil && node.Member < member {
 			node = node.levels[i].forward
 		}
 
-		if node.Memeber == member {
+		if node.Member == member {
 			return node.Score, true
 		}
 	}
@@ -224,12 +224,12 @@ func MakeSkipList() *SkipList {
 	}
 }
 
-func MakeNode(level int, score float64, memeber string) *Node {
+func MakeNode(level int, score float64, member string) *Node {
 
 	node := &Node{
 		Element: Element{
-			Score:   score,
-			Memeber: memeber,
+			Score:  score,
+			Member: member,
 		},
 		levels: make([]*Level, level),
 	}
