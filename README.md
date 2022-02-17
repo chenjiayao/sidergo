@@ -12,8 +12,9 @@
 
 ```
 
-![](https://github.com/chenjiayao/sidergo/actions/workflows/master.yml/badge.svg)
-
+![github action](https://github.com/chenjiayao/sidergo/actions/workflows/master.yml/badge.svg)
+[![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-brightgreen.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Go Reference](https://pkg.go.dev/badge/github.com/chenjiayao/sidergo.svg)](https://pkg.go.dev/github.com/chenjiayao/sidergo)
 
 使用 golang 实现 redis 
 
