@@ -5,9 +5,9 @@ import (
 	"net"
 	"sync"
 
-	"github.com/chenjiayao/goredistraning/config"
-	"github.com/chenjiayao/goredistraning/interface/server"
-	"github.com/chenjiayao/goredistraning/lib/logger"
+	"github.com/chenjiayao/sidergo/config"
+	"github.com/chenjiayao/sidergo/interface/server"
+	"github.com/chenjiayao/sidergo/lib/logger"
 )
 
 func ListenAndServe(server server.Server) {

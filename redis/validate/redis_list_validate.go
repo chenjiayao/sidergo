@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/chenjiayao/goredistraning/interface/conn"
-	"github.com/chenjiayao/goredistraning/redis"
+	"github.com/chenjiayao/sidergo/interface/conn"
+	"github.com/chenjiayao/sidergo/redis"
 )
 
 func ValidateLPush(conn conn.Conn, args [][]byte) error {

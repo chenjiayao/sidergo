@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/chenjiayao/goredistraning/interface/conn"
-	"github.com/chenjiayao/goredistraning/lib/border"
+	"github.com/chenjiayao/sidergo/interface/conn"
+	"github.com/chenjiayao/sidergo/lib/border"
 )
 
 func ValidateZadd(conn conn.Conn, args [][]byte) error {

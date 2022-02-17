@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/chenjiayao/goredistraning/lib/file"
+	"github.com/chenjiayao/sidergo/lib/file"
 )
 
 type logLevel int

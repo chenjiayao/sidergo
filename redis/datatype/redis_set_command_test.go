@@ -3,9 +3,9 @@ package datatype
 import (
 	"testing"
 
-	"github.com/chenjiayao/goredistraning/helper"
-	"github.com/chenjiayao/goredistraning/lib/set"
-	"github.com/chenjiayao/goredistraning/redis"
+	"github.com/chenjiayao/sidergo/helper"
+	"github.com/chenjiayao/sidergo/lib/set"
+	"github.com/chenjiayao/sidergo/redis"
 )
 
 func TestExecSadd(t *testing.T) {

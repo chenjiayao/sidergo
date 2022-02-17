@@ -3,8 +3,8 @@ package redis
 import (
 	"strings"
 
-	"github.com/chenjiayao/goredistraning/interface/conn"
-	"github.com/chenjiayao/goredistraning/interface/response"
+	"github.com/chenjiayao/sidergo/interface/conn"
+	"github.com/chenjiayao/sidergo/interface/response"
 )
 
 type ExecCommandFunc func(conn conn.Conn, db *RedisDB, args [][]byte) response.Response

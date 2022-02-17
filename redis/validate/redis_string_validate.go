@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/chenjiayao/goredistraning/helper"
-	"github.com/chenjiayao/goredistraning/interface/conn"
-	"github.com/chenjiayao/goredistraning/redis"
-	"github.com/chenjiayao/goredistraning/redis/rediserr"
+	"github.com/chenjiayao/sidergo/helper"
+	"github.com/chenjiayao/sidergo/interface/conn"
+	"github.com/chenjiayao/sidergo/redis"
+	"github.com/chenjiayao/sidergo/redis/rediserr"
 )
 
 //set key value [EX seconds] [PX milliseconds] [NX|XX]

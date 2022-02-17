@@ -1,6 +1,6 @@
 package sortedset
 
-import "github.com/chenjiayao/goredistraning/lib/border"
+import "github.com/chenjiayao/sidergo/lib/border"
 
 type SortedSet struct {
 	skipList *SkipList           //排序方式 order by score asc, member asc

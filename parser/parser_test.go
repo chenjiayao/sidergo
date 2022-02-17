@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/chenjiayao/goredistraning/redis/request"
+	"github.com/chenjiayao/sidergo/redis/request"
 )
 
 func TestParseFromSocket(t *testing.T) {

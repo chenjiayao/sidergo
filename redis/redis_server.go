@@ -7,15 +7,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/chenjiayao/goredistraning/config"
-	"github.com/chenjiayao/goredistraning/interface/conn"
-	"github.com/chenjiayao/goredistraning/interface/response"
-	"github.com/chenjiayao/goredistraning/interface/server"
-	"github.com/chenjiayao/goredistraning/lib/atomic"
-	"github.com/chenjiayao/goredistraning/lib/list"
-	"github.com/chenjiayao/goredistraning/lib/logger"
-	"github.com/chenjiayao/goredistraning/parser"
-	"github.com/chenjiayao/goredistraning/redis/resp"
+	"github.com/chenjiayao/sidergo/config"
+	"github.com/chenjiayao/sidergo/interface/conn"
+	"github.com/chenjiayao/sidergo/interface/response"
+	"github.com/chenjiayao/sidergo/interface/server"
+	"github.com/chenjiayao/sidergo/lib/atomic"
+	"github.com/chenjiayao/sidergo/lib/list"
+	"github.com/chenjiayao/sidergo/lib/logger"
+	"github.com/chenjiayao/sidergo/parser"
+	"github.com/chenjiayao/sidergo/redis/resp"
 )
 
 var _ server.Server = &RedisServer{}

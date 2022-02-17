@@ -4,12 +4,12 @@ import (
 	"io"
 	"os"
 
-	"github.com/chenjiayao/goredistraning/config"
-	"github.com/chenjiayao/goredistraning/interface/response"
-	"github.com/chenjiayao/goredistraning/interface/server"
-	"github.com/chenjiayao/goredistraning/lib/logger"
-	"github.com/chenjiayao/goredistraning/lib/unboundedchan"
-	"github.com/chenjiayao/goredistraning/redis/resp"
+	"github.com/chenjiayao/sidergo/config"
+	"github.com/chenjiayao/sidergo/interface/response"
+	"github.com/chenjiayao/sidergo/interface/server"
+	"github.com/chenjiayao/sidergo/lib/logger"
+	"github.com/chenjiayao/sidergo/lib/unboundedchan"
+	"github.com/chenjiayao/sidergo/redis/resp"
 )
 
 // redis aof 属于写后日志，先写内存，再写日志

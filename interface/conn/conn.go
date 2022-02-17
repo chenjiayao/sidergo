@@ -3,7 +3,7 @@ package conn
 import (
 	"time"
 
-	"github.com/chenjiayao/goredistraning/interface/response"
+	"github.com/chenjiayao/sidergo/interface/response"
 )
 
 type Conn interface {

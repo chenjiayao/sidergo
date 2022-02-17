@@ -3,12 +3,12 @@ package datatype
 import (
 	"strconv"
 
-	"github.com/chenjiayao/goredistraning/config"
-	"github.com/chenjiayao/goredistraning/interface/conn"
-	"github.com/chenjiayao/goredistraning/interface/response"
-	"github.com/chenjiayao/goredistraning/redis"
-	"github.com/chenjiayao/goredistraning/redis/resp"
-	"github.com/chenjiayao/goredistraning/redis/validate"
+	"github.com/chenjiayao/sidergo/config"
+	"github.com/chenjiayao/sidergo/interface/conn"
+	"github.com/chenjiayao/sidergo/interface/response"
+	"github.com/chenjiayao/sidergo/redis"
+	"github.com/chenjiayao/sidergo/redis/resp"
+	"github.com/chenjiayao/sidergo/redis/validate"
 )
 
 func init() {

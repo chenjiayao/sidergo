@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/chenjiayao/goredistraning/lib/dict"
-	"github.com/chenjiayao/goredistraning/redis"
-	"github.com/chenjiayao/goredistraning/redis/resp"
+	"github.com/chenjiayao/sidergo/lib/dict"
+	"github.com/chenjiayao/sidergo/redis"
+	"github.com/chenjiayao/sidergo/redis/resp"
 )
 
 func TestExecSet(t *testing.T) {

@@ -3,8 +3,8 @@ package cluster
 import (
 	"net"
 
-	"github.com/chenjiayao/goredistraning/interface/server"
-	"github.com/chenjiayao/goredistraning/redis"
+	"github.com/chenjiayao/sidergo/interface/server"
+	"github.com/chenjiayao/sidergo/redis"
 )
 
 /*

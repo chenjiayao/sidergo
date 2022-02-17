@@ -1,12 +1,12 @@
 package datatype
 
 import (
-	"github.com/chenjiayao/goredistraning/interface/conn"
-	"github.com/chenjiayao/goredistraning/interface/response"
-	"github.com/chenjiayao/goredistraning/lib/set"
-	"github.com/chenjiayao/goredistraning/redis"
-	"github.com/chenjiayao/goredistraning/redis/resp"
-	"github.com/chenjiayao/goredistraning/redis/validate"
+	"github.com/chenjiayao/sidergo/interface/conn"
+	"github.com/chenjiayao/sidergo/interface/response"
+	"github.com/chenjiayao/sidergo/lib/set"
+	"github.com/chenjiayao/sidergo/redis"
+	"github.com/chenjiayao/sidergo/redis/resp"
+	"github.com/chenjiayao/sidergo/redis/validate"
 )
 
 // TODO set 中很多操作达不到 redis 的时间复杂度，这里先做功能实现，后续再考虑性能优化

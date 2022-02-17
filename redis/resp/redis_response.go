@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/chenjiayao/goredistraning/interface/response"
+	"github.com/chenjiayao/sidergo/interface/response"
 )
 
 var _ response.Response = RedisErrorResponse{}

@@ -3,13 +3,13 @@ package main
 import (
 	"os"
 
-	"github.com/chenjiayao/goredistraning"
-	"github.com/chenjiayao/goredistraning/cluster"
-	"github.com/chenjiayao/goredistraning/config"
-	"github.com/chenjiayao/goredistraning/interface/server"
-	"github.com/chenjiayao/goredistraning/lib/logger"
-	"github.com/chenjiayao/goredistraning/redis"
-	_ "github.com/chenjiayao/goredistraning/redis/datatype"
+	goredistraning "github.com/chenjiayao/sidergo"
+	"github.com/chenjiayao/sidergo/cluster"
+	"github.com/chenjiayao/sidergo/config"
+	"github.com/chenjiayao/sidergo/interface/server"
+	"github.com/chenjiayao/sidergo/lib/logger"
+	"github.com/chenjiayao/sidergo/redis"
+	_ "github.com/chenjiayao/sidergo/redis/datatype"
 )
 
 func main() {

@@ -5,7 +5,7 @@ import (
 	"io"
 	"strconv"
 
-	"github.com/chenjiayao/goredistraning/redis/request"
+	"github.com/chenjiayao/sidergo/redis/request"
 )
 
 func ReadCommand(reader io.Reader) chan request.RedisRequet {
