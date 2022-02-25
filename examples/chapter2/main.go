@@ -56,6 +56,10 @@ func main() {
 	}
 }
 
+/*
+ 为了这个实例代码后续可直接服用到 sidergo 项目中
+ 这里额外开一个 goroutine 解析，把解析的结果放到 chan 中传递
+*/
 func ReadCommand(reader net.Conn) chan RedisRequet {
 	ch := make(chan RedisRequet)
 	go ParseFromSocket(reader, ch)
