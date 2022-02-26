@@ -66,7 +66,7 @@ func ReadCommand(reader net.Conn) chan RedisRequet {
 	return ch
 }
 
-func ParseFromSocket(reader io.Reader, ch chan RedisRequet) {
+func ParseFromSocket(reader net.Conn, ch chan RedisRequet) { //attention：这里的 reader 正确类型应该 io.Reader
 	buf := bufio.NewReader(reader)
 
 	for {
