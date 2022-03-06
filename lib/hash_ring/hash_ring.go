@@ -25,7 +25,12 @@ type HashRing struct {
 
 func MakeHashRing(replic int) *HashRing {
 
-	return nil
+	return &HashRing{
+		replica:    3,
+		nodeMap:    make(map[int]string),
+		hashedKeys: make([]int, 0),
+	}
+
 }
 
 // key ===> 返回所以在服务器的 IP:port
@@ -48,5 +53,9 @@ func (hash *HashRing) AddNode(node string) {
 	for i := 0; i < hash.replica; i++ {
 		hashValue := int(crc32.ChecksumIEEE([]byte(strconv.Itoa(i) + node)))
 		hash.nodeMap[hashValue] = node
+
+		hash.hashedKeys = append(hash.hashedKeys, hashValue)
 	}
+
+	sort.Ints(hash.hashedKeys) //排序
 }
