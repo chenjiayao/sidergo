@@ -4,6 +4,7 @@ import (
 	"net"
 
 	"github.com/chenjiayao/sidergo/interface/server"
+	"github.com/chenjiayao/sidergo/lib/hashring"
 	"github.com/chenjiayao/sidergo/redis"
 )
 
@@ -25,8 +26,9 @@ func (node *Node) IsSelf(n *Node) bool {
 }
 
 type Cluster struct {
-	self  *Node   //当前 node 节点
-	peers []*Node // 集群其他节点
+	self     *Node   //当前 node 节点
+	peers    []*Node // 集群其他节点
+	hashRing *hashring.HashRing
 }
 
 func (cluster *Cluster) Handle(conn net.Conn) {
