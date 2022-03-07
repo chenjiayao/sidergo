@@ -1,11 +1,19 @@
 package cluster
 
 import (
+	"fmt"
+	"io"
 	"net"
+	"strings"
 
+	"github.com/chenjiayao/sidergo/config"
+	"github.com/chenjiayao/sidergo/interface/response"
 	"github.com/chenjiayao/sidergo/interface/server"
 	"github.com/chenjiayao/sidergo/lib/hashring"
+	"github.com/chenjiayao/sidergo/lib/logger"
+	"github.com/chenjiayao/sidergo/parser"
 	"github.com/chenjiayao/sidergo/redis"
+	"github.com/chenjiayao/sidergo/redis/resp"
 )
 
 /*
@@ -20,31 +28,128 @@ type Node struct {
 	RedisServer *redis.RedisServer
 }
 
+func MakeNode(ip string) *Node {
+	return &Node{
+		IPAddress:   ip,
+		RedisServer: nil,
+	}
+}
+
 ///两个 node 节点是否为同一个节点
-func (node *Node) IsSelf(n *Node) bool {
-	return node.IPAddress == n.IPAddress
+func (node *Node) IsSelf(ipPortPair string) bool {
+	return node.IPAddress == ipPortPair
 }
 
 type Cluster struct {
-	self     *Node   //当前 node 节点
-	peers    []*Node // 集群其他节点
-	hashRing *hashring.HashRing
-}
-
-func (cluster *Cluster) Handle(conn net.Conn) {
-
-}
-
-func (cluster *Cluster) Close() error {
-	cluster.self.RedisServer.Close()
-	return nil
-}
-
-func (cluster *Cluster) Log() {
-	cluster.self.RedisServer.Log()
+	Self     *Node   //当前 node 节点
+	Peers    []*Node // 集群其他节点
+	HashRing *hashring.HashRing
 }
 
 func MakeCluster() *Cluster {
 
+	cluster := &Cluster{
+		HashRing: hashring.MakeHashRing(3),
+		Peers:    make([]*Node, len(config.Config.Nodes)),
+	}
+
+	cluster.Self = MakeNode(config.Config.Self)
+	cluster.Self.RedisServer = redis.MakeRedisServer()
+
+	for i := 0; i < len(config.Config.Nodes); i++ {
+		node := MakeNode(config.Config.Nodes[i])
+		cluster.Peers[i] = node
+	}
+	return cluster
+}
+
+/**
+1. key 在hash ring 获取节点位置
+2. cluster 判断是否在当前节点，如果是直接当前节点处理
+3. 如果不是，那么 tcp 转发到对应节点
+4. 要考虑分布式事务的处理：MGET，forearch 所有 key 到各个 node 处理，
+5. 要考虑 MSET 命令的处理，不可以存在一部分 key set 成功，一部分 set 失败
+*/
+func (cluster *Cluster) Handle(conn net.Conn) {
+
+	redisClient := redis.MakeRedisConn(conn)
+	ch := parser.ReadCommand(conn)
+	for request := range ch {
+		if request.Err != nil {
+			if request.Err == io.EOF {
+				cluster.closeClient(redisClient)
+				return
+			}
+
+			errResponse := resp.MakeErrorResponse(request.Err.Error())
+			err := redisClient.Write(errResponse.ToErrorByte()) //返回执行命令失败，close client
+			if err != nil {
+				logger.Info("response failed: " + redisClient.RemoteAddress())
+				cluster.closeClient(redisClient)
+				return
+			}
+		}
+		cmdName := cluster.parseCommand(request.Args)
+
+		fn, ok := clusterCommandRouter[cmdName]
+		if !ok {
+			errResp := resp.MakeErrorResponse(fmt.Sprintf("ERR unknown command `%s`, with args beginning with:", cmdName))
+			cluster.sendResponse(redisClient, errResp)
+			continue
+		}
+
+		resp := fn(cluster, request.Args[1:])
+		err := cluster.sendResponse(redisClient, resp)
+		if err == io.EOF {
+			break
+		}
+	}
+}
+
+func (cluster *Cluster) sendResponse(redisClient *RedisConn, res response.Response) error {
+	var err error
+	if _, ok := res.(resp.RedisErrorResponse); ok {
+		err = redisClient.Write(res.ToErrorByte())
+	} else {
+		err = redisClient.Write(res.ToContentByte())
+	}
+	if err == io.EOF {
+		redisServer.closeClient(redisClient)
+	}
+	return err
+}
+
+//从请求数据中解析出 redis 命令
+func (cluster *Cluster) parseCommand(cmd [][]byte) string {
+	cmdName := string(cmd[0])
+	return strings.ToLower(cmdName)
+}
+
+//  根据 key 定位到 node
+func (cluster *Cluster) PickNode(key string) string {
+	ipPortPair := cluster.HashRing.Hit(key)
+	return ipPortPair
+
+}
+
+func (cluster *Cluster) closeClient(client *redis.RedisConn) {
+	logger.Info(fmt.Sprintf("client %s closed", client.RemoteAddress()))
+	client.Close()
+}
+
+func (cluster *Cluster) Close() error {
+	cluster.Self.RedisServer.Close()
 	return nil
 }
+
+func (cluster *Cluster) Log() {
+	cluster.Self.RedisServer.Log()
+}
+
+/*
+
+1. mset 要么全部失败，要么全部成功，这个要看看分布式事务
+2. mget，mset 命令有多个 key，需要多次 hashring.hit
+3. 事务命令   --> 要测试下如果是集群情况下的事务，redis 的表现是怎样的
+4. 没有参数的命令
+*/
