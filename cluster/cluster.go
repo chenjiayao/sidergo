@@ -89,17 +89,26 @@ func (cluster *Cluster) Handle(conn net.Conn) {
 				return
 			}
 		}
-		cmdName := cluster.parseCommand(request.Args)
 
-		fn, ok := clusterCommandRouter[cmdName]
+		cmdName := cluster.parseCommand(request.Args)
+		command, ok := clusterCommandRouter[cmdName]
 		if !ok {
 			errResp := resp.MakeErrorResponse(fmt.Sprintf("ERR unknown command `%s`, with args beginning with:", cmdName))
 			cluster.sendResponse(redisClient, errResp)
 			continue
 		}
+		err := command.ValidateFunc(redisClient, request.Args[1:])
+		if err != nil {
+			errResp := resp.MakeErrorResponse(err.Error())
+			err := cluster.sendResponse(redisClient, errResp)
+			if err == io.EOF {
+				break
+			}
+			continue
+		}
 
-		resp := fn(cluster, request.Args[1:])
-		err := cluster.sendResponse(redisClient, resp)
+		res := command.CommandFunc(cluster, request.Args)
+		err = cluster.sendResponse(redisClient, res)
 		if err == io.EOF {
 			break
 		}
