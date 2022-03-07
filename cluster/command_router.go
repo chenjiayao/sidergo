@@ -4,12 +4,25 @@ import (
 	"strings"
 
 	"github.com/chenjiayao/sidergo/interface/response"
+	"github.com/chenjiayao/sidergo/redis"
 )
 
 type ClusterExecCommandFunc func(cluster *Cluster, args [][]byte) response.Response
+type ClusterValidateFunc redis.ValidateDBCmdArgsFunc
 
-var clusterCommandRouter = make(map[string]ClusterExecCommandFunc)
+type ClusterCommand struct {
+	CmdName      string
+	CommandFunc  ClusterExecCommandFunc
+	ValidateFunc ClusterValidateFunc
+}
 
-func RegisterClusterExecCommand(cmdName string, fn ClusterExecCommandFunc) {
-	clusterCommandRouter[strings.ToLower(cmdName)] = fn
+var clusterCommandRouter = make(map[string]ClusterCommand)
+
+func RegisterClusterExecCommand(cmdName string, execFn ClusterExecCommandFunc, validateFn redis.ValidateDBCmdArgsFunc) {
+	cmdName = strings.ToLower(cmdName)
+	clusterCommandRouter[cmdName] = ClusterCommand{
+		CmdName:      cmdName,
+		ValidateFunc: ClusterValidateFunc(validateFn),
+		CommandFunc:  execFn,
+	}
 }
