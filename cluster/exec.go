@@ -1,8 +1,11 @@
 package cluster
 
 import (
+	"strings"
+
 	"github.com/chenjiayao/sidergo/interface/response"
 	"github.com/chenjiayao/sidergo/redis"
+	"github.com/chenjiayao/sidergo/redis/resp"
 )
 
 func init() {
@@ -17,15 +20,29 @@ func init() {
 */
 func defaultExec(cluster *Cluster, args [][]byte) response.Response {
 
-	return nil
+	cmdName := strings.ToLower(string(args[0]))
+	ipPortPair := cluster.PickNode(cmdName)
+	if cluster.Self.IsSelf(ipPortPair) {
+		// cluster.Self.RedisServer.
+		//TODO这里应该转发给 redisServer 执行命令
+	} else {
+		return nil
+	}
 }
 
 // mget key1 key2 key3
 func ExecMget(cluster *Cluster, args [][]byte) response.Response {
 	argsWithoutCmdName := args[1:]
+	resps := make([]response.Response, len(argsWithoutCmdName)/2)
 	for i := 0; i < len(argsWithoutCmdName); i += 2 {
+		getCommand := [][]byte{
+			[]byte("get"),
+			argsWithoutCmdName[i],
+			argsWithoutCmdName[i+1],
+		}
+		resps = append(resps, defaultExec(cluster, getCommand))
 	}
-	return nil
+	return resp.MakeArrayResponse(resps)
 }
 
 func ExecMset(cluster *Cluster, args [][]byte) response.Response {
