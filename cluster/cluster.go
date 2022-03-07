@@ -106,7 +106,7 @@ func (cluster *Cluster) Handle(conn net.Conn) {
 	}
 }
 
-func (cluster *Cluster) sendResponse(redisClient *RedisConn, res response.Response) error {
+func (cluster *Cluster) sendResponse(redisClient *redis.RedisConn, res response.Response) error {
 	var err error
 	if _, ok := res.(resp.RedisErrorResponse); ok {
 		err = redisClient.Write(res.ToErrorByte())
@@ -114,7 +114,7 @@ func (cluster *Cluster) sendResponse(redisClient *RedisConn, res response.Respon
 		err = redisClient.Write(res.ToContentByte())
 	}
 	if err == io.EOF {
-		redisServer.closeClient(redisClient)
+		cluster.closeClient(redisClient)
 	}
 	return err
 }
