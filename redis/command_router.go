@@ -106,6 +106,7 @@ const (
 var (
 	CommandTables = make(map[string]Command)
 
+	//写命令，用来判断 aof log
 	WriteCommands = map[string]string{
 		Set:       "",
 		Setnx:     "",
@@ -149,7 +150,7 @@ type Command struct {
 	ValidateFunc RedisExecValidateFunc
 }
 
-func RegisterExecCommand(cmdName string, commandFunc RedisExecCommandFunc, validateFunc RedisExecValidateFunc) {
+func RegisterRedisCommand(cmdName string, commandFunc RedisExecCommandFunc, validateFunc RedisExecValidateFunc) {
 
 	cmdName = strings.ToLower(cmdName)
 	CommandTables[cmdName] = Command{

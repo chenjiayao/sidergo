@@ -16,27 +16,27 @@ import (
 
 func init() {
 
-	redis.RegisterExecCommand(redis.Llen, ExecLLen, validate.ValidateLLen)
-	redis.RegisterExecCommand(redis.Lindex, ExecLIndex, validate.ValidateLIndex)
-	redis.RegisterExecCommand(redis.Ltrim, ExecLtrim, validate.ValidateLTrim)
+	redis.RegisterRedisCommand(redis.Llen, ExecLLen, validate.ValidateLLen)
+	redis.RegisterRedisCommand(redis.Lindex, ExecLIndex, validate.ValidateLIndex)
+	redis.RegisterRedisCommand(redis.Ltrim, ExecLtrim, validate.ValidateLTrim)
 
-	redis.RegisterExecCommand(redis.Lrange, ExecLrange, validate.ValidateLrange)
-	redis.RegisterExecCommand(redis.Linsert, ExecLinsert, validate.ValidateLInsert)
+	redis.RegisterRedisCommand(redis.Lrange, ExecLrange, validate.ValidateLrange)
+	redis.RegisterRedisCommand(redis.Linsert, ExecLinsert, validate.ValidateLInsert)
 
-	redis.RegisterExecCommand(redis.Lset, ExecLset, validate.ValidateLset)
-	redis.RegisterExecCommand(redis.Lrem, ExecLrem, validate.ValidateLrem)
+	redis.RegisterRedisCommand(redis.Lset, ExecLset, validate.ValidateLset)
+	redis.RegisterRedisCommand(redis.Lrem, ExecLrem, validate.ValidateLrem)
 
-	redis.RegisterExecCommand(redis.Lpush, ExecLPush, validate.ValidateLPush)
-	redis.RegisterExecCommand(redis.Rpush, ExecRPush, validate.ValidateRPush)
+	redis.RegisterRedisCommand(redis.Lpush, ExecLPush, validate.ValidateLPush)
+	redis.RegisterRedisCommand(redis.Rpush, ExecRPush, validate.ValidateRPush)
 
-	redis.RegisterExecCommand(redis.Lpop, ExecLPop, validate.ValidateLPop)
-	redis.RegisterExecCommand(redis.Rpop, ExecRpop, validate.ValidateRPop)
+	redis.RegisterRedisCommand(redis.Lpop, ExecLPop, validate.ValidateLPop)
+	redis.RegisterRedisCommand(redis.Rpop, ExecRpop, validate.ValidateRPop)
 
-	redis.RegisterExecCommand(redis.Blpop, ExecBlpop, validate.ValidateBlpop)
-	redis.RegisterExecCommand(redis.Brpop, ExecBrpop, validate.ValidateBrpop)
+	redis.RegisterRedisCommand(redis.Blpop, ExecBlpop, validate.ValidateBlpop)
+	redis.RegisterRedisCommand(redis.Brpop, ExecBrpop, validate.ValidateBrpop)
 
-	redis.RegisterExecCommand(redis.Rpushx, ExecRPushx, validate.ValidateRPushx)
-	redis.RegisterExecCommand(redis.Lpushx, ExecLPushx, validate.ValidateLPushx)
+	redis.RegisterRedisCommand(redis.Rpushx, ExecRPushx, validate.ValidateRPushx)
+	redis.RegisterRedisCommand(redis.Lpushx, ExecLPushx, validate.ValidateLPushx)
 
 }
 

@@ -15,16 +15,16 @@ import (
 )
 
 func init() {
-	redis.RegisterExecCommand(redis.ZADD, ExecZadd, validate.ValidateZadd)
-	redis.RegisterExecCommand(redis.ZCARD, ExecZcard, validate.ValidateZcard)
-	redis.RegisterExecCommand(redis.ZCOUNT, ExecZcount, validate.ValidateZcount)
-	redis.RegisterExecCommand(redis.ZRANK, ExecZrank, validate.ValidateZrank)
-	redis.RegisterExecCommand(redis.ZREVRANK, ExecZRevrank, validate.ValidateZrevrank)
-	redis.RegisterExecCommand(redis.ZREM, ExecZrem, validate.ValidateZrem)
-	redis.RegisterExecCommand(redis.ZSCORE, ExecZscore, validate.ValidateZscore)
-	redis.RegisterExecCommand(redis.ZINCRBY, ExecZincrby, validate.ValidateIncrBy)
-	redis.RegisterExecCommand(redis.ZRANGE, ExecZrange, validate.ValidateZrange)
-	redis.RegisterExecCommand(redis.ZREVRANGE, ExecZrevrange, validate.ValidateZrevrange)
+	redis.RegisterRedisCommand(redis.ZADD, ExecZadd, validate.ValidateZadd)
+	redis.RegisterRedisCommand(redis.ZCARD, ExecZcard, validate.ValidateZcard)
+	redis.RegisterRedisCommand(redis.ZCOUNT, ExecZcount, validate.ValidateZcount)
+	redis.RegisterRedisCommand(redis.ZRANK, ExecZrank, validate.ValidateZrank)
+	redis.RegisterRedisCommand(redis.ZREVRANK, ExecZRevrank, validate.ValidateZrevrank)
+	redis.RegisterRedisCommand(redis.ZREM, ExecZrem, validate.ValidateZrem)
+	redis.RegisterRedisCommand(redis.ZSCORE, ExecZscore, validate.ValidateZscore)
+	redis.RegisterRedisCommand(redis.ZINCRBY, ExecZincrby, validate.ValidateIncrBy)
+	redis.RegisterRedisCommand(redis.ZRANGE, ExecZrange, validate.ValidateZrange)
+	redis.RegisterRedisCommand(redis.ZREVRANGE, ExecZrevrange, validate.ValidateZrevrange)
 }
 
 func ExecZrevrange(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {

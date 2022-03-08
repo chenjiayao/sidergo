@@ -31,12 +31,12 @@ SUNIONSTORE
 SSCAN
 */
 func init() {
-	redis.RegisterExecCommand(redis.Sdiff, ExecSdiff, validate.ValidateSdiff)
-	redis.RegisterExecCommand(redis.Sismember, ExecSismember, validate.ValidateSismember)
-	redis.RegisterExecCommand(redis.Spop, ExecSpop, validate.ValidateSpop)
-	redis.RegisterExecCommand(redis.Sadd, ExecSadd, validate.ValidateSadd)
-	redis.RegisterExecCommand(redis.Scard, ExecScard, validate.ValidateScard)
-	redis.RegisterExecCommand(redis.Smembers, ExecSmembers, validate.ValidateSmembers)
+	redis.RegisterRedisCommand(redis.Sdiff, ExecSdiff, validate.ValidateSdiff)
+	redis.RegisterRedisCommand(redis.Sismember, ExecSismember, validate.ValidateSismember)
+	redis.RegisterRedisCommand(redis.Spop, ExecSpop, validate.ValidateSpop)
+	redis.RegisterRedisCommand(redis.Sadd, ExecSadd, validate.ValidateSadd)
+	redis.RegisterRedisCommand(redis.Scard, ExecScard, validate.ValidateScard)
+	redis.RegisterRedisCommand(redis.Smembers, ExecSmembers, validate.ValidateSmembers)
 
 }
 

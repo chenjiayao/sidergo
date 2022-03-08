@@ -16,10 +16,10 @@ const (
 )
 
 func init() {
-	redis.RegisterExecCommand(redis.Ttl, ExecTTL, validate.ValidateTtl)
-	redis.RegisterExecCommand(redis.Expire, ExecExpire, validate.ValidateExpire)
-	redis.RegisterExecCommand(redis.Del, ExecDel, validate.ValidateDel)
-	redis.RegisterExecCommand(redis.Rename, ExecRename, validate.ValidateRename)
+	redis.RegisterRedisCommand(redis.Ttl, ExecTTL, validate.ValidateTtl)
+	redis.RegisterRedisCommand(redis.Expire, ExecExpire, validate.ValidateExpire)
+	redis.RegisterRedisCommand(redis.Del, ExecDel, validate.ValidateDel)
+	redis.RegisterRedisCommand(redis.Rename, ExecRename, validate.ValidateRename)
 }
 
 /**

@@ -12,10 +12,10 @@ import (
 )
 
 func init() {
-	redis.RegisterExecCommand(redis.Auth, ExecAuth, validate.ValidateAuth)
-	redis.RegisterExecCommand(redis.Select, ExecSelect, validate.ValidateSelect)
-	redis.RegisterExecCommand(redis.Persist, ExecPersist, validate.ValidatePersist)
-	redis.RegisterExecCommand(redis.Exist, ExecExist, validate.ValidateExist)
+	redis.RegisterRedisCommand(redis.Auth, ExecAuth, validate.ValidateAuth)
+	redis.RegisterRedisCommand(redis.Select, ExecSelect, validate.ValidateSelect)
+	redis.RegisterRedisCommand(redis.Persist, ExecPersist, validate.ValidatePersist)
+	redis.RegisterRedisCommand(redis.Exist, ExecExist, validate.ValidateExist)
 }
 func ExecExist(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 	key := string(args[0])

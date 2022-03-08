@@ -21,18 +21,18 @@ hash 的数据结构保存为
 */
 func init() {
 
-	redis.RegisterExecCommand(redis.HSET, ExecHset, validate.ValidateHset)
-	redis.RegisterExecCommand(redis.HGET, ExecHget, validate.ValidateHget)
-	redis.RegisterExecCommand(redis.HDEL, ExecHdel, validate.ValidateHdel)
-	redis.RegisterExecCommand(redis.HEXISTS, ExecHexists, validate.ValidateHexists)
-	redis.RegisterExecCommand(redis.HGETALL, ExecHgetall, validate.ValidateHgetall)
-	redis.RegisterExecCommand(redis.HINCRBY, ExecIncrBy, validate.ValidateIncrBy)
-	redis.RegisterExecCommand(redis.HKEYS, ExecHkeys, validate.ValidateHkeys)
-	redis.RegisterExecCommand(redis.HLEN, ExecHlen, validate.ValidateHlen)
-	redis.RegisterExecCommand(redis.HMGET, ExecHmget, validate.ValidateHmget)
-	redis.RegisterExecCommand(redis.HMSET, ExecHmget, validate.ValidateHmset)
-	redis.RegisterExecCommand(redis.HSETNX, ExecHsetnx, validate.ValidateHsetnx)
-	redis.RegisterExecCommand(redis.HVALS, ExecHvals, validate.ValidateHvals)
+	redis.RegisterRedisCommand(redis.HSET, ExecHset, validate.ValidateHset)
+	redis.RegisterRedisCommand(redis.HGET, ExecHget, validate.ValidateHget)
+	redis.RegisterRedisCommand(redis.HDEL, ExecHdel, validate.ValidateHdel)
+	redis.RegisterRedisCommand(redis.HEXISTS, ExecHexists, validate.ValidateHexists)
+	redis.RegisterRedisCommand(redis.HGETALL, ExecHgetall, validate.ValidateHgetall)
+	redis.RegisterRedisCommand(redis.HINCRBY, ExecIncrBy, validate.ValidateIncrBy)
+	redis.RegisterRedisCommand(redis.HKEYS, ExecHkeys, validate.ValidateHkeys)
+	redis.RegisterRedisCommand(redis.HLEN, ExecHlen, validate.ValidateHlen)
+	redis.RegisterRedisCommand(redis.HMGET, ExecHmget, validate.ValidateHmget)
+	redis.RegisterRedisCommand(redis.HMSET, ExecHmget, validate.ValidateHmset)
+	redis.RegisterRedisCommand(redis.HSETNX, ExecHsetnx, validate.ValidateHsetnx)
+	redis.RegisterRedisCommand(redis.HVALS, ExecHvals, validate.ValidateHvals)
 
 }
 
