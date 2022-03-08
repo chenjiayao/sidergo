@@ -7,11 +7,10 @@ import (
 	"github.com/chenjiayao/sidergo/interface/response"
 )
 
-type ExecCommandFunc func(conn conn.Conn, db *RedisDB, args [][]byte) response.Response
-type ValidateDBCmdArgsFunc func(conn conn.Conn, args [][]byte) error
+type RedisExecCommandFunc func(conn conn.Conn, db *RedisDB, args [][]byte) response.Response
+type RedisExecValidateFunc func(conn conn.Conn, args [][]byte) error
 
 const (
-
 	//
 	HDEL         = "hdel"
 	HEXISTS      = "hexists"
@@ -97,7 +96,6 @@ const (
 	Discard = "discard"
 	Watch   = "watch"
 	Exec    = "exec"
-
 	Auth    = "auth"
 	Select  = "select"
 	Ttl     = "ttl"
@@ -147,11 +145,11 @@ var (
 
 type Command struct {
 	CmdName      string
-	CommandFunc  ExecCommandFunc
-	ValidateFunc ValidateDBCmdArgsFunc
+	CommandFunc  RedisExecCommandFunc
+	ValidateFunc RedisExecValidateFunc
 }
 
-func RegisterExecCommand(cmdName string, commandFunc ExecCommandFunc, validateFunc ValidateDBCmdArgsFunc) {
+func RegisterExecCommand(cmdName string, commandFunc RedisExecCommandFunc, validateFunc RedisExecValidateFunc) {
 
 	cmdName = strings.ToLower(cmdName)
 	CommandTables[cmdName] = Command{
