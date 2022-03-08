@@ -8,7 +8,7 @@ import (
 )
 
 type ClusterExecCommandFunc func(cluster *Cluster, args [][]byte) response.Response
-type ClusterExecValidateFunc redis.ValidateDBCmdArgsFunc
+type ClusterExecValidateFunc redis.RedisExecValidateFunc
 
 type ClusterCommand struct {
 	CmdName      string
@@ -23,7 +23,7 @@ var (
 	}
 )
 
-func RegisterClusterExecCommand(cmdName string, execFn ClusterExecCommandFunc, validateFn redis.ValidateDBCmdArgsFunc) {
+func RegisterClusterExecCommand(cmdName string, execFn ClusterExecCommandFunc, validateFn redis.RedisExecValidateFunc) {
 	cmdName = strings.ToLower(cmdName)
 	clusterCommandRouter[cmdName] = ClusterCommand{
 		CmdName:      cmdName,
