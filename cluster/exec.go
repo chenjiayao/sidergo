@@ -25,6 +25,7 @@ func defaultExec(cluster *Cluster, args [][]byte) response.Response {
 	if cluster.Self.IsSelf(ipPortPair) {
 		// cluster.Self.RedisServer.
 		//TODO这里应该转发给 redisServer 执行命令
+		return nil
 	} else {
 		return nil
 	}
