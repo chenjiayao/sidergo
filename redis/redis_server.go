@@ -142,13 +142,13 @@ func (redisServer *RedisServer) Handle(conn net.Conn) {
 	ch := parser.ReadCommand(conn)
 	//chan close 掉之后， range 直接退出
 	for request := range ch {
-		if request.Err != nil {
-			if request.Err == io.EOF {
+		if request.GetErr() != nil {
+			if request.GetErr() == io.EOF {
 				redisServer.closeClient(redisClient)
 				return
 			}
 
-			errResponse := resp.MakeErrorResponse(request.Err.Error())
+			errResponse := resp.MakeErrorResponse(request.GetErr().Error())
 			err := redisClient.Write(errResponse.ToErrorByte()) //返回执行命令失败，close client
 			if err != nil {
 				logger.Info("response failed: " + redisClient.RemoteAddress())
@@ -157,15 +157,15 @@ func (redisServer *RedisServer) Handle(conn net.Conn) {
 			}
 		}
 
-		if len(request.Args) == 0 {
+		if len(request.GetArgs()) == 0 {
 			continue
 		}
 
-		res := redisServer.Exec(redisClient, &request)
+		res := redisServer.Exec(redisClient, request)
 
 		err := redisServer.sendResponse(redisClient, res)
 		if res.ISOK() && config.Config.Appendonly {
-			redisServer.aofHandler.LogCmd(request.Args)
+			redisServer.aofHandler.LogCmd(request.GetArgs())
 		}
 
 		if err == io.EOF {

@@ -17,7 +17,8 @@ type ClusterCommand struct {
 }
 
 var (
-	clusterCommandRouter   = make(map[string]ClusterCommand)
+	clusterCommandRouter = make(map[string]ClusterCommand)
+
 	directValidateCommands = map[string]string{
 		redis.Mget: "",
 	}

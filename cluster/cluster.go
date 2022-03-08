@@ -72,6 +72,7 @@ func (cluster *Cluster) Exec(conn conn.Conn, request request.Request) response.R
 		errResp := resp.MakeErrorResponse(fmt.Sprintf("ERR unknown command `%s`, with args beginning with:", cmdName))
 		return errResp
 	}
+
 	//在集群模式下，某些命令要重写逻辑，这部分命令就需要做 validate
 	_, ok = directValidateCommands[cmdName]
 	if ok {
@@ -98,13 +99,13 @@ func (cluster *Cluster) Handle(conn net.Conn) {
 	redisClient := redis.MakeRedisConn(conn)
 	ch := parser.ReadCommand(conn)
 	for request := range ch {
-		if request.Err != nil {
-			if request.Err == io.EOF {
+		if request.GetErr() != nil {
+			if request.GetErr() == io.EOF {
 				cluster.closeClient(redisClient)
 				return
 			}
 
-			errResponse := resp.MakeErrorResponse(request.Err.Error())
+			errResponse := resp.MakeErrorResponse(request.GetErr().Error())
 			err := redisClient.Write(errResponse.ToErrorByte()) //返回执行命令失败，close client
 			if err != nil {
 				logger.Info("response failed: " + redisClient.RemoteAddress())
@@ -113,8 +114,7 @@ func (cluster *Cluster) Handle(conn net.Conn) {
 			}
 		}
 
-		//FIXME &request
-		res := cluster.Exec(redisClient, &request)
+		res := cluster.Exec(redisClient, request)
 		err := cluster.sendResponse(redisClient, res)
 		if err == io.EOF {
 			break
@@ -122,7 +122,7 @@ func (cluster *Cluster) Handle(conn net.Conn) {
 	}
 }
 
-func (cluster *Cluster) sendResponse(redisClient *redis.RedisConn, res response.Response) error {
+func (cluster *Cluster) sendResponse(redisClient conn.Conn, res response.Response) error {
 	var err error
 	if _, ok := res.(resp.RedisErrorResponse); ok {
 		err = redisClient.Write(res.ToErrorByte())
@@ -148,7 +148,7 @@ func (cluster *Cluster) PickNode(key string) string {
 
 }
 
-func (cluster *Cluster) closeClient(client *redis.RedisConn) {
+func (cluster *Cluster) closeClient(client conn.Conn) {
 	logger.Info(fmt.Sprintf("client %s closed", client.RemoteAddress()))
 	client.Close()
 }

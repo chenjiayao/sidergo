@@ -27,6 +27,10 @@ func (rr *RedisRequet) GetArgs() [][]byte {
 	return rr.Args
 }
 
+func (rr *RedisRequet) GetErr() error {
+	return rr.Err
+}
+
 var (
-	PROTOCOL_ERROR_REQUEST = RedisRequet{Err: errors.New("protocol error")}
+	PROTOCOL_ERROR_REQUEST = &RedisRequet{Err: errors.New("protocol error")}
 )

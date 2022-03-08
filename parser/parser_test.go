@@ -4,14 +4,14 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/chenjiayao/sidergo/redis/request"
+	"github.com/chenjiayao/sidergo/interface/request"
 )
 
 func TestParseFromSocket(t *testing.T) {
 
 	var buf bytes.Buffer
 	buf.Write([]byte("*3\r\n$3\r\nSET\r\n$3\r\nkey\r\n$5\r\nvalue\r\n"))
-	ch := make(chan request.RedisRequet)
+	ch := make(chan request.Request)
 	go ParseFromSocket(&buf, ch)
 
 	r := <-ch
