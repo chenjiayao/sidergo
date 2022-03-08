@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	"github.com/chenjiayao/sidergo/config"
+	"github.com/chenjiayao/sidergo/interface/conn"
+	"github.com/chenjiayao/sidergo/interface/request"
 	"github.com/chenjiayao/sidergo/interface/response"
 	"github.com/chenjiayao/sidergo/interface/server"
 	"github.com/chenjiayao/sidergo/lib/hashring"
@@ -63,6 +65,22 @@ func MakeCluster() *Cluster {
 	return cluster
 }
 
+func (cluster *Cluster) Exec(conn conn.Conn, request request.Request) response.Response {
+	cmdName := cluster.parseCommand(request.GetArgs())
+	command, ok := clusterCommandRouter[cmdName]
+	if !ok {
+		errResp := resp.MakeErrorResponse(fmt.Sprintf("ERR unknown command `%s`, with args beginning with:", cmdName))
+		return errResp
+	}
+	err := command.ValidateFunc(conn, request.GetArgs()[1:])
+	if err != nil {
+		errResp := resp.MakeErrorResponse(err.Error())
+		return errResp
+	}
+	res := command.CommandFunc(cluster, request.GetArgs())
+	return res
+}
+
 /**
 1. key 在hash ring 获取节点位置
 2. cluster 判断是否在当前节点，如果是直接当前节点处理
@@ -90,25 +108,9 @@ func (cluster *Cluster) Handle(conn net.Conn) {
 			}
 		}
 
-		cmdName := cluster.parseCommand(request.Args)
-		command, ok := clusterCommandRouter[cmdName]
-		if !ok {
-			errResp := resp.MakeErrorResponse(fmt.Sprintf("ERR unknown command `%s`, with args beginning with:", cmdName))
-			cluster.sendResponse(redisClient, errResp)
-			continue
-		}
-		err := command.ValidateFunc(redisClient, request.Args[1:])
-		if err != nil {
-			errResp := resp.MakeErrorResponse(err.Error())
-			err := cluster.sendResponse(redisClient, errResp)
-			if err == io.EOF {
-				break
-			}
-			continue
-		}
-
-		res := command.CommandFunc(cluster, request.Args)
-		err = cluster.sendResponse(redisClient, res)
+		//FIXME &request
+		res := cluster.Exec(redisClient, &request)
+		err := cluster.sendResponse(redisClient, res)
 		if err == io.EOF {
 			break
 		}
@@ -161,4 +163,5 @@ func (cluster *Cluster) Log() {
 2. mget，mset 命令有多个 key，需要多次 hashring.hit
 3. 事务命令   --> 要测试下如果是集群情况下的事务，redis 的表现是怎样的
 4. 没有参数的命令
+5. 共享登陆状态
 */

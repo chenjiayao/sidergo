@@ -9,6 +9,7 @@ import (
 
 	"github.com/chenjiayao/sidergo/config"
 	"github.com/chenjiayao/sidergo/interface/conn"
+	"github.com/chenjiayao/sidergo/interface/request"
 	"github.com/chenjiayao/sidergo/interface/response"
 	"github.com/chenjiayao/sidergo/interface/server"
 	"github.com/chenjiayao/sidergo/lib/atomic"
@@ -156,37 +157,13 @@ func (redisServer *RedisServer) Handle(conn net.Conn) {
 			}
 		}
 
-		var res response.Response
-		var err error
-
 		if len(request.Args) == 0 {
 			continue
 		}
 
-		cmd := request.Args
-		cmdName := redisServer.parseCommand(cmd)
-		args := cmd[1:]
+		res := redisServer.Exec(redisClient, &request)
 
-		if cmdName != "auth" && !redisServer.isAuthenticated(redisClient) {
-			res = resp.MakeErrorResponse("NOAUTH Authentication required")
-			err := redisServer.sendResponse(redisClient, res)
-			if err == io.EOF {
-				break
-			}
-			continue
-		}
-
-		selectedDBIndex := redisClient.GetSelectedDBIndex()
-		selectedDB := redisServer.rds.DBs[selectedDBIndex]
-
-		res = selectedDB.Exec(redisClient, cmdName, args)
-
-		//返回空，表示 conn 执行的是阻塞命令，当前链接被阻塞
-		if res == nil {
-			res = redisClient.GetBlockingResponse()
-		}
-
-		err = redisServer.sendResponse(redisClient, res)
+		err := redisServer.sendResponse(redisClient, res)
 		if res.ISOK() && config.Config.Appendonly {
 			redisServer.aofHandler.LogCmd(request.Args)
 		}
@@ -197,12 +174,36 @@ func (redisServer *RedisServer) Handle(conn net.Conn) {
 	}
 }
 
-//FIXME 如果没有设置密码，那么任意密码都可以登录，这里需要改下
-func (redisServer *RedisServer) isAuthenticated(redisClient *RedisConn) bool {
-	return config.Config.RequirePass == redisClient.GetPassword()
+func (redisServer *RedisServer) Exec(conn conn.Conn, request request.Request) response.Response {
+	var res response.Response
+
+	cmd := request.GetArgs()
+	cmdName := redisServer.parseCommand(cmd)
+	args := cmd[1:]
+
+	if cmdName != "auth" && !redisServer.isAuthenticated(conn) {
+		res = resp.MakeErrorResponse("NOAUTH Authentication required")
+		return res
+	}
+
+	selectedDBIndex := conn.GetSelectedDBIndex()
+	selectedDB := redisServer.rds.DBs[selectedDBIndex]
+
+	res = selectedDB.Exec(conn, cmdName, args)
+
+	//返回空，表示 conn 执行的是阻塞命令，当前链接被阻塞
+	if res == nil {
+		res = conn.GetBlockingResponse()
+	}
+	return res
 }
 
-func (redisServer *RedisServer) sendResponse(redisClient *RedisConn, res response.Response) error {
+//FIXME 如果没有设置密码，那么任意密码都可以登录，这里需要改下
+func (redisServer *RedisServer) isAuthenticated(conn conn.Conn) bool {
+	return config.Config.RequirePass == conn.GetPassword()
+}
+
+func (redisServer *RedisServer) sendResponse(redisClient conn.Conn, res response.Response) error {
 	var err error
 	if _, ok := res.(resp.RedisErrorResponse); ok {
 		err = redisClient.Write(res.ToErrorByte())
@@ -222,7 +223,7 @@ func (redisServer *RedisServer) parseCommand(cmd [][]byte) string {
 }
 
 // closeClient
-func (redisServer *RedisServer) closeClient(client *RedisConn) {
+func (redisServer *RedisServer) closeClient(client conn.Conn) {
 	logger.Info(fmt.Sprintf("client %s closed", client.RemoteAddress()))
 	client.Close()
 }

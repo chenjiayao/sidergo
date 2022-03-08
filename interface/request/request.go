@@ -1,5 +1,6 @@
 package request
 
 type Request interface {
-	ToStrings() []string
+	ToStrings() string
+	GetArgs() [][]byte
 }
