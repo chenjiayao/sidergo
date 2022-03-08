@@ -72,11 +72,16 @@ func (cluster *Cluster) Exec(conn conn.Conn, request request.Request) response.R
 		errResp := resp.MakeErrorResponse(fmt.Sprintf("ERR unknown command `%s`, with args beginning with:", cmdName))
 		return errResp
 	}
-	err := command.ValidateFunc(conn, request.GetArgs()[1:])
-	if err != nil {
-		errResp := resp.MakeErrorResponse(err.Error())
-		return errResp
+	//在集群模式下，某些命令要重写逻辑，这部分命令就需要做 validate
+	_, ok = directValidateCommands[cmdName]
+	if ok {
+		err := command.ValidateFunc(conn, request.GetArgs()[1:])
+		if err != nil {
+			errResp := resp.MakeErrorResponse(err.Error())
+			return errResp
+		}
 	}
+
 	res := command.CommandFunc(cluster, request.GetArgs())
 	return res
 }

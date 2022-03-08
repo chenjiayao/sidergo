@@ -16,7 +16,12 @@ type ClusterCommand struct {
 	ValidateFunc ClusterValidateFunc
 }
 
-var clusterCommandRouter = make(map[string]ClusterCommand)
+var (
+	clusterCommandRouter   = make(map[string]ClusterCommand)
+	directValidateCommands = map[string]string{
+		redis.Mget: "",
+	}
+)
 
 func RegisterClusterExecCommand(cmdName string, execFn ClusterExecCommandFunc, validateFn redis.ValidateDBCmdArgsFunc) {
 	cmdName = strings.ToLower(cmdName)
