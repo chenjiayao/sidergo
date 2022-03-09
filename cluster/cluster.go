@@ -83,7 +83,7 @@ func (cluster *Cluster) Exec(conn conn.Conn, request request.Request) response.R
 		}
 	}
 
-	res := command.CommandFunc(cluster, request.GetArgs())
+	res := command.CommandFunc(cluster, conn, request.GetArgs())
 	return res
 }
 
@@ -141,13 +141,6 @@ func (cluster *Cluster) parseCommand(cmd [][]byte) string {
 	return strings.ToLower(cmdName)
 }
 
-//  根据 key 定位到 node
-func (cluster *Cluster) PickNode(key string) string {
-	ipPortPair := cluster.HashRing.Hit(key)
-	return ipPortPair
-
-}
-
 func (cluster *Cluster) closeClient(client conn.Conn) {
 	logger.Info(fmt.Sprintf("client %s closed", client.RemoteAddress()))
 	client.Close()
@@ -169,4 +162,5 @@ func (cluster *Cluster) Log() {
 3. 事务命令   --> 要测试下如果是集群情况下的事务，redis 的表现是怎样的
 4. 没有参数的命令
 5. 共享登陆状态
+6. 在发送命令之前，需要先发送 select 命令
 */
