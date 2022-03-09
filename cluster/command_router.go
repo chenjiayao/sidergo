@@ -3,11 +3,12 @@ package cluster
 import (
 	"strings"
 
+	"github.com/chenjiayao/sidergo/interface/conn"
 	"github.com/chenjiayao/sidergo/interface/response"
 	"github.com/chenjiayao/sidergo/redis"
 )
 
-type ClusterExecCommandFunc func(cluster *Cluster, args [][]byte) response.Response
+type ClusterExecCommandFunc func(cluster *Cluster, conn conn.Conn, args [][]byte) response.Response
 type ClusterExecValidateFunc redis.RedisExecValidateFunc
 
 type ClusterCommand struct {
@@ -19,6 +20,7 @@ type ClusterCommand struct {
 var (
 	clusterCommandRouter = make(map[string]ClusterCommand)
 
+	//需要直接在当前 node 做 validate 的命令
 	directValidateCommands = map[string]string{
 		redis.Mget: "",
 	}
