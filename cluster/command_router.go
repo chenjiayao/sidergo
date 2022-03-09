@@ -17,6 +17,29 @@ type ClusterCommand struct {
 	ValidateFunc ClusterExecValidateFunc
 }
 
+/**
+需要重新的命令
+routerMap["ping"] = ping
+routerMap["prepare"] = execPrepare
+routerMap["commit"] = execCommit
+routerMap["rollback"] = execRollback
+routerMap["del"] = Del
+routerMap["rename"] = Rename
+routerMap["renamenx"] = RenameNx
+routerMap["mset"] = MSet
+routerMap["mget"] = MGet
+routerMap["msetnx"] = MSetNX
+routerMap["publish"] = Publish
+routerMap[relayPublish] = onRelayedPublish
+routerMap["subscribe"] = Subscribe
+routerMap["unsubscribe"] = UnSubscribe
+
+routerMap["flushdb"] = FlushDB
+routerMap["flushall"] = FlushAll
+routerMap[relayMulti] = execRelayedMulti
+routerMap["watch"] = execWatch
+*/
+
 var (
 	clusterCommandRouter = make(map[string]ClusterCommand)
 
