@@ -162,12 +162,7 @@ func (redisServer *RedisServer) Handle(conn net.Conn) {
 		}
 
 		res := redisServer.Exec(redisClient, request)
-
 		err := redisServer.sendResponse(redisClient, res)
-		if res.ISOK() && config.Config.Appendonly {
-			redisServer.aofHandler.LogCmd(request.GetArgs())
-		}
-
 		if err == io.EOF {
 			break
 		}
@@ -195,6 +190,11 @@ func (redisServer *RedisServer) Exec(conn conn.Conn, request request.Request) re
 	if res == nil {
 		res = conn.GetBlockingResponse()
 	}
+
+	if res.ISOK() && config.Config.Appendonly {
+		redisServer.aofHandler.LogCmd(request.GetArgs())
+	}
+
 	return res
 }
 
