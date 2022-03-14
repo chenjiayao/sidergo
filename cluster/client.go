@@ -37,6 +37,7 @@ func makeClient(ipPortPair string) *client {
 	if err != nil {
 		c = &client{
 			ipPortPair: ipPortPair,
+			conn:       nil,
 		}
 	} else {
 		c = &client{
@@ -104,7 +105,7 @@ func (c *client) heartbeat() {
 }
 
 func (c *client) isServerOnline() bool {
-	return c.conn != nil && c.conn.RemoteAddr().String() != ""
+	return c != nil && c.conn != nil
 }
 
 func (c *client) IsIdle() bool {
