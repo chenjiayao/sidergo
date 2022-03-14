@@ -47,6 +47,7 @@ func makeClient(ipPortPair string) *client {
 		}
 	}
 	c.Start()
+
 	return c
 }
 
@@ -105,7 +106,7 @@ func (c *client) heartbeat() {
 }
 
 func (c *client) isServerOnline() bool {
-	return c != nil && c.conn != nil
+	return c.conn != nil
 }
 
 func (c *client) IsIdle() bool {

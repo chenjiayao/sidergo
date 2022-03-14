@@ -73,7 +73,7 @@ func MakeCluster() *Cluster {
 		cluster.ClientPools[ipPortPair] = make([]*client, 5)
 		for i := 0; i < 5; i++ {
 			nc := makeClient(ipPortPair)
-			cluster.ClientPools[ipPortPair] = append(cluster.ClientPools[ipPortPair], nc)
+			cluster.ClientPools[ipPortPair][i] = nc
 		}
 	}
 
