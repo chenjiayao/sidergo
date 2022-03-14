@@ -18,3 +18,4 @@ logs/*.log
 go-redis-training
 datadir/appendonly.aof
 redis.aof
+sidergo
