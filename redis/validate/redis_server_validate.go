@@ -50,3 +50,10 @@ func ValidateExist(conn conn.Conn, args [][]byte) error {
 	}
 	return nil
 }
+
+func ValidatePing(conn conn.Conn, args [][]byte) error {
+	if len(args) > 1 {
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Ping)
+	}
+	return nil
+}

@@ -7,13 +7,16 @@ import (
 	"github.com/chenjiayao/sidergo/cluster"
 	"github.com/chenjiayao/sidergo/config"
 	"github.com/chenjiayao/sidergo/interface/server"
-	"github.com/chenjiayao/sidergo/lib/logger"
+	"github.com/sirupsen/logrus"
+
 	"github.com/chenjiayao/sidergo/redis"
 	_ "github.com/chenjiayao/sidergo/redis/datatype"
 )
 
 func main() {
-	logger.Setting()
+
+	logrus.SetLevel(logrus.TraceLevel)
+	logrus.SetReportCaller(true)
 
 	configFile := os.Getenv("REDIS_CONFIG")
 	if configFile == "" {

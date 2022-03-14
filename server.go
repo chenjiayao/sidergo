@@ -7,17 +7,14 @@ import (
 
 	"github.com/chenjiayao/sidergo/config"
 	"github.com/chenjiayao/sidergo/interface/server"
-	"github.com/chenjiayao/sidergo/lib/logger"
 )
 
 func ListenAndServe(server server.Server) {
 
 	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", config.Config.Bind, config.Config.Port))
 	if err != nil {
-		logger.Fatal("start listen failed : ", err)
 	}
 
-	logger.Info(fmt.Sprintf("start listen %s", listener.Addr().String()))
 	if config.Config.Appendonly {
 		server.Log()
 	}
@@ -34,7 +31,6 @@ func ListenAndServe(server server.Server) {
 		if err != nil {
 			break
 		}
-		logger.Info("accept link")
 		waitGroup.Add(1)
 
 		go func() {

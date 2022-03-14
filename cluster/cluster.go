@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"strings"
 
 	"github.com/chenjiayao/sidergo/config"
 	"github.com/chenjiayao/sidergo/interface/conn"
@@ -12,7 +11,8 @@ import (
 	"github.com/chenjiayao/sidergo/interface/response"
 	"github.com/chenjiayao/sidergo/interface/server"
 	"github.com/chenjiayao/sidergo/lib/hashring"
-	"github.com/chenjiayao/sidergo/lib/logger"
+	"github.com/sirupsen/logrus"
+
 	"github.com/chenjiayao/sidergo/parser"
 	"github.com/chenjiayao/sidergo/redis"
 	"github.com/chenjiayao/sidergo/redis/resp"
@@ -46,44 +46,59 @@ type Cluster struct {
 	Self     *Node   //当前 node 节点
 	Peers    []*Node // 集群其他节点
 	HashRing *hashring.HashRing
+
+	ClientPools map[string][]*client
 }
 
 func MakeCluster() *Cluster {
 
 	cluster := &Cluster{
-		HashRing: hashring.MakeHashRing(3),
-		Peers:    make([]*Node, len(config.Config.Nodes)),
+		HashRing:    hashring.MakeHashRing(3),
+		Peers:       make([]*Node, len(config.Config.Nodes)),
+		ClientPools: make(map[string][]*client, len(config.Config.Nodes)),
 	}
 
 	cluster.Self = MakeNode(config.Config.Self)
 	cluster.Self.RedisServer = redis.MakeRedisServer()
 
 	for i := 0; i < len(config.Config.Nodes); i++ {
-		node := MakeNode(config.Config.Nodes[i])
+		ipPortPair := config.Config.Nodes[i]
+
+		node := MakeNode(ipPortPair)
 		cluster.Peers[i] = node
+
+		//给每个 node 配置一个
+		cluster.ClientPools[ipPortPair] = make([]*client, 5)
+		for i := 0; i < 5; i++ {
+			nc := makeClient(ipPortPair)
+			cluster.ClientPools[ipPortPair] = append(cluster.ClientPools[ipPortPair], nc)
+		}
 	}
+
 	return cluster
 }
 
 func (cluster *Cluster) Exec(conn conn.Conn, request request.Request) response.Response {
-	cmdName := cluster.parseCommand(request.GetArgs())
+	logrus.Info("get command from cluster : ", request.ToStrings())
+
+	cmdName := request.GetCmdName()
 	command, ok := clusterCommandRouter[cmdName]
 	if !ok {
 		errResp := resp.MakeErrorResponse(fmt.Sprintf("ERR unknown command `%s`, with args beginning with:", cmdName))
 		return errResp
 	}
 
-	//在集群模式下，某些命令要重写逻辑，这部分命令就需要做 validate
+	//在集群模式下，某些命令不是直接转发或者在当前 node 执行，而是要重写逻辑，这部分命令就需要做 validate
 	_, ok = directValidateCommands[cmdName]
 	if ok {
-		err := command.ValidateFunc(conn, request.GetArgs()[1:])
+		err := command.ValidateFunc(conn, request.GetArgs())
 		if err != nil {
 			errResp := resp.MakeErrorResponse(err.Error())
 			return errResp
 		}
 	}
 
-	res := command.CommandFunc(cluster, conn, request.GetArgs())
+	res := command.CommandFunc(cluster, conn, cmdName, request.GetArgs())
 	return res
 }
 
@@ -108,10 +123,12 @@ func (cluster *Cluster) Handle(conn net.Conn) {
 			errResponse := resp.MakeErrorResponse(request.GetErr().Error())
 			err := redisClient.Write(errResponse.ToErrorByte()) //返回执行命令失败，close client
 			if err != nil {
-				logger.Info("response failed: " + redisClient.RemoteAddress())
 				cluster.closeClient(redisClient)
 				return
 			}
+		}
+		if request.ToStrings() == "" {
+			continue
 		}
 
 		res := cluster.Exec(redisClient, request)
@@ -135,25 +152,15 @@ func (cluster *Cluster) sendResponse(redisClient conn.Conn, res response.Respons
 	return err
 }
 
-//从请求数据中解析出 redis 命令
-func (cluster *Cluster) parseCommand(cmd [][]byte) string {
-	cmdName := string(cmd[0])
-	return strings.ToLower(cmdName)
-}
-
 func (cluster *Cluster) closeClient(client conn.Conn) {
-	logger.Info(fmt.Sprintf("client %s closed", client.RemoteAddress()))
 	client.Close()
 }
 
 func (cluster *Cluster) Close() error {
-	cluster.Self.RedisServer.Close()
 	return nil
 }
 
-func (cluster *Cluster) Log() {
-	cluster.Self.RedisServer.Log()
-}
+func (cluster *Cluster) Log() {}
 
 /*
 
@@ -164,3 +171,15 @@ func (cluster *Cluster) Log() {
 5. 共享登陆状态
 6. 在发送命令之前，需要先发送 select 命令
 */
+
+func (cluster *Cluster) PeekIdleClient(ipPortPair string) *client {
+	clientPool := cluster.ClientPools[ipPortPair]
+
+	for {
+		for i := 0; i < len(clientPool); i++ {
+			if clientPool[i].IsIdle() {
+				return clientPool[i]
+			}
+		}
+	}
+}

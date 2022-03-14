@@ -1,10 +1,8 @@
 package redis
 
 import (
-	"fmt"
 	"io"
 	"net"
-	"strings"
 	"time"
 
 	"github.com/chenjiayao/sidergo/config"
@@ -14,7 +12,6 @@ import (
 	"github.com/chenjiayao/sidergo/interface/server"
 	"github.com/chenjiayao/sidergo/lib/atomic"
 	"github.com/chenjiayao/sidergo/lib/list"
-	"github.com/chenjiayao/sidergo/lib/logger"
 	"github.com/chenjiayao/sidergo/parser"
 	"github.com/chenjiayao/sidergo/redis/resp"
 )
@@ -151,7 +148,6 @@ func (redisServer *RedisServer) Handle(conn net.Conn) {
 			errResponse := resp.MakeErrorResponse(request.GetErr().Error())
 			err := redisClient.Write(errResponse.ToErrorByte()) //返回执行命令失败，close client
 			if err != nil {
-				logger.Info("response failed: " + redisClient.RemoteAddress())
 				redisServer.closeClient(redisClient)
 				return
 			}
@@ -172,9 +168,8 @@ func (redisServer *RedisServer) Handle(conn net.Conn) {
 func (redisServer *RedisServer) Exec(conn conn.Conn, request request.Request) response.Response {
 	var res response.Response
 
-	cmd := request.GetArgs()
-	cmdName := redisServer.parseCommand(cmd)
-	args := cmd[1:]
+	args := request.GetArgs()
+	cmdName := request.GetCmdName()
 
 	if cmdName != "auth" && !redisServer.isAuthenticated(conn) {
 		res = resp.MakeErrorResponse("NOAUTH Authentication required")
@@ -216,20 +211,12 @@ func (redisServer *RedisServer) sendResponse(redisClient conn.Conn, res response
 	return err
 }
 
-//从请求数据中解析出 redis 命令
-func (redisServer *RedisServer) parseCommand(cmd [][]byte) string {
-	cmdName := string(cmd[0])
-	return strings.ToLower(cmdName)
-}
-
 // closeClient
 func (redisServer *RedisServer) closeClient(client conn.Conn) {
-	logger.Info(fmt.Sprintf("client %s closed", client.RemoteAddress()))
 	client.Close()
 }
 
 func (redisServer *RedisServer) Close() error {
-	logger.Info("server close....")
 	redisServer.aofHandler.EndAof()
 	return nil
 }

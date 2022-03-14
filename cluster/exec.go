@@ -8,6 +8,7 @@ import (
 	"github.com/chenjiayao/sidergo/redis"
 	redisRequest "github.com/chenjiayao/sidergo/redis/request"
 	"github.com/chenjiayao/sidergo/redis/resp"
+	"github.com/chenjiayao/sidergo/redis/validate"
 )
 
 func init() {
@@ -63,6 +64,18 @@ func init() {
 	RegisterClusterExecCommand(redis.Sismember, defaultExec, nil)
 	RegisterClusterExecCommand(redis.Scard, defaultExec, nil)
 	RegisterClusterExecCommand(redis.Smembers, defaultExec, nil)
+
+	RegisterClusterExecCommand(redis.Ping, ExecPing, validate.ValidatePing)
+}
+
+func ExecPing(cluster *Cluster, conn conn.Conn, cmdName string, args [][]byte) response.Response {
+
+	message := "PONG"
+	if len(args) > 0 {
+		message = string(args[0])
+	}
+
+	return resp.MakeMultiResponse(message)
 }
 
 /*
@@ -73,16 +86,21 @@ func init() {
 
 	注意，default 的命令中 key 只有一个
 */
-func defaultExec(cluster *Cluster, conn conn.Conn, args [][]byte) response.Response {
+func defaultExec(cluster *Cluster, conn conn.Conn, cmdName string, args [][]byte) response.Response {
 
 	key := strings.ToLower(string(args[1]))
 	ipPortPair := cluster.HashRing.Hit(key)
+	req := &redisRequest.RedisRequet{
+		Args: args,
+	}
 	if cluster.Self.IsSelf(ipPortPair) {
 		return cluster.Self.RedisServer.Exec(conn, &redisRequest.RedisRequet{
 			Args: args,
 		})
 	} else {
-		return nil
+		c := cluster.PeekIdleClient(ipPortPair)
+		ch := c.SendRequest(req)
+		return <-ch //chan 会一直阻塞直到有返回值
 	}
 }
 
@@ -96,7 +114,7 @@ func ExecMget(cluster *Cluster, conn conn.Conn, args [][]byte) response.Response
 			argsWithoutCmdName[i],
 			argsWithoutCmdName[i+1],
 		}
-		resps = append(resps, defaultExec(cluster, conn, getCommand))
+		resps = append(resps, defaultExec(cluster, conn, "get", getCommand))
 	}
 	return resp.MakeArrayResponse(resps)
 }

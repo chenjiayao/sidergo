@@ -4,4 +4,6 @@ type Request interface {
 	ToStrings() string
 	GetArgs() [][]byte
 	GetErr() error
+	ToByte() []byte
+	GetCmdName() string
 }

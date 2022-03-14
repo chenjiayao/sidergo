@@ -7,7 +7,6 @@ import (
 	"github.com/chenjiayao/sidergo/config"
 	"github.com/chenjiayao/sidergo/interface/response"
 	"github.com/chenjiayao/sidergo/interface/server"
-	"github.com/chenjiayao/sidergo/lib/logger"
 	"github.com/chenjiayao/sidergo/lib/unboundedchan"
 	"github.com/chenjiayao/sidergo/redis/resp"
 )
@@ -43,7 +42,6 @@ func (h *AofHandler) writeToAofFile(cmd [][]byte) {
 
 	_, err := h.aofFile.Write(arrayResponse.ToContentByte())
 	if err != nil {
-		logger.Info("write aof failed :", err.Error())
 	}
 }
 

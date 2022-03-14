@@ -31,6 +31,7 @@ func LoadConfig(filename string) {
 	}
 	defer file.Close()
 	Config = parseConfig(file)
+
 }
 
 func LoadDefaultConfig() {

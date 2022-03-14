@@ -8,7 +8,7 @@ import (
 	"github.com/chenjiayao/sidergo/redis"
 )
 
-type ClusterExecCommandFunc func(cluster *Cluster, conn conn.Conn, args [][]byte) response.Response
+type ClusterExecCommandFunc func(cluster *Cluster, conn conn.Conn, cmdName string, args [][]byte) response.Response
 type ClusterExecValidateFunc redis.RedisExecValidateFunc
 
 type ClusterCommand struct {
@@ -39,6 +39,13 @@ routerMap["flushall"] = FlushAll
 routerMap[relayMulti] = execRelayedMulti
 routerMap["watch"] = execWatch
 */
+/**
+
+命令分为 3 个部分
+1. 根据 hash 定位到 node ，正常执行
+2. 命令也是定位到 node，但是命令会操作多个 key，这些 key 必须在同一个 node 中
+3. mget 之类的命令涉及到多个 node，这部分命令需要重写
+*/
 
 var (
 	clusterCommandRouter = make(map[string]ClusterCommand)
@@ -46,6 +53,7 @@ var (
 	//需要直接在当前 node 做 validate 的命令
 	directValidateCommands = map[string]string{
 		redis.Mget: "",
+		redis.Ping: "",
 	}
 )
 

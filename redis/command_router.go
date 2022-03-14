@@ -101,6 +101,8 @@ const (
 	Ttl     = "ttl"
 	Persist = "Persist"
 	Exist   = "Exist"
+
+	Ping = "ping"
 )
 
 var (

@@ -16,6 +16,7 @@ func init() {
 	redis.RegisterRedisCommand(redis.Select, ExecSelect, validate.ValidateSelect)
 	redis.RegisterRedisCommand(redis.Persist, ExecPersist, validate.ValidatePersist)
 	redis.RegisterRedisCommand(redis.Exist, ExecExist, validate.ValidateExist)
+	redis.RegisterRedisCommand(redis.Ping, ExecPing, validate.ValidatePing)
 }
 func ExecExist(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 	key := string(args[0])
@@ -52,4 +53,13 @@ func ExecSelect(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 	dbIndex, _ := strconv.Atoi(dbIndexStr)
 	conn.SetSelectedDBIndex(dbIndex)
 	return resp.OKSimpleResponse
+}
+
+func ExecPing(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
+
+	message := "PONG"
+	if len(args) > 0 {
+		message = string(args[0])
+	}
+	return resp.MakeMultiResponse(message)
 }
