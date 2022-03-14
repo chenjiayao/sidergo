@@ -10,13 +10,15 @@ import (
 var _ request.Request = &RedisRequet{}
 
 type RedisRequet struct {
-	Args [][]byte //args 本质上是一个字符串数组
-	Err  error    //从 socket 读取数据出错
+	CmdName string
+	Args    [][]byte //args 本质上是一个字符串数组，不包含 cmdName
+	Err     error    //从 socket 读取数据出错
 }
 
 func (rr *RedisRequet) ToStrings() string {
 
 	var builder strings.Builder
+	builder.WriteString(rr.CmdName + " ")
 	for _, v := range rr.Args {
 		builder.Write(append(v, ' '))
 	}
@@ -34,11 +36,12 @@ func (rr *RedisRequet) ToByte() []byte {
 }
 
 func (rr *RedisRequet) GetCmdName() string {
-	return string(rr.Args[0])
+	return rr.CmdName
 }
 
+//返回参数，不包括命令
 func (rr *RedisRequet) GetArgs() [][]byte {
-	return rr.Args[1:]
+	return rr.Args
 }
 
 func (rr *RedisRequet) GetErr() error {

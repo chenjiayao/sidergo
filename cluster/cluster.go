@@ -67,7 +67,9 @@ func MakeCluster() *Cluster {
 		node := MakeNode(ipPortPair)
 		cluster.Peers[i] = node
 
-		//给每个 node 配置一个
+		cluster.HashRing.AddNode(ipPortPair)
+
+		//给每个 ipport 配置若干个 client
 		cluster.ClientPools[ipPortPair] = make([]*client, 5)
 		for i := 0; i < 5; i++ {
 			nc := makeClient(ipPortPair)
@@ -82,6 +84,8 @@ func (cluster *Cluster) Exec(conn conn.Conn, request request.Request) response.R
 	logrus.Info("get command from cluster : ", request.ToStrings())
 
 	cmdName := request.GetCmdName()
+	args := request.GetArgs()
+
 	command, ok := clusterCommandRouter[cmdName]
 	if !ok {
 		errResp := resp.MakeErrorResponse(fmt.Sprintf("ERR unknown command `%s`, with args beginning with:", cmdName))
@@ -91,14 +95,14 @@ func (cluster *Cluster) Exec(conn conn.Conn, request request.Request) response.R
 	//在集群模式下，某些命令不是直接转发或者在当前 node 执行，而是要重写逻辑，这部分命令就需要做 validate
 	_, ok = directValidateCommands[cmdName]
 	if ok {
-		err := command.ValidateFunc(conn, request.GetArgs())
+		err := command.ValidateFunc(conn, args)
 		if err != nil {
 			errResp := resp.MakeErrorResponse(err.Error())
 			return errResp
 		}
 	}
 
-	res := command.CommandFunc(cluster, conn, cmdName, request.GetArgs())
+	res := command.CommandFunc(cluster, conn, cmdName, args)
 	return res
 }
 
@@ -156,6 +160,7 @@ func (cluster *Cluster) closeClient(client conn.Conn) {
 	client.Close()
 }
 
+//TODO 需要取消 clientPools 中所有的 client
 func (cluster *Cluster) Close() error {
 	return nil
 }

@@ -1,14 +1,13 @@
 package cluster
 
 import (
-	"strings"
-
 	"github.com/chenjiayao/sidergo/interface/conn"
 	"github.com/chenjiayao/sidergo/interface/response"
 	"github.com/chenjiayao/sidergo/redis"
 	redisRequest "github.com/chenjiayao/sidergo/redis/request"
 	"github.com/chenjiayao/sidergo/redis/resp"
 	"github.com/chenjiayao/sidergo/redis/validate"
+	"github.com/sirupsen/logrus"
 )
 
 func init() {
@@ -88,15 +87,15 @@ func ExecPing(cluster *Cluster, conn conn.Conn, cmdName string, args [][]byte) r
 */
 func defaultExec(cluster *Cluster, conn conn.Conn, cmdName string, args [][]byte) response.Response {
 
-	key := strings.ToLower(string(args[1]))
-	ipPortPair := cluster.HashRing.Hit(key)
+	ipPortPair := cluster.HashRing.Hit(cmdName)
 	req := &redisRequest.RedisRequet{
-		Args: args,
+		CmdName: cmdName,
+		Args:    args,
 	}
+	logrus.Info("选中的 node:", ipPortPair)
+
 	if cluster.Self.IsSelf(ipPortPair) {
-		return cluster.Self.RedisServer.Exec(conn, &redisRequest.RedisRequet{
-			Args: args,
-		})
+		return cluster.Self.RedisServer.Exec(conn, req)
 	} else {
 		c := cluster.PeekIdleClient(ipPortPair)
 		ch := c.SendRequest(req)

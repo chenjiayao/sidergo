@@ -91,7 +91,8 @@ func ParseFromSocket(reader io.Reader, ch chan request.Request) {
 		}
 
 		ch <- &req.RedisRequet{
-			Args: cmds,
+			Args:    cmds[1:],
+			CmdName: string(cmds[0]),
 		}
 	}
 }
