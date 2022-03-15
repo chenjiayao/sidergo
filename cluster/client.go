@@ -57,8 +57,6 @@ func (c *client) SendRequestWithTimeout(request request.Request, timeout time.Du
 	c.isIdle.Set(false)
 	defer c.isIdle.Set(true)
 
-	logrus.Info("send request to ", c.ipPortPair, " cmd is :", request.ToStrings())
-
 	var r response.Response
 
 	_, err := c.conn.Write(request.ToByte())
@@ -66,7 +64,7 @@ func (c *client) SendRequestWithTimeout(request request.Request, timeout time.Du
 		if err == io.EOF {
 			r = resp.MakeErrorResponse("server closed conn")
 		} else {
-			r = resp.MakeErrorResponse("unknow err")
+			r = resp.MakeErrorResponse(err.Error())
 		}
 		return r
 	}
@@ -80,7 +78,7 @@ func (c *client) SendRequestWithTimeout(request request.Request, timeout time.Du
 		return resp.MakeErrorResponse(err.Error())
 	}
 	r = resp.MakeReidsRawByteResponse(b)
-	logrus.Info("response ", r.ToStrings())
+	logrus.Info("response ", string(b))
 	return r
 }
 
@@ -207,6 +205,5 @@ func (c *client) isServerOnline() bool {
 }
 
 func (c *client) IsIdle() bool {
-	logrus.Info(c.isIdle.Get(), c.isServerOnline())
 	return c.isServerOnline() && c.isIdle.Get()
 }
