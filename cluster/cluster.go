@@ -61,7 +61,7 @@ func MakeCluster() *Cluster {
 	}
 
 	cluster.Self = MakeNode(config.Config.Self)
-	// cluster.HashRing.AddNode(config.Config.Self)
+	cluster.HashRing.AddNode(config.Config.Self)
 	cluster.Self.RedisServer = redis.MakeRedisServer()
 
 	for i := 0; i < len(config.Config.Nodes); i++ {
@@ -80,7 +80,6 @@ func MakeCluster() *Cluster {
 }
 
 func (cluster *Cluster) Exec(conn conn.Conn, request request.Request) response.Response {
-	logrus.Info("get command from cluster : ", request.ToStrings())
 
 	cmdName := request.GetCmdName()
 	args := request.GetArgs()
@@ -143,6 +142,7 @@ func (cluster *Cluster) Handle(conn net.Conn) {
 }
 
 func (cluster *Cluster) sendResponse(redisClient conn.Conn, res response.Response) error {
+
 	var err error
 	if _, ok := res.(resp.RedisErrorResponse); ok {
 		err = redisClient.Write(res.ToErrorByte())
