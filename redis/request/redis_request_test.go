@@ -7,15 +7,15 @@ import (
 func TestRedisRequet_ToStrings(t *testing.T) {
 
 	b := make([][]byte, 0)
-	b = append(b, []byte("GET"))
 	b = append(b, []byte("key"))
 
 	req := &RedisRequet{
-		Args: b,
-		Err:  nil,
+		CmdName: "get",
+		Args:    b,
+		Err:     nil,
 	}
 	got := req.ToStrings()
-	want := "GET key"
+	want := "*2\r\n$3\r\nget\r\n$3\r\nkey\r\n"
 
 	if got != want {
 		t.Errorf("req.ToStrings() = %s, want : %s", got, want)
@@ -23,11 +23,11 @@ func TestRedisRequet_ToStrings(t *testing.T) {
 }
 
 func TestRedisRequet_ToByte(t *testing.T) {
-	cmd := "*3\r\n$3\r\nget\r\n$3\r\nkey\r\n$5\r\nvalue\r\n"
+	cmd := "*3\r\n$3\r\nset\r\n$3\r\nkey\r\n$5\r\nvalue\r\n"
 	want := []byte(cmd)
 
 	req := &RedisRequet{
-		CmdName: "get",
+		CmdName: "set",
 		Args: [][]byte{
 			[]byte("key"),
 			[]byte("value"),
