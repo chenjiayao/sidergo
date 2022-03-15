@@ -2,6 +2,7 @@ package request
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/chenjiayao/sidergo/interface/request"
@@ -25,14 +26,34 @@ func (rr *RedisRequet) ToStrings() string {
 	return strings.TrimSpace(builder.String())
 }
 
-func (rr *RedisRequet) ToByte() []byte {
-	res := make([]byte, 0)
+/*
 
-	for _, v := range rr.Args {
-		res = append(res, v...)
-		res = append(res, []byte("\r\n")...)
+*2
+$6
+member
+$7
+member1
+
+*/
+func (rr *RedisRequet) ToByte() []byte {
+
+	var builder strings.Builder
+
+	arrLen := len(rr.Args) + 1
+	arrHeader := fmt.Sprintf("*%d\r\n", arrLen)
+	builder.WriteString(arrHeader)
+
+	cmd := fmt.Sprintf("$%d\r\n%s\r\n", len([]byte(rr.CmdName)), rr.CmdName)
+	builder.WriteString(cmd)
+
+	for i := 0; i < len(rr.Args); i++ {
+		itemHeader := fmt.Sprintf("$%d\r\n", len(rr.Args[i]))
+		item := fmt.Sprintf("%s%s\r\n", itemHeader, string(rr.Args[i]))
+		builder.WriteString(item)
 	}
-	return res
+
+	res := builder.String()
+	return []byte(res)
 }
 
 func (rr *RedisRequet) GetCmdName() string {
