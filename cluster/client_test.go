@@ -3,6 +3,9 @@ package cluster
 import (
 	"bytes"
 	"testing"
+	"time"
+
+	"github.com/chenjiayao/sidergo/redis/request"
 )
 
 func Test_client_parseMulti(t *testing.T) {
@@ -70,5 +73,19 @@ func Test_client_parseArray(t *testing.T) {
 
 	if want != gotString {
 		t.Errorf("test failed, got: %s", string(got))
+	}
+}
+
+func Test_client_SendRequestWithTimeout(t *testing.T) {
+	c := makeClient("localhost:3102")
+
+	req := &request.RedisRequet{
+		CmdName: "ping",
+	}
+	want := "$4\r\nPONG\r\n"
+	resp := c.SendRequestWithTimeout(req, time.Second)
+	gotStr := string(resp.ToContentByte())
+	if want != gotStr {
+		t.Errorf("test failed,got %s", gotStr)
 	}
 }
