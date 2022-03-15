@@ -1,12 +1,13 @@
 package cluster
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/chenjiayao/sidergo/interface/conn"
 	"github.com/chenjiayao/sidergo/interface/response"
 	"github.com/chenjiayao/sidergo/redis"
-	redisRequest "github.com/chenjiayao/sidergo/redis/request"
+	req "github.com/chenjiayao/sidergo/redis/request"
 	"github.com/chenjiayao/sidergo/redis/resp"
 	"github.com/chenjiayao/sidergo/redis/validate"
 	"github.com/sirupsen/logrus"
@@ -75,7 +76,6 @@ func ExecPing(cluster *Cluster, conn conn.Conn, cmdName string, args [][]byte) r
 	if len(args) > 0 {
 		message = string(args[0])
 	}
-
 	return resp.MakeMultiResponse(message)
 }
 
@@ -90,18 +90,26 @@ func ExecPing(cluster *Cluster, conn conn.Conn, cmdName string, args [][]byte) r
 func defaultExec(cluster *Cluster, conn conn.Conn, cmdName string, args [][]byte) response.Response {
 
 	ipPortPair := cluster.HashRing.Hit(cmdName)
-	req := &redisRequest.RedisRequet{
+	re := &req.RedisRequet{
 		CmdName: cmdName,
 		Args:    args,
 	}
-	logrus.Info("选中的 node:", ipPortPair)
+	logrus.Info("选中的 node:", ipPortPair, cluster.Self.IsSelf(ipPortPair))
 
 	if cluster.Self.IsSelf(ipPortPair) {
-		return cluster.Self.RedisServer.Exec(conn, req)
+		return cluster.Self.RedisServer.Exec(conn, re)
 	} else {
 		c := cluster.PeekIdleClient(ipPortPair)
 		logrus.Info("peek node as server : ", c.ipPortPair)
-		return c.SendRequestWithTimeout(req, 10*time.Second)
+
+		selectRequest := &req.RedisRequet{
+			CmdName: "select",
+			Args: [][]byte{
+				[]byte(fmt.Sprintf("%d", conn.GetSelectedDBIndex())),
+			},
+		}
+		c.SendRequestWithTimeout(selectRequest, 10*time.Second)
+		return c.SendRequestWithTimeout(re, 10*time.Second)
 	}
 }
 
