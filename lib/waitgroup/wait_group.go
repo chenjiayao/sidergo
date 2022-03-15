@@ -21,7 +21,6 @@ func (wg *WaitGroup) WaitWithTimeout(timeout time.Duration) bool {
 	case <-c:
 		return false
 	case <-time.After(timeout):
-		wg.wg.Done()
 		return true
 	}
 }
