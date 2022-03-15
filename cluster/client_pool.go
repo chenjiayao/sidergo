@@ -4,10 +4,12 @@ import (
 	"time"
 
 	req "github.com/chenjiayao/sidergo/redis/request"
+	"github.com/sirupsen/logrus"
 )
 
 type clientPool struct {
 	ipPortPair string
+	stopChan   chan struct{}
 	clients    []*client
 }
 
@@ -16,6 +18,7 @@ func MakeClientPool(ipPortPair string, num int) *clientPool {
 	pool := &clientPool{
 		ipPortPair: ipPortPair,
 		clients:    make([]*client, num),
+		stopChan:   make(chan struct{}),
 	}
 	for i := 0; i < num; i++ {
 		pool.clients[i] = makeClient(ipPortPair)
@@ -24,6 +27,10 @@ func MakeClientPool(ipPortPair string, num int) *clientPool {
 	pool.start()
 
 	return pool
+}
+
+func (pool *clientPool) destroy() {
+	pool.stopChan <- struct{}{}
 }
 
 func (pool *clientPool) start() {
@@ -47,10 +54,14 @@ func (pool *clientPool) heartbeat() {
 				} else if client.IsIdle() {
 					pingReq := &req.RedisRequet{
 						CmdName: "ping",
+						Args:    make([][]byte, 0),
 					}
-					client.SendRequestWithTimeout(pingReq, 15*time.Second)
+					r := client.SendRequestWithTimeout(pingReq, 15*time.Second)
+					logrus.Info("client pool heartbeat response : ", string(r.ToContentByte()))
 				}
 			}
+		case <-pool.stopChan:
+			return
 		}
 	}
 }

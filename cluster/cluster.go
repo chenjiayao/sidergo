@@ -161,6 +161,9 @@ func (cluster *Cluster) closeClient(client conn.Conn) {
 
 //TODO 需要取消 clientPools 中所有的 client
 func (cluster *Cluster) Close() error {
+	for _, pool := range cluster.Pool {
+		pool.destroy()
+	}
 	return nil
 }
 
