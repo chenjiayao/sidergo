@@ -29,6 +29,8 @@ type client struct {
 	ipPortPair string
 	conn       net.Conn
 	isIdle     atomic.Boolean //1/true是空闲，0/false是忙碌
+
+	stopChan chan struct{}
 }
 
 func makeClient(ipPortPair string) *client {
@@ -41,12 +43,14 @@ func makeClient(ipPortPair string) *client {
 			ipPortPair: ipPortPair,
 			conn:       nil,
 			isIdle:     atomic.Boolean(1),
+			stopChan:   make(chan struct{}),
 		}
 	} else {
 		c = &client{
 			conn:       n,
 			isIdle:     atomic.Boolean(1),
 			ipPortPair: ipPortPair,
+			stopChan:   make(chan struct{}),
 		}
 	}
 	return c
@@ -59,6 +63,7 @@ func (c *client) SendRequestWithTimeout(request request.Request, timeout time.Du
 
 	var r response.Response
 
+	logrus.Info("send command : ", string(request.ToByte()))
 	_, err := c.conn.Write(request.ToByte())
 	if err != nil {
 		if err == io.EOF {
@@ -78,7 +83,6 @@ func (c *client) SendRequestWithTimeout(request request.Request, timeout time.Du
 		return resp.MakeErrorResponse(err.Error())
 	}
 	r = resp.MakeReidsRawByteResponse(b)
-	logrus.Info("response ", string(b))
 	return r
 }
 
@@ -103,6 +107,9 @@ func (c *client) parse(reader io.Reader) ([]byte, error) {
 		resp, err = c.parseArray(reader)
 	case "-": //错误
 		resp, err = c.parseError(reader)
+	default:
+		resp = nil
+		err = errors.New("protocol err")
 	}
 	return resp, err
 }
@@ -206,4 +213,8 @@ func (c *client) isServerOnline() bool {
 
 func (c *client) IsIdle() bool {
 	return c.isServerOnline() && c.isIdle.Get()
+}
+
+func (c *client) Stop() {
+	c.stopChan <- struct{}{}
 }
