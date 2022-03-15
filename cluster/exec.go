@@ -1,6 +1,8 @@
 package cluster
 
 import (
+	"time"
+
 	"github.com/chenjiayao/sidergo/interface/conn"
 	"github.com/chenjiayao/sidergo/interface/response"
 	"github.com/chenjiayao/sidergo/redis"
@@ -98,8 +100,8 @@ func defaultExec(cluster *Cluster, conn conn.Conn, cmdName string, args [][]byte
 		return cluster.Self.RedisServer.Exec(conn, req)
 	} else {
 		c := cluster.PeekIdleClient(ipPortPair)
-		ch := c.SendRequest(req)
-		return <-ch //chan 会一直阻塞直到有返回值
+		logrus.Info("peek node as server : ", c.ipPortPair)
+		return c.SendRequestWithTimeout(req, 10*time.Second)
 	}
 }
 
