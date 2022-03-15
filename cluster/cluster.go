@@ -47,18 +47,21 @@ type Cluster struct {
 	Peers    []*Node // 集群其他节点
 	HashRing *hashring.HashRing
 
-	ClientPools map[string][]*client
+	Pool map[string]*clientPool
 }
 
 func MakeCluster() *Cluster {
 
+	logrus.Info("enable cluster")
 	cluster := &Cluster{
-		HashRing:    hashring.MakeHashRing(3),
-		Peers:       make([]*Node, len(config.Config.Nodes)),
-		ClientPools: make(map[string][]*client, len(config.Config.Nodes)),
+		HashRing: hashring.MakeHashRing(3),
+		Peers:    make([]*Node, len(config.Config.Nodes)),
+
+		Pool: make(map[string]*clientPool),
 	}
 
 	cluster.Self = MakeNode(config.Config.Self)
+	// cluster.HashRing.AddNode(config.Config.Self)
 	cluster.Self.RedisServer = redis.MakeRedisServer()
 
 	for i := 0; i < len(config.Config.Nodes); i++ {
@@ -70,11 +73,7 @@ func MakeCluster() *Cluster {
 		cluster.HashRing.AddNode(ipPortPair)
 
 		//给每个 ipport 配置若干个 client
-		cluster.ClientPools[ipPortPair] = make([]*client, 5)
-		for i := 0; i < 5; i++ {
-			nc := makeClient(ipPortPair)
-			cluster.ClientPools[ipPortPair][i] = nc
-		}
+		cluster.Pool[ipPortPair] = MakeClientPool(ipPortPair, 4)
 	}
 
 	return cluster
@@ -178,12 +177,13 @@ func (cluster *Cluster) Log() {}
 */
 
 func (cluster *Cluster) PeekIdleClient(ipPortPair string) *client {
-	clientPool := cluster.ClientPools[ipPortPair]
 
+	pool := cluster.Pool[ipPortPair]
 	for {
-		for i := 0; i < len(clientPool); i++ {
-			if clientPool[i].IsIdle() {
-				return clientPool[i]
+		for i := 0; i < len(pool.clients); i++ {
+			client := pool.clients[i]
+			if client.IsIdle() {
+				return client
 			}
 		}
 	}
