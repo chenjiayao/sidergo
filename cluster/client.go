@@ -1,15 +1,18 @@
 package cluster
 
 import (
+	"bufio"
+	"errors"
 	"io"
 	"net"
+	"strconv"
 	"time"
 
 	"github.com/chenjiayao/sidergo/interface/request"
 	"github.com/chenjiayao/sidergo/interface/response"
 	"github.com/chenjiayao/sidergo/lib/atomic"
-	req "github.com/chenjiayao/sidergo/redis/request"
 	"github.com/chenjiayao/sidergo/redis/resp"
+	"github.com/sirupsen/logrus"
 )
 
 /*
@@ -20,14 +23,12 @@ client 的作用是，将请求发送到对应的 node ，相当于这是一个 
 
 cluster 会维护有一个 map[ip:port]clients
 
-
 */
 
 type client struct {
 	ipPortPair string
 	conn       net.Conn
-	stopChan   chan struct{}
-	isIdle     atomic.Boolean
+	isIdle     atomic.Boolean //1/true是空闲，0/false是忙碌
 }
 
 func makeClient(ipPortPair string) *client {
@@ -35,9 +36,11 @@ func makeClient(ipPortPair string) *client {
 	var c *client
 	n, err := net.Dial("tcp", ipPortPair)
 	if err != nil {
+		logrus.Info("client to node server failed : ", err, ipPortPair)
 		c = &client{
 			ipPortPair: ipPortPair,
 			conn:       nil,
+			isIdle:     atomic.Boolean(1),
 		}
 	} else {
 		c = &client{
@@ -46,17 +49,15 @@ func makeClient(ipPortPair string) *client {
 			ipPortPair: ipPortPair,
 		}
 	}
-	c.Start()
-
 	return c
 }
 
-func (c *client) SendRequest(request request.Request) chan response.Response {
+func (c *client) SendRequestWithTimeout(request request.Request, timeout time.Duration) response.Response {
 
 	c.isIdle.Set(false)
 	defer c.isIdle.Set(true)
 
-	ch := make(chan response.Response)
+	logrus.Info("send request to ", c.ipPortPair, " cmd is :", request.ToStrings())
 
 	var r response.Response
 
@@ -67,42 +68,138 @@ func (c *client) SendRequest(request request.Request) chan response.Response {
 		} else {
 			r = resp.MakeErrorResponse("unknow err")
 		}
-		ch <- r
-		return ch
+		return r
 	}
 
-	r = resp.MakeMultiResponse(c.conn.RemoteAddr().String())
-	ch <- r
-	return ch
+	b, err := c.parse(c.conn)
+	if err != nil {
+		if err == io.EOF {
+			c.conn.Close()
+			return resp.MakeErrorResponse("server closed")
+		}
+		return resp.MakeErrorResponse(err.Error())
+	}
+	r = resp.MakeReidsRawByteResponse(b)
+	logrus.Info("response ", r.ToStrings())
+	return r
 }
 
-//保持一个心跳连接，同时要判断对方是否在线
-func (c *client) heartbeat() {
+//只要解析出 []byte
+func (c *client) parse(reader io.Reader) ([]byte, error) {
 
-	ticker := time.NewTicker(5 * time.Second)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-ticker.C:
-			if c.isServerOnline() {
-				req := &req.RedisRequet{
-					Args: [][]byte{
-						[]byte("ping"),
-					},
-				}
-				c.SendRequest(req)
-			} else {
-				conn, err := net.Dial("tcp", c.ipPortPair)
-				if err != nil {
-					continue
-				}
-				c.conn = conn
-			}
+	typ := make([]byte, 1)
+	reader.Read(typ)
 
-		case <-c.stopChan:
-			return
-		}
+	var err error
+	var resp []byte
+
+	t := string(typ)
+	switch t {
+	case "$": // 多行字符串
+		resp, err = c.parseMulti(reader)
+	case ":": // 数字
+		resp, err = c.parseNumber(reader)
+	case "+": //单行字符串
+		resp, err = c.parseLine(reader)
+	case "*": //数组
+		resp, err = c.parseArray(reader)
+	case "-": //错误
+		resp, err = c.parseError(reader)
 	}
+	return resp, err
+}
+
+func (c *client) parseMulti(reader io.Reader) ([]byte, error) {
+	buf := bufio.NewReader(reader)
+	b, err := buf.ReadBytes('\n') // 3\r\n
+	if err != nil {
+		return nil, err
+	}
+
+	bs := string(b[:len(b)-2]) //去掉 \r\n
+	l, err := strconv.ParseInt(bs, 10, 64)
+	if err != nil {
+		return nil, errors.New("protocol err")
+	}
+
+	ret := make([]byte, 0)
+
+	ret = append(ret, []byte("$")...)
+	ret = append(ret, b...)
+
+	s := make([]byte, l+2)
+	io.ReadFull(buf, s)
+	ret = append(ret, s...)
+	return ret, nil
+}
+
+//"3\r\n$3\r\nget\r\n$3\r\nkey\r\n$5\r\nvalue\r\n"
+func (c *client) parseArray(reader io.Reader) ([]byte, error) {
+	buf := bufio.NewReader(reader)
+
+	b, err := buf.ReadBytes('\n')
+	if err != nil {
+		return nil, err
+	}
+
+	var resp []byte
+	resp = append(resp, []byte("*")...)
+	resp = append(resp, b...)
+
+	l, err := strconv.ParseInt(string(b[:len(b)-2]), 10, 64)
+	if err != nil {
+		return nil, errors.New("protocol err")
+	}
+
+	for i := int64(1); i <= l; i++ {
+		b, err := c.parse(buf)
+		if err != nil {
+			return nil, err
+		}
+		logrus.Info(string(b))
+		resp = append(resp, b...)
+	}
+	return resp, nil
+}
+
+func (c *client) parseLine(io io.Reader) ([]byte, error) {
+	ret := make([]byte, 0)
+
+	ret = append(ret, []byte("+")...)
+	buf := bufio.NewReader(io)
+	b, err := buf.ReadBytes('\n')
+	if err != nil {
+		return nil, err
+	}
+	ret = append(ret, b...)
+	return ret, nil
+}
+
+func (c *client) parseError(io io.Reader) ([]byte, error) {
+	ret := make([]byte, 0)
+
+	ret = append(ret, []byte("-")...)
+	buf := bufio.NewReader(io)
+	b, err := buf.ReadBytes('\n')
+	if err != nil {
+		return nil, err
+	}
+	ret = append(ret, b...)
+	return ret, nil
+}
+func (c *client) parseNumber(io io.Reader) ([]byte, error) {
+	ret := make([]byte, 0)
+
+	ret = append(ret, []byte(":")...)
+
+	buf := bufio.NewReader(io)
+	b, err := buf.ReadBytes('\n')
+	if err != nil {
+		return nil, err
+	}
+
+	ret = append(ret, b...)
+	return ret, nil
 }
 
 func (c *client) isServerOnline() bool {
@@ -110,14 +207,6 @@ func (c *client) isServerOnline() bool {
 }
 
 func (c *client) IsIdle() bool {
-
+	logrus.Info(c.isIdle.Get(), c.isServerOnline())
 	return c.isServerOnline() && c.isIdle.Get()
-}
-
-func (c *client) Start() {
-	go c.heartbeat()
-}
-
-func (c *client) Stop() {
-	c.stopChan <- struct{}{}
 }
