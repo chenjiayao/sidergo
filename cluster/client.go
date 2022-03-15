@@ -127,6 +127,10 @@ func (c *client) parseMulti(reader io.Reader) ([]byte, error) {
 		return nil, errors.New("protocol err")
 	}
 
+	if l == -1 {
+		return []byte("$-1\r\n"), nil
+	}
+
 	ret := make([]byte, 0)
 
 	ret = append(ret, []byte("$")...)
