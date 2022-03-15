@@ -3,7 +3,6 @@ package resp
 import (
 	"errors"
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/chenjiayao/sidergo/interface/response"
@@ -64,10 +63,6 @@ func (rsr RedisSimpleResponse) ToErrorByte() []byte {
 	return []byte{}
 }
 
-func (rsr RedisSimpleResponse) ToStrings() string {
-	return rsr.Content
-}
-
 func (rsr RedisSimpleResponse) ISOK() bool {
 	return true
 }
@@ -114,10 +109,6 @@ func (rmls RedisMultiLineResponse) ISOK() bool {
 	return true
 }
 
-func (rmls RedisMultiLineResponse) ToStrings() string {
-	return rmls.Content
-}
-
 func MakeMultiResponse(content string) response.Response {
 
 	return &RedisMultiLineResponse{
@@ -140,9 +131,6 @@ func (rsr RedisNumberResponse) ToErrorByte() []byte {
 }
 func (rsr RedisNumberResponse) ISOK() bool {
 	return true
-}
-func (rsr RedisNumberResponse) ToStrings() string {
-	return strconv.Itoa(int(rsr.Number))
 }
 
 func MakeNumberResponse(number int64) response.Response {
@@ -179,10 +167,6 @@ func (rar RedisArrayResponse) ISOK() bool {
 	return true
 }
 
-func (rar RedisArrayResponse) ToStrings() string {
-	return ""
-}
-
 func MakeArrayResponse(resps []response.Response) response.Response {
 	return RedisArrayResponse{
 		Content: resps,
@@ -196,9 +180,6 @@ type ReidsRawByteResponse struct {
 
 func (rrr ReidsRawByteResponse) ToContentByte() []byte {
 	return rrr.ByteContent
-}
-func (rrr ReidsRawByteResponse) ToStrings() string {
-	return string(rrr.ByteContent)
 }
 
 func (rrr ReidsRawByteResponse) ToErrorByte() []byte {
