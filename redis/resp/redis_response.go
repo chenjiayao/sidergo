@@ -3,6 +3,7 @@ package resp
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/chenjiayao/sidergo/interface/response"
@@ -27,6 +28,10 @@ type RedisErrorResponse struct {
 
 func (rer RedisErrorResponse) ToContentByte() []byte {
 	return []byte{}
+}
+
+func (rer RedisErrorResponse) ToStrings() string {
+	return rer.Err.Error()
 }
 
 func (rer RedisErrorResponse) ToErrorByte() []byte {
@@ -58,6 +63,11 @@ func (rsr RedisSimpleResponse) ToContentByte() []byte {
 func (rsr RedisSimpleResponse) ToErrorByte() []byte {
 	return []byte{}
 }
+
+func (rsr RedisSimpleResponse) ToStrings() string {
+	return rsr.Content
+}
+
 func (rsr RedisSimpleResponse) ISOK() bool {
 	return true
 }
@@ -104,6 +114,10 @@ func (rmls RedisMultiLineResponse) ISOK() bool {
 	return true
 }
 
+func (rmls RedisMultiLineResponse) ToStrings() string {
+	return rmls.Content
+}
+
 func MakeMultiResponse(content string) response.Response {
 
 	return &RedisMultiLineResponse{
@@ -127,6 +141,10 @@ func (rsr RedisNumberResponse) ToErrorByte() []byte {
 func (rsr RedisNumberResponse) ISOK() bool {
 	return true
 }
+func (rsr RedisNumberResponse) ToStrings() string {
+	return strconv.Itoa(int(rsr.Number))
+}
+
 func MakeNumberResponse(number int64) response.Response {
 	return RedisNumberResponse{
 		Number: number,
@@ -160,8 +178,38 @@ func (rar RedisArrayResponse) ToErrorByte() []byte {
 func (rar RedisArrayResponse) ISOK() bool {
 	return true
 }
+
+func (rar RedisArrayResponse) ToStrings() string {
+	return ""
+}
+
 func MakeArrayResponse(resps []response.Response) response.Response {
 	return RedisArrayResponse{
 		Content: resps,
+	}
+}
+
+/////
+type ReidsRawByteResponse struct {
+	ByteContent []byte
+}
+
+func (rrr ReidsRawByteResponse) ToContentByte() []byte {
+	return rrr.ByteContent
+}
+func (rrr ReidsRawByteResponse) ToStrings() string {
+	return string(rrr.ByteContent)
+}
+
+func (rrr ReidsRawByteResponse) ToErrorByte() []byte {
+	return []byte{}
+}
+func (rrr ReidsRawByteResponse) ISOK() bool {
+	return true
+}
+
+func MakeReidsRawByteResponse(b []byte) response.Response {
+	return ReidsRawByteResponse{
+		ByteContent: b,
 	}
 }

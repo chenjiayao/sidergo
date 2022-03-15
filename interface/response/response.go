@@ -5,4 +5,5 @@ type Response interface {
 
 	ToErrorByte() []byte
 	ISOK() bool
+	ToStrings() string
 }
