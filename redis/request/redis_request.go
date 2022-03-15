@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/chenjiayao/sidergo/interface/request"
+	"github.com/sirupsen/logrus"
 )
 
 var _ request.Request = &RedisRequet{}
@@ -19,11 +20,16 @@ type RedisRequet struct {
 func (rr *RedisRequet) ToStrings() string {
 
 	var builder strings.Builder
-	builder.WriteString(rr.CmdName + " ")
+	builder.WriteString(fmt.Sprintf("*%d\r\n", len(rr.Args)+1))
+
+	builder.WriteString(fmt.Sprintf("$%d\r\n", len([]byte(rr.CmdName))))
+	builder.WriteString(rr.CmdName + "\r\n")
 	for _, v := range rr.Args {
-		builder.Write(append(v, ' '))
+		builder.WriteString(fmt.Sprintf("$%d\r\n", len(v)))
+		builder.Write(v)
+		builder.WriteString("\r\n")
 	}
-	return strings.TrimSpace(builder.String())
+	return builder.String()
 }
 
 /*
@@ -53,6 +59,7 @@ func (rr *RedisRequet) ToByte() []byte {
 	}
 
 	res := builder.String()
+	logrus.Info(res)
 	return []byte(res)
 }
 
