@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/chenjiayao/sidergo/config"
+	"github.com/chenjiayao/sidergo/interface/request"
 	"github.com/chenjiayao/sidergo/interface/response"
 	"github.com/chenjiayao/sidergo/interface/server"
 	"github.com/chenjiayao/sidergo/lib/unboundedchan"
@@ -45,8 +46,16 @@ func (h *AofHandler) writeToAofFile(cmd [][]byte) {
 	}
 }
 
-func (h *AofHandler) LogCmd(cmd [][]byte) {
-	h.aofChan.In <- cmd
+func (h *AofHandler) LogCmd(req request.Request) {
+	args := req.GetArgs()
+	cmdBytes := make([][]byte, len(args)+1)
+	cmdBytes[0] = []byte(req.GetCmdName())
+
+	for i := 1; i <= len(args); i++ {
+		cmdBytes[i] = args[i-1]
+	}
+
+	h.aofChan.In <- cmdBytes
 }
 
 func (h *AofHandler) EndAof() {
