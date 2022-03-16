@@ -8,7 +8,6 @@ import (
 	req "github.com/chenjiayao/sidergo/redis/request"
 	"github.com/chenjiayao/sidergo/redis/resp"
 	"github.com/chenjiayao/sidergo/redis/validate"
-	"github.com/sirupsen/logrus"
 )
 
 func init() {
@@ -31,7 +30,6 @@ func ExecMget(cluster *Cluster, conn conn.Conn, re request.Request) response.Res
 		}
 
 		resps[i] = defaultExec(cluster, conn, getCommandRequest)
-		logrus.Info(resps)
 	}
 	return resp.MakeArrayResponse(resps)
 }
