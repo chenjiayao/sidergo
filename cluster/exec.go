@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/chenjiayao/sidergo/interface/conn"
+	"github.com/chenjiayao/sidergo/interface/request"
 	"github.com/chenjiayao/sidergo/interface/response"
 	"github.com/chenjiayao/sidergo/redis"
 	req "github.com/chenjiayao/sidergo/redis/request"
@@ -71,10 +72,13 @@ func init() {
 	RegisterClusterExecCommand(redis.Select, ExecSelect, validate.ValidateSelect)
 
 	RegisterClusterExecCommand(redis.Ping, ExecPing, validate.ValidatePing)
+
+	RegisterClusterExecCommand(redis.Mget, ExecMget, validate.ValidateMGet)
 }
 
-func ExecPing(cluster *Cluster, conn conn.Conn, cmdName string, args [][]byte) response.Response {
+func ExecPing(cluster *Cluster, conn conn.Conn, re request.Request) response.Response {
 
+	args := re.GetArgs()
 	message := "PONG"
 	if len(args) > 0 {
 		message = string(args[0])
@@ -90,14 +94,11 @@ func ExecPing(cluster *Cluster, conn conn.Conn, cmdName string, args [][]byte) r
 
 	注意，default 的命令中 key 只有一个
 */
-func defaultExec(cluster *Cluster, conn conn.Conn, cmdName string, args [][]byte) response.Response {
+func defaultExec(cluster *Cluster, conn conn.Conn, re request.Request) response.Response {
 
 	// ipPortPair := cluster.HashRing.Hit(cmdName)
 	ipPortPair := "localhost:3101"
-	re := &req.RedisRequet{
-		CmdName: cmdName,
-		Args:    args,
-	}
+
 	logrus.Info("选中的 node:", ipPortPair, cluster.Self.IsSelf(ipPortPair))
 
 	if cluster.Self.IsSelf(ipPortPair) {
@@ -112,6 +113,7 @@ func defaultExec(cluster *Cluster, conn conn.Conn, cmdName string, args [][]byte
 				[]byte(fmt.Sprintf("%d", conn.GetSelectedDBIndex())),
 			},
 		}
+
 		c.SendRequestWithTimeout(selectRequest, 10*time.Second)
 
 		return c.SendRequestWithTimeout(re, 10*time.Second)
@@ -119,29 +121,30 @@ func defaultExec(cluster *Cluster, conn conn.Conn, cmdName string, args [][]byte
 }
 
 // mget key1 key2 key3
-func ExecMget(cluster *Cluster, conn conn.Conn, args [][]byte) response.Response {
-	argsWithoutCmdName := args[1:]
-	resps := make([]response.Response, len(argsWithoutCmdName)/2)
-	for i := 0; i < len(argsWithoutCmdName); i += 2 {
-		getCommand := [][]byte{
-			[]byte("get"),
-			argsWithoutCmdName[i],
-			argsWithoutCmdName[i+1],
+func ExecMget(cluster *Cluster, conn conn.Conn, re request.Request) response.Response {
+	keys := re.GetArgs()
+
+	resps := make([]response.Response, len(keys))
+
+	for i := 0; i < len(keys); i++ {
+		getCommandRequest := &req.RedisRequet{
+			CmdName: redis.Get,
+			Args: [][]byte{
+				keys[i],
+			},
 		}
-		resps = append(resps, defaultExec(cluster, conn, "get", getCommand))
+
+		resps[i] = defaultExec(cluster, conn, getCommandRequest)
+		logrus.Info(resps)
 	}
 	return resp.MakeArrayResponse(resps)
 }
 
-func ExecMset(cluster *Cluster, conn conn.Conn, cmdName string, args [][]byte) response.Response {
+func ExecMset(cluster *Cluster, conn conn.Conn, req request.Request) response.Response {
 	return nil
 }
 
-func ExecSelect(cluster *Cluster, conn conn.Conn, cmdName string, args [][]byte) response.Response {
+func ExecSelect(cluster *Cluster, conn conn.Conn, req request.Request) response.Response {
 
-	cluster.Self.RedisServer.Exec(conn, &req.RedisRequet{
-		CmdName: cmdName,
-		Args:    args,
-	})
-	return resp.OKSimpleResponse
+	return cluster.Self.RedisServer.Exec(conn, req)
 }
