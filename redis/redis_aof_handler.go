@@ -41,9 +41,7 @@ func (h *AofHandler) writeToAofFile(cmd [][]byte) {
 
 	arrayResponse := resp.MakeArrayResponse(multiResponses)
 
-	_, err := h.aofFile.Write(arrayResponse.ToContentByte())
-	if err != nil {
-	}
+	h.aofFile.Write(arrayResponse.ToContentByte())
 }
 
 func (h *AofHandler) LogCmd(req request.Request) {
