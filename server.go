@@ -1,4 +1,4 @@
-package goredistraning
+package sidergo
 
 import (
 	"fmt"

@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/chenjiayao/sidergo/interface/request"
-	"github.com/sirupsen/logrus"
 )
 
 var _ request.Request = &RedisRequet{}
@@ -57,9 +56,7 @@ func (rr *RedisRequet) ToByte() []byte {
 		item := fmt.Sprintf("%s%s\r\n", itemHeader, string(rr.Args[i]))
 		builder.WriteString(item)
 	}
-
 	res := builder.String()
-	logrus.Info(res)
 	return []byte(res)
 }
 
