@@ -204,7 +204,6 @@ func (redisServer *RedisServer) Exec(conn conn.Conn, request request.Request) re
 	return res
 }
 
-//FIXME 如果没有设置密码，那么任意密码都可以登录，这里需要改下
 func (redisServer *RedisServer) isAuthenticated(conn conn.Conn) bool {
 	if config.Config.RequirePass == "" {
 		return true
