@@ -206,6 +206,9 @@ func (redisServer *RedisServer) Exec(conn conn.Conn, request request.Request) re
 
 //FIXME 如果没有设置密码，那么任意密码都可以登录，这里需要改下
 func (redisServer *RedisServer) isAuthenticated(conn conn.Conn) bool {
+	if config.Config.RequirePass == "" {
+		return true
+	}
 	return config.Config.RequirePass == conn.GetPassword()
 }
 
@@ -228,6 +231,10 @@ func (redisServer *RedisServer) closeClient(client conn.Conn) {
 }
 
 func (redisServer *RedisServer) Close() error {
+	if redisServer.closed.Get() {
+		return nil
+	}
+	redisServer.closed.Set(true)
 	redisServer.aofHandler.EndAof()
 	return nil
 }
