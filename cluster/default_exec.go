@@ -98,8 +98,6 @@ func defaultExec(cluster *Cluster, conn conn.Conn, re request.Request) response.
 	// ipPortPair := cluster.HashRing.Hit(cmdName)
 	ipPortPair := "localhost:3101"
 
-	logrus.Info("选中的 node:", ipPortPair, cluster.Self.IsSelf(ipPortPair))
-
 	if cluster.Self.IsSelf(ipPortPair) {
 		return cluster.Self.RedisServer.Exec(conn, re)
 	} else {
