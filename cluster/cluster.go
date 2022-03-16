@@ -46,8 +46,7 @@ type Cluster struct {
 	Self     *Node   //当前 node 节点
 	Peers    []*Node // 集群其他节点
 	HashRing *hashring.HashRing
-
-	Pool map[string]*clientPool
+	Pool     map[string]*clientPool
 }
 
 func MakeCluster() *Cluster {
@@ -62,6 +61,7 @@ func MakeCluster() *Cluster {
 
 	cluster.Self = MakeNode(config.Config.Self)
 	cluster.HashRing.AddNode(config.Config.Self)
+
 	cluster.Self.RedisServer = redis.MakeRedisServer()
 
 	for i := 0; i < len(config.Config.Nodes); i++ {
@@ -100,7 +100,7 @@ func (cluster *Cluster) Exec(conn conn.Conn, request request.Request) response.R
 		}
 	}
 
-	res := command.CommandFunc(cluster, conn, cmdName, args)
+	res := command.CommandFunc(cluster, conn, request)
 	return res
 }
 
@@ -129,7 +129,7 @@ func (cluster *Cluster) Handle(conn net.Conn) {
 				return
 			}
 		}
-		if request.ToStrings() == "" {
+		if request.GetCmdName() == "" {
 			continue
 		}
 
@@ -167,7 +167,9 @@ func (cluster *Cluster) Close() error {
 	return nil
 }
 
-func (cluster *Cluster) Log() {}
+func (cluster *Cluster) Log() {
+	cluster.Self.RedisServer.Log()
+}
 
 /*
 
