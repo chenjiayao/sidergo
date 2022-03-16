@@ -16,6 +16,7 @@ import (
 func init() {
 	RegisterClusterExecCommand(redis.Get, defaultExec, nil)
 	RegisterClusterExecCommand(redis.Getset, defaultExec, nil)
+	RegisterClusterExecCommand(redis.Set, defaultExec, nil)
 	RegisterClusterExecCommand(redis.Incr, defaultExec, nil)
 	RegisterClusterExecCommand(redis.Incrbyf, defaultExec, nil)
 	RegisterClusterExecCommand(redis.Incrby, defaultExec, nil)
@@ -67,6 +68,8 @@ func init() {
 	RegisterClusterExecCommand(redis.Scard, defaultExec, nil)
 	RegisterClusterExecCommand(redis.Smembers, defaultExec, nil)
 
+	RegisterClusterExecCommand(redis.Select, ExecSelect, validate.ValidateSelect)
+
 	RegisterClusterExecCommand(redis.Ping, ExecPing, validate.ValidatePing)
 }
 
@@ -89,7 +92,8 @@ func ExecPing(cluster *Cluster, conn conn.Conn, cmdName string, args [][]byte) r
 */
 func defaultExec(cluster *Cluster, conn conn.Conn, cmdName string, args [][]byte) response.Response {
 
-	ipPortPair := cluster.HashRing.Hit(cmdName)
+	// ipPortPair := cluster.HashRing.Hit(cmdName)
+	ipPortPair := "localhost:3101"
 	re := &req.RedisRequet{
 		CmdName: cmdName,
 		Args:    args,
@@ -109,6 +113,7 @@ func defaultExec(cluster *Cluster, conn conn.Conn, cmdName string, args [][]byte
 			},
 		}
 		c.SendRequestWithTimeout(selectRequest, 10*time.Second)
+
 		return c.SendRequestWithTimeout(re, 10*time.Second)
 	}
 }
@@ -128,6 +133,15 @@ func ExecMget(cluster *Cluster, conn conn.Conn, args [][]byte) response.Response
 	return resp.MakeArrayResponse(resps)
 }
 
-func ExecMset(cluster *Cluster, args [][]byte) response.Response {
+func ExecMset(cluster *Cluster, conn conn.Conn, cmdName string, args [][]byte) response.Response {
 	return nil
+}
+
+func ExecSelect(cluster *Cluster, conn conn.Conn, cmdName string, args [][]byte) response.Response {
+
+	cluster.Self.RedisServer.Exec(conn, &req.RedisRequet{
+		CmdName: cmdName,
+		Args:    args,
+	})
+	return resp.OKSimpleResponse
 }
