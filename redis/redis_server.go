@@ -51,36 +51,41 @@ func (redisServer *RedisServer) activeExpireCycle() {
 	2. 删除这 20 个key 中过期的 key
 	3. 如果过期的 key 比率超过 1/4，那么重复步骤 1
 	*/
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
 	for {
-		for _, db := range redisServer.rds.DBs {
-			for {
-				delKeyCount := 0
-				for i := 0; i < 20; i++ {
-					k := db.TtlMap.RandomKey()
-					if k == nil {
-						break
-					}
-					key := k.(string)
-					v, _ := db.TtlMap.Get(key)
-					ttlUnixTimestamp := v.(int64)
+		select {
+		case <-ticker.C:
+			for _, db := range redisServer.rds.DBs {
+				for {
+					delKeyCount := 0
+					for i := 0; i < 20; i++ {
+						k := db.TtlMap.RandomKey()
+						if k == nil {
+							break
+						}
+						key := k.(string)
+						v, _ := db.TtlMap.Get(key)
+						ttlUnixTimestamp := v.(int64)
 
-					if time.Now().Unix() > ttlUnixTimestamp {
-						//删除这个key
-						db.Dataset.Del(key)
-						delKeyCount++
+						if time.Now().Unix() > ttlUnixTimestamp {
+							//删除这个key
+							db.Dataset.Del(key)
+							delKeyCount++
 
-						if config.Config.Appendonly {
-							deleteCmd := [][]byte{
-								[]byte("DEL"),
-								[]byte(key),
+							if config.Config.Appendonly {
+								deleteCmd := [][]byte{
+									[]byte("DEL"),
+									[]byte(key),
+								}
+								redisServer.aofHandler.LogCmd(deleteCmd)
 							}
-							redisServer.aofHandler.LogCmd(deleteCmd)
 						}
 					}
-				}
 
-				if delKeyCount <= 5 {
-					break
+					if delKeyCount <= 5 {
+						break
+					}
 				}
 			}
 		}
@@ -89,37 +94,43 @@ func (redisServer *RedisServer) activeExpireCycle() {
 
 //TODO 这里要做协程退出处理，不然会导致协程泄漏
 func (redisServer *RedisServer) checkTimeoutConn() {
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
+
 	for {
-		for _, db := range redisServer.rds.DBs {
-			db.BlockingKeys.Range(func(key, value interface{}) bool {
-				l, _ := value.(*list.List)
-				node := l.HeadNode()
+		select {
+		case <-ticker.C:
+			for _, db := range redisServer.rds.DBs {
+				db.BlockingKeys.Range(func(key, value interface{}) bool {
+					l, _ := value.(*list.List)
+					node := l.HeadNode()
 
-				for {
-					if node == nil {
-						break
-					}
-					element := node.Element()
-					conn, _ := element.(conn.Conn)
-					blockAt := conn.GetBlockAt()
-					blockTime := conn.GetMaxBlockTime()
-					if blockTime == 0 {
-						continue
-					}
+					for {
+						if node == nil {
+							break
+						}
+						element := node.Element()
+						conn, _ := element.(conn.Conn)
+						blockAt := conn.GetBlockAt()
+						blockTime := conn.GetMaxBlockTime()
+						if blockTime == 0 {
+							continue
+						}
 
-					// time.Now().Sub(blockAt) --> time - blockAt
-					// time.Until(blockAt) --> blockAt.Sub(time.Now()) --> blockAt - time.Now()
-					//  blockTime < time.Now() - blockAt
-					if time.Since(blockAt).Seconds() > float64(blockTime) {
-						conn.SetBlockingResponse(resp.NullMultiResponse)
-						conn.SetBlockingExec("", nil)
-						l.RemoveNode(conn) //链接已经不再阻塞，从 list 中移除
-					}
+						// time.Now().Sub(blockAt) --> time - blockAt
+						// time.Until(blockAt) --> blockAt.Sub(time.Now()) --> blockAt - time.Now()
+						//  blockTime < time.Now() - blockAt
+						if time.Since(blockAt).Seconds() > float64(blockTime) {
+							conn.SetBlockingResponse(resp.NullMultiResponse)
+							conn.SetBlockingExec("", nil)
+							l.RemoveNode(conn) //链接已经不再阻塞，从 list 中移除
+						}
 
-					node = node.Next()
-				}
-				return true
-			})
+						node = node.Next()
+					}
+					return true
+				})
+			}
 		}
 	}
 }
