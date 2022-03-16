@@ -102,7 +102,7 @@ func ValidateMSetNX(conn conn.Conn, args [][]byte) error {
 }
 
 func ValidateMGet(conn conn.Conn, args [][]byte) error {
-	if len(args) != 1 {
+	if len(args) < 1 {
 		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Mget)
 	}
 	return nil
