@@ -13,6 +13,7 @@ import (
 	"github.com/chenjiayao/sidergo/lib/atomic"
 	"github.com/chenjiayao/sidergo/lib/list"
 	"github.com/chenjiayao/sidergo/parser"
+	req "github.com/chenjiayao/sidergo/redis/request"
 	"github.com/chenjiayao/sidergo/redis/resp"
 )
 
@@ -74,11 +75,13 @@ func (redisServer *RedisServer) activeExpireCycle() {
 							delKeyCount++
 
 							if config.Config.Appendonly {
-								deleteCmd := [][]byte{
-									[]byte("DEL"),
-									[]byte(key),
+								deleteCmdRequest := &req.RedisRequet{
+									CmdName: "del",
+									Args: [][]byte{
+										[]byte(key),
+									},
 								}
-								redisServer.aofHandler.LogCmd(deleteCmd)
+								redisServer.aofHandler.LogCmd(deleteCmdRequest)
 							}
 						}
 					}
@@ -198,7 +201,7 @@ func (redisServer *RedisServer) Exec(conn conn.Conn, request request.Request) re
 	}
 
 	if res.ISOK() && config.Config.Appendonly {
-		redisServer.aofHandler.LogCmd(request.GetArgs())
+		redisServer.aofHandler.LogCmd(request)
 	}
 
 	return res
