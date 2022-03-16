@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	goredistraning "github.com/chenjiayao/sidergo"
+	"github.com/chenjiayao/sidergo"
 	"github.com/chenjiayao/sidergo/cluster"
 	"github.com/chenjiayao/sidergo/config"
 	"github.com/chenjiayao/sidergo/interface/server"
@@ -27,7 +27,7 @@ func main() {
 
 	s := makeServer()
 
-	goredistraning.ListenAndServe(s)
+	sidergo.ListenAndServe(s)
 }
 
 //TODO 根据 config 判断是否启动集群模式
