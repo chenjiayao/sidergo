@@ -9,7 +9,11 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "/Users/chenjiayao/code/go/go-redis-training/cmd/main.go"
+            "program": "/Users/chenjiayao/code/golang/sidergo/cmd/main.go",
+            "env": {
+                "REDIS_CONFIG": "/Users/chenjiayao/code/golang/sidergo/config/node3102.conf"
+            },
+            "showLog": true
         }
     ]
 }
