@@ -73,7 +73,6 @@ func init() {
 
 	RegisterClusterExecCommand(redis.Ping, ExecPing, validate.ValidatePing)
 
-	RegisterClusterExecCommand(redis.Mget, ExecMget, validate.ValidateMGet)
 }
 
 func ExecPing(cluster *Cluster, conn conn.Conn, re request.Request) response.Response {
@@ -118,30 +117,6 @@ func defaultExec(cluster *Cluster, conn conn.Conn, re request.Request) response.
 
 		return c.SendRequestWithTimeout(re, 10*time.Second)
 	}
-}
-
-// mget key1 key2 key3
-func ExecMget(cluster *Cluster, conn conn.Conn, re request.Request) response.Response {
-	keys := re.GetArgs()
-
-	resps := make([]response.Response, len(keys))
-
-	for i := 0; i < len(keys); i++ {
-		getCommandRequest := &req.RedisRequet{
-			CmdName: redis.Get,
-			Args: [][]byte{
-				keys[i],
-			},
-		}
-
-		resps[i] = defaultExec(cluster, conn, getCommandRequest)
-		logrus.Info(resps)
-	}
-	return resp.MakeArrayResponse(resps)
-}
-
-func ExecMset(cluster *Cluster, conn conn.Conn, req request.Request) response.Response {
-	return nil
 }
 
 func ExecSelect(cluster *Cluster, conn conn.Conn, req request.Request) response.Response {

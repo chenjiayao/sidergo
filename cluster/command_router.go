@@ -4,11 +4,12 @@ import (
 	"strings"
 
 	"github.com/chenjiayao/sidergo/interface/conn"
+	"github.com/chenjiayao/sidergo/interface/request"
 	"github.com/chenjiayao/sidergo/interface/response"
 	"github.com/chenjiayao/sidergo/redis"
 )
 
-type ClusterExecCommandFunc func(cluster *Cluster, conn conn.Conn, cmdName string, args [][]byte) response.Response
+type ClusterExecCommandFunc func(cluster *Cluster, conn conn.Conn, req request.Request) response.Response
 type ClusterExecValidateFunc redis.RedisExecValidateFunc
 
 type ClusterCommand struct {
