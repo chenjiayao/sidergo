@@ -1,6 +1,7 @@
 package redis
 
 import (
+	"context"
 	"io"
 	"net"
 	"time"
@@ -24,13 +25,18 @@ type RedisServer struct {
 	closed     atomic.Boolean
 	rds        *RedisDBs
 	aofHandler *AofHandler
+	ctx        context.Context
+	cancel     context.CancelFunc
 }
 
 ///////////启动 redis 服务，
 // 如果这里有 aof，那么需要加载 aof
 func MakeRedisServer() *RedisServer {
+	ctx, cancel := context.WithCancel(context.TODO())
 	redisServer := &RedisServer{
 		closed: atomic.Boolean(0),
+		ctx:    ctx,
+		cancel: cancel,
 	}
 
 	redisServer.rds = NewDBs(redisServer)
@@ -91,6 +97,8 @@ func (redisServer *RedisServer) activeExpireCycle() {
 					}
 				}
 			}
+		case <-redisServer.ctx.Done():
+			return
 		}
 	}
 }
@@ -128,12 +136,13 @@ func (redisServer *RedisServer) checkTimeoutConn() {
 							conn.SetBlockingExec("", nil)
 							l.RemoveNode(conn) //链接已经不再阻塞，从 list 中移除
 						}
-
 						node = node.Next()
 					}
 					return true
 				})
 			}
+		case <-redisServer.ctx.Done():
+			return
 		}
 	}
 }
@@ -245,7 +254,9 @@ func (redisServer *RedisServer) Close() error {
 	if redisServer.closed.Get() {
 		return nil
 	}
+
 	redisServer.closed.Set(true)
+	redisServer.cancel()
 	redisServer.aofHandler.EndAof()
 	return nil
 }
