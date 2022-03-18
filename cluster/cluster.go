@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"sync"
 
 	"github.com/chenjiayao/sidergo/config"
 	"github.com/chenjiayao/sidergo/interface/conn"
@@ -43,20 +44,21 @@ func (node *Node) IsSelf(ipPortPair string) bool {
 }
 
 type Cluster struct {
-	Self     *Node   //当前 node 节点
-	Peers    []*Node // 集群其他节点
-	HashRing *hashring.HashRing
-	Pool     map[string]*clientPool
+	Self            *Node   //当前 node 节点
+	Peers           []*Node // 集群其他节点
+	HashRing        *hashring.HashRing
+	Pool            map[string]*clientPool
+	transactionMaps sync.Map
 }
 
 func MakeCluster() *Cluster {
 
 	logrus.Info("enable cluster")
 	cluster := &Cluster{
-		HashRing: hashring.MakeHashRing(3),
-		Peers:    make([]*Node, len(config.Config.Nodes)),
-
-		Pool: make(map[string]*clientPool),
+		HashRing:        hashring.MakeHashRing(3),
+		Peers:           make([]*Node, len(config.Config.Nodes)),
+		transactionMaps: sync.Map{},
+		Pool:            make(map[string]*clientPool),
 	}
 
 	cluster.Self = MakeNode(config.Config.Self)
