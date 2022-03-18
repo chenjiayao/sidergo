@@ -1,6 +1,8 @@
 package cluster
 
 import (
+	"time"
+
 	"github.com/chenjiayao/sidergo/interface/conn"
 	"github.com/chenjiayao/sidergo/interface/request"
 	"github.com/chenjiayao/sidergo/interface/response"
@@ -12,6 +14,8 @@ import (
 
 func init() {
 	RegisterClusterExecCommand(redis.Mget, ExecMget, validate.ValidateMGet)
+	RegisterClusterExecCommand(redis.Mset, ExecMset, validate.ValidateMSet)
+	RegisterClusterExecCommand(redis.Msetnx, ExecMSetNX, validate.ValidateMSetNX)
 
 }
 
@@ -28,12 +32,62 @@ func ExecMget(cluster *Cluster, conn conn.Conn, re request.Request) response.Res
 				keys[i],
 			},
 		}
-
 		resps[i] = defaultExec(cluster, conn, getCommandRequest)
 	}
 	return resp.MakeArrayResponse(resps)
 }
 
-func ExecMset(cluster *Cluster, conn conn.Conn, req request.Request) response.Response {
-	return nil
+func ExecMset(cluster *Cluster, conn conn.Conn, clientRequest request.Request) response.Response {
+	kv := make(map[string]string)
+
+	args := clientRequest.GetArgs()
+	for i := 0; i < len(args); i += 2 {
+		key := string(args[i])
+		value := string(args[i+1])
+		kv[key] = value
+	}
+
+	tx := MakeTransaction(conn, cluster, redis.Del, redis.Set, kv)
+	tx.begin()
+
+	return resp.OKSimpleResponse
 }
+
+//msetnx 的所有 key 都应该在同一个 node 中，如果不是那么不执行
+func ExecMSetNX(cluster *Cluster, conn conn.Conn, clientRequest request.Request) response.Response {
+
+	args := clientRequest.GetArgs()
+
+	keys := make([]string, len(args)/2)
+	for i := 0; i < len(args)/2; i++ {
+		keys[i] = string(args[i])
+	}
+
+	hitNodeIPPortPair := cluster.HashRing.Hit(string(args[0]))
+
+	for _, k := range keys {
+		ipPortPair := cluster.HashRing.Hit(k)
+		if hitNodeIPPortPair != ipPortPair {
+			return resp.MakeErrorResponse("ERR msetnx must within one slot in cluster mode")
+		}
+	}
+
+	if cluster.Self.IsSelf(hitNodeIPPortPair) {
+		return cluster.Self.RedisServer.Exec(conn, clientRequest)
+	}
+
+	client := cluster.PeekIdleClient(hitNodeIPPortPair)
+	return client.SendRequestWithTimeout(clientRequest, time.Second)
+}
+
+/**
+
+commit'args
+	args[0]= set
+	args[1] = key
+	args[2] = value
+
+
+rollback's args
+
+*/
