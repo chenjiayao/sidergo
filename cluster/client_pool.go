@@ -32,13 +32,18 @@ func (pool *clientPool) destroy() {
 }
 
 func (pool *clientPool) start() {
+
+	for i := 0; i < len(pool.clients); i++ {
+		client := pool.clients[i]
+		pool.clients[i] = makeClient(client.ipPortPair)
+	}
 	go pool.heartbeat()
 }
 
 //pool 会每隔 10 * len(clients)s 对所有的 client 进行一次 ping 请求，保证连接正常
 func (pool *clientPool) heartbeat() {
 
-	s := 10 * len(pool.clients)
+	s := 2 * len(pool.clients)
 	ticker := time.NewTicker(time.Duration(s) * time.Second)
 	defer ticker.Stop()
 
