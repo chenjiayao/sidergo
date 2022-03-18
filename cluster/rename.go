@@ -6,11 +6,14 @@ import (
 	"github.com/chenjiayao/sidergo/interface/conn"
 	"github.com/chenjiayao/sidergo/interface/request"
 	"github.com/chenjiayao/sidergo/interface/response"
+	"github.com/chenjiayao/sidergo/redis"
 	"github.com/chenjiayao/sidergo/redis/resp"
+	"github.com/chenjiayao/sidergo/redis/validate"
 )
 
 func init() {
 
+	RegisterClusterExecCommand(redis.Rename, ExecRename, validate.ValidateRename)
 }
 
 //rename oldkey newkey
