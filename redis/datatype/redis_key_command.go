@@ -23,8 +23,7 @@ func init() {
 }
 
 /**
-TODO 这里要考虑是否需要加锁
-*/
+ */
 func ExecRename(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 	key := string(args[0])
 	newkey := string(args[1])

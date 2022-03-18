@@ -30,7 +30,6 @@ func main() {
 	sidergo.ListenAndServe(s)
 }
 
-//TODO 根据 config 判断是否启动集群模式
 func makeServer() server.Server {
 	if config.Config.EnableCluster {
 		return cluster.MakeCluster()

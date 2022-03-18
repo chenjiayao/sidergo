@@ -9,8 +9,6 @@ import (
 	"github.com/chenjiayao/sidergo/redis/validate"
 )
 
-// TODO set 中很多操作达不到 redis 的时间复杂度，这里先做功能实现，后续再考虑性能优化
-
 /**
 SADD
 SCARD
@@ -98,8 +96,6 @@ func ExecSmembers(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Res
 
 	setValue := getSetOrInitSet(conn, db, string(args[0]))
 	if setValue.Len() == 0 {
-		// TODO 返回空数组
-		// return resp.make
 		return resp.MakeArrayResponse(nil)
 	}
 

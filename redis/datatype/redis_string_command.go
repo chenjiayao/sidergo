@@ -220,7 +220,8 @@ func ExecGet(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response
 
 	//key 不存在，或者已经到过期时间了
 	if ttl(db, [][]byte{args[0]}) < -1 {
-		// TODO 删除 key
+		db.Dataset.Del(string(args[0]))
+		db.TtlMap.Del(string(args[0]))
 		return resp.NullMultiResponse
 	}
 

@@ -34,8 +34,7 @@ func (rer RedisErrorResponse) ToStrings() string {
 }
 
 func (rer RedisErrorResponse) ToErrorByte() []byte {
-	// TODO感觉可以优化，后续进行优化
-	errString := "-" + rer.Err.Error() + CRLF
+	errString := fmt.Sprintf("-%s%s", rer.Err.Error(), CRLF)
 	return []byte(errString)
 }
 

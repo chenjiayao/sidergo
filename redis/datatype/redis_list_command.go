@@ -73,7 +73,6 @@ func ExecLrem(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respons
 		node = l.TailNode()
 	}
 
-	// TODO 这里的效率没有 O(N)，需要优化
 	for i := int64(0); i < count; i++ {
 		if node.Element() == value {
 			l.RemoveNode(node)

@@ -11,6 +11,7 @@ import (
 	"github.com/chenjiayao/sidergo/interface/request"
 	"github.com/chenjiayao/sidergo/interface/response"
 	"github.com/chenjiayao/sidergo/lib/atomic"
+	"github.com/chenjiayao/sidergo/lib/waitgroup"
 	"github.com/chenjiayao/sidergo/redis/resp"
 	"github.com/sirupsen/logrus"
 )
@@ -29,8 +30,8 @@ type client struct {
 	ipPortPair string
 	conn       net.Conn
 	isIdle     atomic.Boolean //1/true是空闲，0/false是忙碌
-
-	stopChan chan struct{}
+	stopChan   chan struct{}
+	wg         waitgroup.WaitGroup
 }
 
 func makeClient(ipPortPair string) *client {
@@ -43,6 +44,7 @@ func makeClient(ipPortPair string) *client {
 			conn:       nil,
 			isIdle:     atomic.Boolean(1),
 			stopChan:   make(chan struct{}),
+			wg:         waitgroup.WaitGroup{},
 		}
 	} else {
 		c = &client{
@@ -50,6 +52,7 @@ func makeClient(ipPortPair string) *client {
 			isIdle:     atomic.Boolean(1),
 			ipPortPair: ipPortPair,
 			stopChan:   make(chan struct{}),
+			wg:         waitgroup.WaitGroup{},
 		}
 	}
 	return c

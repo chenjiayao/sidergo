@@ -16,7 +16,6 @@ import (
 hash 的数据结构保存为
 	map[key]map[field]value
 
-	TODO 这里应该可以不用 *dict.ConcurrentDict 来做并发
 	因为 key get 到的 map 已经加锁了，不会有其他协程可以 get 到这个 key 对应的 map
 */
 func init() {
@@ -160,7 +159,6 @@ func ExecHgetall(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Resp
 	multiResponses := make([]response.Response, len(kvmap)*2)
 
 	index := 0
-	//TODO 注意，这里使用 map 那么可能每次返回的顺序是不一样的
 	for k, v := range kvmap {
 		multiResponses[index] = resp.MakeMultiResponse(k)
 		multiResponses[index+1] = resp.MakeMultiResponse(v)
