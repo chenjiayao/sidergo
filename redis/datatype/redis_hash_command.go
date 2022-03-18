@@ -104,8 +104,7 @@ func ExecHmget(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respon
 	multiResponses := make([]response.Response, len(args[1:]))
 
 	for index, v := range args[1:] {
-		field := string(v)
-		value, exist := kvmap[field]
+		value, exist := kvmap[string(v)]
 		if !exist {
 			multiResponses[index] = resp.NullMultiResponse
 		} else {
