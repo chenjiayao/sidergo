@@ -241,7 +241,7 @@ func ExecPrepare(cluster *Cluster, conn conn.Conn, clientRequest request.Request
 	selectedDBIndex := conn.GetSelectedDBIndex()
 
 	//锁定key
-	err := cluster.Self.RedisServer.LockTxKey(selectedDBIndex, key, txID)
+	err := cluster.Self.RedisServer.LockKey(selectedDBIndex, key, txID)
 	if err != nil {
 		return resp.MakeErrorResponse(err.Error())
 	}
@@ -253,6 +253,6 @@ func ExecTransactionUnlock(cluster *Cluster, conn conn.Conn, clientRequest reque
 	txID := string(args[0])
 	key := string(args[1])
 	selectedDBIndex := conn.GetSelectedDBIndex()
-	cluster.Self.RedisServer.UnLockTxKey(selectedDBIndex, key, txID)
+	cluster.Self.RedisServer.UnLockKey(selectedDBIndex, key, txID)
 	return resp.OKSimpleResponse
 }
