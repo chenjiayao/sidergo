@@ -38,7 +38,6 @@ func makeClient(ipPortPair string) *client {
 	var c *client
 	n, err := net.Dial("tcp", ipPortPair)
 	if err != nil {
-		logrus.Info("client to node server failed : ", err, ipPortPair)
 		c = &client{
 			ipPortPair: ipPortPair,
 			conn:       nil,
@@ -63,11 +62,11 @@ func (c *client) SendRequestWithTimeout(request request.Request, timeout time.Du
 
 	var r response.Response
 
-	logrus.Info("send command : ", string(request.ToByte()))
 	_, err := c.conn.Write(request.ToByte())
 	if err != nil {
 		if err == io.EOF {
 			r = resp.MakeErrorResponse("server closed conn")
+			c.conn = nil //该节点关闭了， conn设置为 nil
 		} else {
 			r = resp.MakeErrorResponse(err.Error())
 		}
