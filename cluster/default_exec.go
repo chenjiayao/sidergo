@@ -11,7 +11,6 @@ import (
 	req "github.com/chenjiayao/sidergo/redis/request"
 	"github.com/chenjiayao/sidergo/redis/resp"
 	"github.com/chenjiayao/sidergo/redis/validate"
-	"github.com/sirupsen/logrus"
 )
 
 func init() {
@@ -95,15 +94,14 @@ func ExecPing(cluster *Cluster, conn conn.Conn, re request.Request) response.Res
 */
 func defaultExec(cluster *Cluster, conn conn.Conn, re request.Request) response.Response {
 
-	// ipPortPair := cluster.HashRing.Hit(cmdName)
-	ipPortPair := "localhost:3101"
+	args := re.GetArgs()
+	key := string(args[0])
+	ipPortPair := cluster.HashRing.Hit(key)
 
 	if cluster.Self.IsSelf(ipPortPair) {
 		return cluster.Self.RedisServer.Exec(conn, re)
 	} else {
 		c := cluster.PeekIdleClient(ipPortPair)
-		logrus.Info("peek node as server : ", c.ipPortPair)
-
 		selectRequest := &req.RedisRequet{
 			CmdName: "select",
 			Args: [][]byte{
