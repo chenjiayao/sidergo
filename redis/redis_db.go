@@ -27,7 +27,7 @@ type RedisDB struct {
 
 	TtlMap *dict.ConcurrentDict //保存 key 和过期时间之间的关系 key ---> unix timestamp
 
-	keyLocks sync.Map
+	keyLocks sync.Map //被上锁的key，上锁原因有两个：1. msetnx 需要原子操作，2.集群模式下 prepare 需要先加锁
 
 	WatchedKeys sync.Map // 保存了一个 watched_keys 字典， 字典的键是这个数据库被监视的键， 而字典的值则是一个链表， 链表中保存了所有监视这个键的客户端。
 
@@ -35,6 +35,7 @@ type RedisDB struct {
 
 	BlockingKeys sync.Map                     // key 和被阻塞的「客户端链表」
 	ReadyList    *unboundedchan.UnboundedChan // 不再为空的 key 数组
+
 }
 
 func NewDBInstance(server server.Server, index int) *RedisDB {
@@ -140,14 +141,14 @@ func (rd *RedisDB) setWatchedKeyClientCASDirty(key string) {
 	}
 }
 
-func (rd *RedisDB) LockKey(key string) {
+func (rd *RedisDB) LockKey(key string, placeholder string) {
 	// 尝试对一个 key 加锁，利用 sync.map 的并发安全特性
 	// 但是这里应该挺慢的。。。后续有时间再优化吧
 	//for ---> 自旋锁，减少切换线程
 	alreadyLockByOtherGoroutine := false
-	_, alreadyLockByOtherGoroutine = rd.keyLocks.LoadOrStore(key, 1)
+	_, alreadyLockByOtherGoroutine = rd.keyLocks.LoadOrStore(key, placeholder)
 	for alreadyLockByOtherGoroutine {
-		_, alreadyLockByOtherGoroutine = rd.keyLocks.LoadOrStore(key, 1)
+		_, alreadyLockByOtherGoroutine = rd.keyLocks.LoadOrStore(key, placeholder)
 	}
 }
 

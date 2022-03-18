@@ -227,6 +227,15 @@ func (redisServer *RedisServer) sendResponse(redisClient conn.Conn, res response
 	return err
 }
 
+func (redisServer *RedisServer) LockKey(dbIndex int, key string, txID string) error {
+	redisServer.rds.DBs[dbIndex].LockKey(key, txID)
+	return nil
+}
+func (redisServer *RedisServer) UnLockKey(dbIndex int, key string, txID string) error {
+	redisServer.rds.DBs[dbIndex].LockKey(key, txID)
+	return nil
+}
+
 // closeClient
 func (redisServer *RedisServer) closeClient(client conn.Conn) {
 	client.Close()
