@@ -86,7 +86,7 @@ func ExecMSetNX(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 	//对所有的 key 加锁
 	for i := 0; i < len(allKeys); i++ {
 		key := allKeys[i]
-		db.LockKey(key)
+		db.LockKey(key, "1")
 		defer db.UnLockKey(key)
 	}
 
@@ -110,7 +110,7 @@ func ExecMSetNX(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 func ExecGetset(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 	key := string(args[0])
 
-	db.LockKey(key)
+	db.LockKey(key, "1")
 	defer db.UnLockKey(key)
 
 	i, exists := db.Dataset.Get(key)
@@ -257,7 +257,7 @@ func ExecIncrBy(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 	steps := string(args[1])
 	step, _ := strconv.ParseInt(steps, 10, 64)
 
-	db.LockKey(string(args[0]))
+	db.LockKey(string(args[0]), "1")
 	defer db.UnLockKey(key)
 
 	//get
@@ -290,7 +290,7 @@ func ExecIncrByFloat(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.
 	steps := string(args[1])
 	step, _ := strconv.ParseFloat(steps, 64)
 
-	db.LockKey(key)
+	db.LockKey(key, "1")
 	defer db.UnLockKey(key)
 
 	//get
