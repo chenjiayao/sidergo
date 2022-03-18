@@ -45,7 +45,7 @@ func ValidateLIndex(conn conn.Conn, args [][]byte) error {
 	indexs := args[1]
 	_, err := strconv.Atoi(string(indexs))
 	if err != nil {
-		return fmt.Errorf("(error) ERR value is not an integer or out of range")
+		return fmt.Errorf("ERR value is not an integer or out of range")
 	}
 	return nil
 }
@@ -77,12 +77,12 @@ func ValidateLTrim(conn conn.Conn, args [][]byte) error {
 	}
 	_, err := strconv.Atoi(string(args[1]))
 	if err != nil {
-		return fmt.Errorf("(error) ERR value is not an integer or out of range")
+		return fmt.Errorf("ERR value is not an integer or out of range")
 	}
 
 	_, err = strconv.Atoi(string(args[2]))
 	if err != nil {
-		return fmt.Errorf("(error) ERR value is not an integer or out of range")
+		return fmt.Errorf("ERR value is not an integer or out of range")
 	}
 	return nil
 }
@@ -97,7 +97,7 @@ func ValidateLInsert(conn conn.Conn, args [][]byte) error {
 	}
 	pos := strings.ToUpper(string(args[1]))
 	if pos != "BEFORE" && pos != "AFTER" {
-		return fmt.Errorf("(error) ERR syntax error")
+		return fmt.Errorf("ERR syntax error")
 	}
 	return nil
 }
@@ -109,7 +109,7 @@ func ValidateLset(conn conn.Conn, args [][]byte) error {
 
 	_, err := strconv.Atoi(string(args[1]))
 	if err != nil {
-		return errors.New("(error) WRONGTYPE Operation against a key holding the wrong kind of value")
+		return errors.New(" WRONGTYPE Operation against a key holding the wrong kind of value")
 	}
 	return nil
 }
@@ -120,7 +120,7 @@ func ValidateBlpop(conn conn.Conn, args [][]byte) error {
 	}
 	_, err := strconv.Atoi(string(args[len(args)-1]))
 	if err != nil {
-		return fmt.Errorf("(error) ERR value is not an integer or out of range")
+		return fmt.Errorf("ERR value is not an integer or out of range")
 	}
 	return nil
 }
@@ -131,7 +131,7 @@ func ValidateBrpop(conn conn.Conn, args [][]byte) error {
 	}
 	_, err := strconv.Atoi(string(args[len(args)-1]))
 	if err != nil {
-		return fmt.Errorf("(error) ERR value is not an integer or out of range")
+		return fmt.Errorf("ERR value is not an integer or out of range")
 	}
 	return nil
 }
@@ -142,7 +142,7 @@ func ValidateLrem(conn conn.Conn, args [][]byte) error {
 	}
 	_, err := strconv.Atoi(string(args[1]))
 	if err != nil {
-		return fmt.Errorf("(error) ERR value is not an integer or out of range")
+		return fmt.Errorf("ERR value is not an integer or out of range")
 	}
 	return nil
 }

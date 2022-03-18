@@ -23,7 +23,7 @@ func ValidateExpire(conn conn.Conn, args [][]byte) error {
 	}
 	_, err := strconv.Atoi(string(args[1]))
 	if err != nil {
-		return errors.New("(error) ERR value is not an integer or out of range")
+		return errors.New("ERR value is not an integer or out of range")
 	}
 
 	return nil

@@ -30,7 +30,7 @@ func ExecRename(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 	newkey := string(args[1])
 	value, exist := db.Dataset.Get(key)
 	if !exist {
-		return resp.MakeErrorResponse("(error) ERR no such key")
+		return resp.MakeErrorResponse("ERR no such key")
 	}
 
 	//不管有没有，删除 newkey 的数据

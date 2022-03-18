@@ -113,7 +113,7 @@ func ValidateHincrby(conn conn.Conn, args [][]byte) error {
 	increment := string(args[2])
 	_, err := strconv.Atoi(increment)
 	if err != nil {
-		return fmt.Errorf("(error) ERR value is not an integer or out of range")
+		return fmt.Errorf("ERR value is not an integer or out of range")
 	}
 	return nil
 }
@@ -127,7 +127,7 @@ func ValidateHincrbyfloat(conn conn.Conn, args [][]byte) error {
 	increment := string(args[2])
 	_, err := strconv.ParseFloat(increment, 64)
 	if err != nil {
-		return fmt.Errorf("(error) ERR value is not an integer or out of range")
+		return fmt.Errorf("ERR value is not an integer or out of range")
 	}
 	return nil
 }

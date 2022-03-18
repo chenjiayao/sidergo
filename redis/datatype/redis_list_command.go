@@ -89,12 +89,12 @@ func ExecLset(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respons
 		return resp.MakeErrorResponse(err.Error())
 	}
 	if l == nil {
-		return resp.MakeErrorResponse("(error) ERR no such key")
+		return resp.MakeErrorResponse("ERR no such key")
 	}
 
 	index, _ := strconv.ParseInt(string(args[1]), 10, 64)
 	if index > l.Len()-1 {
-		return resp.MakeErrorResponse("(error) ERR index out of range")
+		return resp.MakeErrorResponse("ERR index out of range")
 	}
 
 	val := string(args[2])
@@ -364,7 +364,7 @@ func getList(conn conn.Conn, db *redis.RedisDB, args [][]byte) (*list.List, erro
 	}
 	l, ok := val.(*list.List)
 	if !ok {
-		return nil, errors.New("(error) WRONGTYPE Operation against a key holding the wrong kind of value")
+		return nil, errors.New(" WRONGTYPE Operation against a key holding the wrong kind of value")
 	}
 	return l, nil
 }

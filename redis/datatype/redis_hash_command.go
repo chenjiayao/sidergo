@@ -292,7 +292,7 @@ func getOrInitHash(db *redis.RedisDB, key string) (map[string]string, error) {
 		kvmap, ok := v.(map[string]string)
 
 		if !ok {
-			return nil, errors.New("(error) WRONGTYPE Operation against a key holding the wrong kind of value")
+			return nil, errors.New(" WRONGTYPE Operation against a key holding the wrong kind of value")
 		}
 		return kvmap, nil
 	}

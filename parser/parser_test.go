@@ -16,7 +16,7 @@ func TestParseFromSocket(t *testing.T) {
 
 	r := <-ch
 	if string(r.ToByte()) != "*3\r\n$3\r\nSET\r\n$3\r\nkey\r\n$5\r\nvalue\r\n" {
-		t.Errorf("err: %s", string(r.ToByte()))
+		t.Errorf("ERR: %s", string(r.ToByte()))
 	}
 }
 
