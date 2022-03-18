@@ -8,14 +8,27 @@ import (
 	"github.com/chenjiayao/sidergo/interface/request"
 	"github.com/chenjiayao/sidergo/interface/response"
 	redisRequest "github.com/chenjiayao/sidergo/redis/request"
+	"github.com/chenjiayao/sidergo/redis/resp"
+	"github.com/rs/xid"
+	"github.com/sirupsen/logrus"
 )
 
+func init() {
+	RegisterClusterExecCommand("prepare", ExecPrepare, nil)
+	RegisterClusterExecCommand("commit", ExecCommit, nil)
+	RegisterClusterExecCommand("undo", ExecUndo, nil)
+	RegisterClusterExecCommand("transaction_unlock", ExecTransactionUnlock, nil)
+}
+
+//redis 中只有 mset 需要自用分布式事务处理
 type transaction struct {
-	txID    string
-	conn    conn.Conn
-	cluster *Cluster
-	kv      map[string]string
-	wg      sync.WaitGroup
+	txID              string
+	conn              conn.Conn
+	cluster           *Cluster
+	kv                map[string]string
+	wg                sync.WaitGroup
+	undoCommandName   string
+	commitCommandName string
 }
 
 func (tx *transaction) begin() {
@@ -27,39 +40,40 @@ func (tx *transaction) begin() {
 // 这个操作和具体的命令没有关系
 func (tx *transaction) prepare() {
 
-	prepareResponses := make([]response.Response, len(tx.kv))
-	index := 0
+	prepareResponses := make([]response.Response, 0)
 	for k, _ := range tx.kv {
+		tx.wg.Add(1)
 
-		key := k
+		prepareRequest := &redisRequest.RedisRequet{
+			CmdName: "prepare",
+			Args: [][]byte{
+				[]byte(k),
+				[]byte(tx.txID),
+			},
+		}
 
-		go func() {
-			tx.wg.Add(1)
-			ipPortPair := tx.cluster.HashRing.Hit(k)
-			client := tx.cluster.PeekIdleClient(ipPortPair)
+		ipPortPair := tx.cluster.HashRing.Hit(k)
 
-			prepareRequest := &redisRequest.RedisRequet{
-				CmdName: "prepare",
-				Args: [][]byte{
-					[]byte(tx.txID),
-					[]byte(key),
-				},
-			}
-			r := client.SendRequestWithTimeout(prepareRequest, time.Second)
-			prepareResponses[index] = r
-			index++
+		if tx.cluster.Self.IsSelf(ipPortPair) {
+			prepareResponses = append(prepareResponses, ExecPrepare(tx.cluster, tx.conn, prepareRequest))
 			tx.wg.Done()
-		}()
-		tx.wg.Wait()
+		} else {
+			go func(key string) {
+				client := tx.cluster.PeekIdleClient(ipPortPair)
+				prepareResponses = append(prepareResponses, client.SendRequestWithTimeout(prepareRequest, time.Second))
+				tx.wg.Done()
+			}(k)
+		}
 	}
+	tx.wg.Wait()
+
+	logrus.Info("prepare wait ok")
 	for _, r := range prepareResponses {
 		if !r.ISOK() {
 			tx.rollbackPrepare()
 		}
 	}
-
 	tx.commit()
-
 }
 
 //需要对每个 node 执行对应的命令，这个命令应该由调用方传递
@@ -68,28 +82,30 @@ func (tx *transaction) prepare() {
 func (tx *transaction) commit() {
 	commitResponses := make(map[string]response.Response)
 
-	for k, _ := range tx.kv {
-		key := k
+	for k, v := range tx.kv {
+		tx.wg.Add(1)
+		ipPortPair := tx.cluster.HashRing.Hit(k)
+		commitRequest := &redisRequest.RedisRequet{
+			CmdName: "commit",
+			Args: [][]byte{
+				[]byte(tx.commitCommandName),
+				[]byte(k),
+				[]byte(v),
+			},
+		}
 
-		go func() {
-			tx.wg.Add(1)
-			ipPortPair := tx.cluster.HashRing.Hit(k)
-			client := tx.cluster.PeekIdleClient(ipPortPair)
-
-			//TODO这里要设计 do 命令如何传递
-			commitRequest := &redisRequest.RedisRequet{
-				CmdName: "commit",
-				Args: [][]byte{
-					[]byte(tx.txID),
-					[]byte(key),
-				},
-			}
-			r := client.SendRequestWithTimeout(commitRequest, time.Second)
-			commitResponses[key] = r
+		if tx.cluster.Self.IsSelf(ipPortPair) {
+			commitResponses[k] = ExecCommit(tx.cluster, tx.conn, commitRequest)
 			tx.wg.Done()
-		}()
-		tx.wg.Wait()
+		} else {
+			go func(key string) {
+				client := tx.cluster.PeekIdleClient(ipPortPair)
+				commitResponses[key] = client.SendRequestWithTimeout(commitRequest, time.Second)
+				tx.wg.Done()
+			}(k)
+		}
 	}
+	tx.wg.Wait()
 
 	successKeys := make([]string, 0)
 	rollback := false
@@ -104,6 +120,7 @@ func (tx *transaction) commit() {
 	if rollback {
 		tx.rollbackCommit(successKeys) //undo 成功的命令
 	}
+	logrus.Info("commit ok")
 	tx.unlockAllKey()
 
 }
@@ -112,24 +129,28 @@ func (tx *transaction) commit() {
 // 命令只针对那些成功的 key,
 func (tx *transaction) rollbackCommit(successKeys []string) {
 	for _, key := range successKeys {
-
-		go func(k string) {
-			tx.wg.Add(1)
-			ipPortPair := tx.cluster.HashRing.Hit(k)
-			client := tx.cluster.PeekIdleClient(ipPortPair)
-
-			//TODO这里要设计 undo 命令如何传递
-			unlockRequest := &redisRequest.RedisRequet{
-				CmdName: "rollback_commit",
-				Args: [][]byte{
-					[]byte(tx.txID),
-					[]byte(k),
-				},
-			}
-			client.SendRequestWithTimeout(unlockRequest, time.Second)
+		tx.wg.Add(1)
+		ipPortPair := tx.cluster.HashRing.Hit(key)
+		undoRequest := &redisRequest.RedisRequet{
+			CmdName: "undo",
+			Args: [][]byte{
+				[]byte(tx.undoCommandName),
+				[]byte(key),
+				[]byte(tx.txID),
+			},
+		}
+		if tx.cluster.Self.IsSelf(ipPortPair) {
+			ExecUndo(tx.cluster, tx.conn, undoRequest)
 			tx.wg.Done()
-		}(key)
+		} else {
+			go func() {
+				client := tx.cluster.PeekIdleClient(ipPortPair)
+				client.SendRequestWithTimeout(undoRequest, time.Second)
+				tx.wg.Done()
+			}()
+		}
 	}
+	tx.wg.Wait()
 }
 
 func (tx *transaction) rollbackPrepare() {
@@ -140,61 +161,98 @@ func (tx *transaction) rollbackPrepare() {
 func (tx *transaction) unlockAllKey() {
 
 	for k, _ := range tx.kv {
-		key := k // TODO 要描述清楚这里为什么要这么做
-		go func() {
-			tx.wg.Add(1)
-			ipPortPair := tx.cluster.HashRing.Hit(k)
-			client := tx.cluster.PeekIdleClient(ipPortPair)
+		tx.wg.Add(1)
 
-			unlockRequest := &redisRequest.RedisRequet{
-				CmdName: "transaction_unlock",
-				Args: [][]byte{
-					[]byte(tx.txID),
-					[]byte(key),
-				},
-			}
-			client.SendRequestWithTimeout(unlockRequest, time.Second)
+		ipPortPair := tx.cluster.HashRing.Hit(k)
+		unlockRequest := &redisRequest.RedisRequet{
+			CmdName: "transaction_unlock",
+			Args: [][]byte{
+				[]byte("transaction_unlock"),
+				[]byte(tx.txID),
+				[]byte(k),
+			},
+		}
+
+		if tx.cluster.Self.IsSelf(ipPortPair) {
+			ExecTransactionUnlock(tx.cluster, tx.conn, unlockRequest)
 			tx.wg.Done()
-		}()
+		} else {
+			go func() {
+				client := tx.cluster.PeekIdleClient(ipPortPair)
+				client.SendRequestWithTimeout(unlockRequest, time.Second)
+				tx.wg.Done()
+			}()
+		}
 	}
+	tx.wg.Wait()
+	logrus.Info("unlock done")
 }
 
-func MakeTransaction(conn conn.Conn, cluster *Cluster, kv map[string]string) *transaction {
+func (tx *transaction) generateUniqueID() string {
+	return xid.New().String()
+}
+
+func MakeTransaction(conn conn.Conn, cluster *Cluster, undoCommandName string, commitcommandName string, kv map[string]string) *transaction {
 	tx := &transaction{
-		conn:    conn,
-		cluster: cluster,
-		kv:      kv,
-		wg:      sync.WaitGroup{},
+		conn:              conn,
+		cluster:           cluster,
+		kv:                kv,
+		wg:                sync.WaitGroup{},
+		undoCommandName:   undoCommandName,
+		commitCommandName: commitcommandName,
 	}
+	tx.txID = tx.generateUniqueID()
 	return tx
 }
 
-func commit(cluster *Cluster, conn conn.Conn, clientRequest request.Request) response.Response {
+func ExecCommit(cluster *Cluster, conn conn.Conn, clientRequest request.Request) response.Response {
 
 	args := clientRequest.GetArgs()
-
 	cmdName := string(args[0])
-	cmdArgs := args[1:]
 
 	command := clusterCommandRouter[cmdName]
-	r := &redisRequest.RedisRequet{
+	cmdRequest := &redisRequest.RedisRequet{
 		CmdName: cmdName,
-		Args:    cmdArgs,
+		Args:    args[1:],
 	}
-
-	return command.CommandFunc(cluster, conn, r)
+	logrus.Info(command.CmdName)
+	return command.CommandFunc(cluster, conn, cmdRequest)
 }
 
-func undo(cluster *Cluster, conn conn.Conn, clientRequest request.Request) response.Response {
+//执行 undo 操作，注意不取消 unlock
+func ExecUndo(cluster *Cluster, conn conn.Conn, clientRequest request.Request) response.Response {
 	args := clientRequest.GetArgs()
+	undoCommandName := string(args[0])
 
-	cmdName := string(args[0])
-	cmdArgs := args[1:]
-
-	command := clusterCommandRouter[cmdName]
-	r := &redisRequest.RedisRequet{
-		CmdName: cmdName,
-		Args:    cmdArgs,
+	undoCommand := clusterCommandRouter[undoCommandName]
+	cmdRequest := &redisRequest.RedisRequet{
+		CmdName: undoCommandName,
+		Args:    args[1:],
 	}
-	return command.CommandFunc(cluster, conn, r)
+	return undoCommand.CommandFunc(cluster, conn, cmdRequest)
+}
+
+//txid 和 key
+func ExecPrepare(cluster *Cluster, conn conn.Conn, clientRequest request.Request) response.Response {
+
+	args := clientRequest.GetArgs()
+	key := string(args[0])
+	txID := string(args[1])
+	selectedDBIndex := conn.GetSelectedDBIndex()
+
+	//锁定key
+	err := cluster.Self.RedisServer.LockTxKey(selectedDBIndex, key, txID)
+	if err != nil {
+		return resp.MakeErrorResponse(err.Error())
+	}
+	return resp.OKSimpleResponse
+}
+
+func ExecTransactionUnlock(cluster *Cluster, conn conn.Conn, clientRequest request.Request) response.Response {
+	args := clientRequest.GetArgs()
+	txID := string(args[0])
+	key := string(args[1])
+	selectedDBIndex := conn.GetSelectedDBIndex()
+	cluster.Self.RedisServer.UnLockTxKey(selectedDBIndex, key, txID)
+	return resp.OKSimpleResponse
 }
