@@ -38,16 +38,29 @@ func ExecMget(cluster *Cluster, conn conn.Conn, re request.Request) response.Res
 }
 
 func ExecMset(cluster *Cluster, conn conn.Conn, clientRequest request.Request) response.Response {
-	kv := make(map[string]string)
 
 	args := clientRequest.GetArgs()
+
+	undoRequests := make([]request.Request, len(args)/2)
+	commitRequests := make([]request.Request, len(args)/2)
+
 	for i := 0; i < len(args); i += 2 {
-		key := string(args[i])
-		value := string(args[i+1])
-		kv[key] = value
+		undoRequests[i/2] = &req.RedisRequet{
+			CmdName: redis.Del,
+			Args: [][]byte{
+				args[i],
+			},
+		}
+		commitRequests[i/2] = &req.RedisRequet{
+			CmdName: redis.Set,
+			Args: [][]byte{
+				args[i],
+				args[i+1],
+			},
+		}
 	}
 
-	tx := MakeTransaction(conn, cluster, redis.Del, redis.Set, kv)
+	tx := MakeTransaction(conn, cluster, undoRequests, commitRequests)
 	tx.begin()
 
 	return resp.OKSimpleResponse

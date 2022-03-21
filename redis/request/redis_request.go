@@ -16,6 +16,10 @@ type RedisRequet struct {
 	Err     error    //从 socket 读取数据出错
 }
 
+func (rr *RedisRequet) GetKey() string {
+	return string(rr.Args[0])
+}
+
 func (rr *RedisRequet) ToStrings() string {
 
 	var builder strings.Builder

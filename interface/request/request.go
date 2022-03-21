@@ -5,4 +5,5 @@ type Request interface {
 	GetErr() error
 	ToByte() []byte
 	GetCmdName() string
+	GetKey() string
 }
