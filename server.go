@@ -7,11 +7,14 @@ import (
 
 	"github.com/chenjiayao/sidergo/config"
 	"github.com/chenjiayao/sidergo/interface/server"
+	"github.com/sirupsen/logrus"
 )
 
 func ListenAndServe(server server.Server) {
 
-	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", config.Config.Bind, config.Config.Port))
+	address := fmt.Sprintf("%s:%d", config.Config.Bind, config.Config.Port)
+	logrus.Info("listen at:", address)
+	listener, err := net.Listen("tcp", address)
 	if err != nil {
 	}
 

@@ -54,12 +54,14 @@ func (tx *transaction) prepare() {
 
 		ipPortPair := tx.cluster.HashRing.Hit(key)
 
+		logrus.Info(key, "----->", ipPortPair)
 		if tx.cluster.Self.IsSelf(ipPortPair) {
 			prepareResponses = append(prepareResponses, ExecPrepare(tx.cluster, tx.conn, prepareRequest))
 			tx.wg.Done()
 		} else {
 			go func(key string) {
 				client := tx.cluster.PeekIdleClient(ipPortPair)
+				logrus.Info("peeck client : ", client.ipPortPair)
 				prepareResponses = append(prepareResponses, client.SendRequestWithTimeout(prepareRequest, time.Second))
 				tx.wg.Done()
 			}(key)
@@ -89,13 +91,22 @@ func (tx *transaction) commit() {
 
 		ipPortPair := tx.cluster.HashRing.Hit(commitRequest.GetKey())
 
+		commitCommandRequestArgs := make([][]byte, 0)
+		commitCommandRequestArgs = append(commitCommandRequestArgs, []byte(commitRequest.GetCmdName()))
+		commitCommandRequestArgs = append(commitCommandRequestArgs, commitRequest.GetArgs()...)
+
+		commitCommandRequest := &redisRequest.RedisRequet{
+			CmdName: "commit",
+			Args:    commitCommandRequestArgs,
+		}
+
 		if tx.cluster.Self.IsSelf(ipPortPair) {
-			commitResponses[key] = ExecCommit(tx.cluster, tx.conn, commitRequest)
+			commitResponses[key] = ExecCommit(tx.cluster, tx.conn, commitCommandRequest)
 			tx.wg.Done()
 		} else {
 			go func(key string) {
 				client := tx.cluster.PeekIdleClient(ipPortPair)
-				commitResponses[key] = client.SendRequestWithTimeout(commitRequest, time.Second)
+				commitResponses[key] = client.SendRequestWithTimeout(commitCommandRequest, time.Second)
 				tx.wg.Done()
 			}(key)
 		}
@@ -113,6 +124,7 @@ func (tx *transaction) commit() {
 	}
 
 	if rollback {
+		logrus.Info("should rollback")
 		tx.rollbackCommit(successKeys) //undo 成功的命令
 	}
 	logrus.Info("commit ok")
@@ -135,19 +147,26 @@ func (tx *transaction) rollbackCommit(successKeys map[string]string) {
 
 		tx.wg.Add(1)
 		ipPortPair := tx.cluster.HashRing.Hit(key)
+		undoCommitRequestArgs := make([][]byte, 0)
+		undoCommitRequestArgs[0] = []byte(undoRequest.GetCmdName())
+		undoCommitRequestArgs = append(undoCommitRequestArgs, undoRequest.GetArgs()...)
+
+		undoCommandRequest := &redisRequest.RedisRequet{
+			CmdName: "undo",
+			Args:    undoCommitRequestArgs,
+		}
 
 		if tx.cluster.Self.IsSelf(ipPortPair) {
-			ExecUndo(tx.cluster, tx.conn, undoRequest)
+			ExecUndo(tx.cluster, tx.conn, undoCommandRequest)
 			tx.wg.Done()
 		} else {
 			go func() {
 				client := tx.cluster.PeekIdleClient(ipPortPair)
-				client.SendRequestWithTimeout(undoRequest, time.Second)
+				client.SendRequestWithTimeout(undoCommandRequest, time.Second)
 				tx.wg.Done()
 			}()
 		}
 	}
-
 	tx.wg.Wait()
 }
 
@@ -184,7 +203,7 @@ func (tx *transaction) unlockAllKey() {
 		}
 	}
 	tx.wg.Wait()
-	logrus.Info("unlock done")
+	logrus.Info("unlock all key done")
 }
 
 func (tx *transaction) generateUniqueID() string {
@@ -214,8 +233,8 @@ func ExecCommit(cluster *Cluster, conn conn.Conn, clientRequest request.Request)
 		CmdName: cmdName,
 		Args:    args[1:],
 	}
-	logrus.Info(command.CmdName)
-	return command.CommandFunc(cluster, conn, cmdRequest)
+	commitResponse := command.CommandFunc(cluster, conn, cmdRequest)
+	return commitResponse
 }
 
 //执行 undo 操作，注意不取消 unlock

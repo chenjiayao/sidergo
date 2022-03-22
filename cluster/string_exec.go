@@ -10,6 +10,7 @@ import (
 	req "github.com/chenjiayao/sidergo/redis/request"
 	"github.com/chenjiayao/sidergo/redis/resp"
 	"github.com/chenjiayao/sidergo/redis/validate"
+	"github.com/sirupsen/logrus"
 )
 
 func init() {
@@ -41,6 +42,7 @@ func ExecMset(cluster *Cluster, conn conn.Conn, clientRequest request.Request) r
 
 	args := clientRequest.GetArgs()
 
+	logrus.Info("exec mset")
 	undoRequests := make([]request.Request, len(args)/2)
 	commitRequests := make([]request.Request, len(args)/2)
 

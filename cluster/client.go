@@ -38,6 +38,7 @@ func makeClient(ipPortPair string) *client {
 
 	var c *client
 	n, err := net.Dial("tcp", ipPortPair)
+	logrus.Info("dial failed:", ipPortPair)
 	if err != nil {
 		c = &client{
 			ipPortPair: ipPortPair,
