@@ -41,12 +41,8 @@ func LoadDefaultConfig() {
 		Databases:      3,
 		RequirePass:    "",
 		Appendonly:     true,
-		EnableCluster:  true,
+		EnableCluster:  false,
 		AppendFilename: "./redis.aof",
-		Self:           "localhost:3101",
-		Nodes: []string{
-			"localhost:3102",
-		},
 	}
 }
 
