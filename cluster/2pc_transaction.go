@@ -60,7 +60,6 @@ func (tx *transaction) prepare() {
 			tx.wg.Done()
 		} else {
 			c := tx.cluster.PeekIdleClient(ipPortPair)
-			logrus.Info("from ", c.ipPortPair, "ok")
 			go func(c *client, request request.Request) {
 				prepareResponses = append(prepareResponses, c.SendRequestWithTimeout(prepareRequest, time.Second))
 				tx.wg.Done()
