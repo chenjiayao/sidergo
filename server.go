@@ -3,7 +3,10 @@ package sidergo
 import (
 	"fmt"
 	"net"
+	"os"
+	"os/signal"
 	"sync"
+	"syscall"
 
 	"github.com/chenjiayao/sidergo/config"
 	"github.com/chenjiayao/sidergo/interface/server"
@@ -25,6 +28,17 @@ func ListenAndServe(server server.Server) {
 	defer func() {
 		listener.Close()
 		server.Close()
+	}()
+
+	sigCh := make(chan os.Signal)
+	signal.Notify(sigCh, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT)
+	go func() {
+		sig := <-sigCh
+		logrus.Info("收到关闭信号。。停止服务")
+		switch sig {
+		case syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT:
+			server.Close()
+		}
 	}()
 
 	var waitGroup sync.WaitGroup

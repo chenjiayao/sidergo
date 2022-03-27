@@ -16,6 +16,7 @@ import (
 	"github.com/chenjiayao/sidergo/parser"
 	"github.com/chenjiayao/sidergo/redis/redisrequest"
 	"github.com/chenjiayao/sidergo/redis/redisresponse"
+	"github.com/sirupsen/logrus"
 )
 
 var _ server.Server = &RedisServer{}
@@ -98,6 +99,7 @@ func (redisServer *RedisServer) activeExpireCycle() {
 				}
 			}
 		case <-redisServer.ctx.Done():
+			logrus.Info("activeExpireCycle...结束")
 			return
 		}
 	}
@@ -142,6 +144,7 @@ func (redisServer *RedisServer) checkTimeoutConn() {
 				})
 			}
 		case <-redisServer.ctx.Done():
+			logrus.Info("checkTimeoutConn结束...")
 			return
 		}
 	}

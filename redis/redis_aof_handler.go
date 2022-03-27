@@ -10,6 +10,7 @@ import (
 	"github.com/chenjiayao/sidergo/interface/server"
 	"github.com/chenjiayao/sidergo/lib/unboundedchan"
 	"github.com/chenjiayao/sidergo/redis/redisresponse"
+	"github.com/sirupsen/logrus"
 )
 
 // redis aof 属于写后日志，先写内存，再写日志
@@ -61,6 +62,7 @@ func (h *AofHandler) EndAof() {
 	for cmd := range h.aofChan.Out {
 		h.writeToAofFile(cmd)
 	}
+	logrus.Info("结束 aof")
 }
 
 func MakeAofHandler(server server.Server) *AofHandler {
