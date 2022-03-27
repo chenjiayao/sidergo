@@ -13,6 +13,7 @@ import (
 	"github.com/chenjiayao/sidergo/lib/list"
 	"github.com/chenjiayao/sidergo/lib/unboundedchan"
 	"github.com/chenjiayao/sidergo/redis/redisresponse"
+	"github.com/sirupsen/logrus"
 )
 
 var _ db.DB = &RedisDB{}
@@ -56,6 +57,7 @@ func NewDBInstance(server server.Server, index int) *RedisDB {
 }
 
 func (rd *RedisDB) CloseDB() {
+	logrus.Info(rd.Index, " db closed")
 	close(rd.ReadyList.In)
 }
 
@@ -215,6 +217,9 @@ func (rd *RedisDB) AddReadyKey(key []byte) {
 
 func (rd *RedisDB) handleClientsBlockedOnLists() {
 	for o := range rd.ReadyList.Out {
+		if len(o) == 0 {
+			continue
+		}
 		key := string(o[0])
 		lv, ok := rd.BlockingKeys.Load(key)
 		if !ok {

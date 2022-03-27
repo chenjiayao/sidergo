@@ -260,6 +260,10 @@ func (redisServer *RedisServer) Close() error {
 
 	redisServer.closed.Set(true)
 	redisServer.cancel()
-	redisServer.aofHandler.EndAof()
+	if redisServer.aofHandler != nil {
+		redisServer.aofHandler.EndAof()
+	}
+	redisServer.rds.CloseAllDB()
+
 	return nil
 }

@@ -29,6 +29,10 @@ func (h *AofHandler) StartAof() {
 }
 
 func (h *AofHandler) writeToAofFile(cmd [][]byte) {
+	if len(cmd) == 0 {
+		return
+	}
+
 	if !h.isWriteCmd(cmd[0]) {
 		return
 	}
@@ -58,7 +62,9 @@ func (h *AofHandler) LogCmd(req request.Request) {
 }
 
 func (h *AofHandler) EndAof() {
-	defer close(h.aofChan.In)
+
+	close(h.aofChan.In)
+
 	for cmd := range h.aofChan.Out {
 		h.writeToAofFile(cmd)
 	}

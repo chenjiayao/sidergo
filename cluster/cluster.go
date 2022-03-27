@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"sync"
+	"time"
 
 	"github.com/chenjiayao/sidergo/config"
 	"github.com/chenjiayao/sidergo/interface/conn"
@@ -44,21 +44,19 @@ func (node *Node) IsSelf(ipPortPair string) bool {
 }
 
 type Cluster struct {
-	Self            *Node   //当前 node 节点
-	Peers           []*Node // 集群其他节点
-	HashRing        *hashring.HashRing
-	Pool            map[string]*clientPool
-	transactionMaps sync.Map
+	Self     *Node   //当前 node 节点
+	Peers    []*Node // 集群其他节点
+	HashRing *hashring.HashRing
+	Pools    map[string]*clientPool
 }
 
 func MakeCluster() *Cluster {
 
 	logrus.Info("enable cluster")
 	cluster := &Cluster{
-		HashRing:        hashring.MakeHashRing(3),
-		Peers:           make([]*Node, len(config.Config.Nodes)),
-		transactionMaps: sync.Map{},
-		Pool:            make(map[string]*clientPool),
+		HashRing: hashring.MakeHashRing(3),
+		Peers:    make([]*Node, len(config.Config.Nodes)),
+		Pools:    make(map[string]*clientPool),
 	}
 
 	cluster.Self = MakeNode(config.Config.Self)
@@ -75,7 +73,7 @@ func MakeCluster() *Cluster {
 		cluster.HashRing.AddNode(ipPortPair)
 
 		//给每个 ipport 配置若干个 client
-		cluster.Pool[ipPortPair] = MakeClientPool(ipPortPair, 4)
+		cluster.Pools[ipPortPair] = MakeClientPool(ipPortPair, 4)
 	}
 
 	return cluster
@@ -162,9 +160,13 @@ func (cluster *Cluster) closeClient(client conn.Conn) {
 }
 
 func (cluster *Cluster) Close() error {
-	for _, pool := range cluster.Pool {
+	for _, pool := range cluster.Pools {
 		pool.destroy()
 	}
+	cluster.Self.RedisServer.Close()
+	time.Sleep(time.Second)
+
+	logrus.Info("关闭集群...")
 	return nil
 }
 
@@ -184,7 +186,7 @@ func (cluster *Cluster) Log() {
 
 func (cluster *Cluster) PeekIdleClient(ipPortPair string) *client {
 
-	pool := cluster.Pool[ipPortPair]
+	pool := cluster.Pools[ipPortPair]
 	for {
 		for i := 0; i < len(pool.clients); i++ {
 			client := pool.clients[i]

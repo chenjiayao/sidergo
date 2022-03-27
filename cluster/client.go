@@ -30,7 +30,6 @@ type client struct {
 	ipPortPair string
 	conn       net.Conn
 	isIdle     atomic.Boolean //1/true是空闲，0/false是忙碌
-	stopChan   chan struct{}
 	wg         waitgroup.WaitGroup
 }
 
@@ -44,7 +43,6 @@ func makeClient(ipPortPair string) *client {
 			ipPortPair: ipPortPair,
 			conn:       nil,
 			isIdle:     atomic.Boolean(1),
-			stopChan:   make(chan struct{}),
 			wg:         waitgroup.WaitGroup{},
 		}
 	} else {
@@ -52,7 +50,6 @@ func makeClient(ipPortPair string) *client {
 			conn:       n,
 			isIdle:     atomic.Boolean(1),
 			ipPortPair: ipPortPair,
-			stopChan:   make(chan struct{}),
 			wg:         waitgroup.WaitGroup{},
 		}
 	}
@@ -223,5 +220,8 @@ func (c *client) IsIdle() bool {
 }
 
 func (c *client) Stop() {
-	c.stopChan <- struct{}{}
+	logrus.Info(c.ipPortPair, " closed")
+	if c.isServerOnline() {
+		c.conn.Close()
+	}
 }

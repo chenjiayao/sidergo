@@ -19,16 +19,14 @@ func ListenAndServe(server server.Server) {
 	logrus.Info("listen at:", address)
 	listener, err := net.Listen("tcp", address)
 	if err != nil {
+		logrus.Fatal("start server failed ", err)
 	}
 
 	if config.Config.Appendonly {
 		server.Log()
 	}
 
-	defer func() {
-		listener.Close()
-		server.Close()
-	}()
+	defer server.Close()
 
 	sigCh := make(chan os.Signal)
 	signal.Notify(sigCh, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT)
@@ -37,7 +35,7 @@ func ListenAndServe(server server.Server) {
 		logrus.Info("收到关闭信号。。停止服务")
 		switch sig {
 		case syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT:
-			server.Close()
+			listener.Close()
 		}
 	}()
 
