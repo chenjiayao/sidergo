@@ -54,17 +54,17 @@ func (tx *transaction) prepare() {
 
 		ipPortPair := tx.cluster.HashRing.Hit(key)
 
-		logrus.Info(key, "----->", ipPortPair)
+		logrus.Info(key, "----->", ipPortPair, tx.cluster.Self.IsSelf(ipPortPair))
 		if tx.cluster.Self.IsSelf(ipPortPair) {
 			prepareResponses = append(prepareResponses, ExecPrepare(tx.cluster, tx.conn, prepareRequest))
 			tx.wg.Done()
 		} else {
-			go func(key string) {
-				client := tx.cluster.PeekIdleClient(ipPortPair)
-				logrus.Info("peeck client : ", client.ipPortPair)
-				prepareResponses = append(prepareResponses, client.SendRequestWithTimeout(prepareRequest, time.Second))
+			c := tx.cluster.PeekIdleClient(ipPortPair)
+			logrus.Info("from ", c.ipPortPair, "ok")
+			go func(c *client, request request.Request) {
+				prepareResponses = append(prepareResponses, c.SendRequestWithTimeout(prepareRequest, time.Second))
 				tx.wg.Done()
-			}(key)
+			}(c, prepareRequest)
 		}
 	}
 	tx.wg.Wait()
@@ -73,6 +73,7 @@ func (tx *transaction) prepare() {
 	for _, r := range prepareResponses {
 		if !r.ISOK() {
 			tx.rollbackPrepare()
+			return
 		}
 	}
 	tx.commit()
@@ -104,11 +105,13 @@ func (tx *transaction) commit() {
 			commitResponses[key] = ExecCommit(tx.cluster, tx.conn, commitCommandRequest)
 			tx.wg.Done()
 		} else {
-			go func(key string) {
-				client := tx.cluster.PeekIdleClient(ipPortPair)
-				commitResponses[key] = client.SendRequestWithTimeout(commitCommandRequest, time.Second)
+			c := tx.cluster.PeekIdleClient(ipPortPair)
+
+			go func(c *client, commitCommandRequest request.Request) {
+				key := commitCommandRequest.GetKey()
+				commitResponses[key] = c.SendRequestWithTimeout(commitCommandRequest, time.Second)
 				tx.wg.Done()
-			}(key)
+			}(c, commitCommandRequest)
 		}
 	}
 	tx.wg.Wait()
@@ -160,11 +163,12 @@ func (tx *transaction) rollbackCommit(successKeys map[string]string) {
 			ExecUndo(tx.cluster, tx.conn, undoCommandRequest)
 			tx.wg.Done()
 		} else {
-			go func() {
-				client := tx.cluster.PeekIdleClient(ipPortPair)
-				client.SendRequestWithTimeout(undoCommandRequest, time.Second)
+
+			c := tx.cluster.PeekIdleClient(ipPortPair)
+			go func(c *client, undoCommandRequest request.Request) {
+				c.SendRequestWithTimeout(undoCommandRequest, time.Second)
 				tx.wg.Done()
-			}()
+			}(c, undoCommandRequest)
 		}
 	}
 	tx.wg.Wait()
@@ -185,7 +189,6 @@ func (tx *transaction) unlockAllKey() {
 		unlockRequest := &redisrequest.RedisRequet{
 			CmdName: "transaction_unlock",
 			Args: [][]byte{
-				[]byte("transaction_unlock"),
 				[]byte(tx.txID),
 				[]byte(k),
 			},
@@ -195,11 +198,12 @@ func (tx *transaction) unlockAllKey() {
 			ExecTransactionUnlock(tx.cluster, tx.conn, unlockRequest)
 			tx.wg.Done()
 		} else {
-			go func() {
-				client := tx.cluster.PeekIdleClient(ipPortPair)
-				client.SendRequestWithTimeout(unlockRequest, time.Second)
+
+			c := tx.cluster.PeekIdleClient(ipPortPair)
+			go func(c *client, unlockRequest request.Request) {
+				c.SendRequestWithTimeout(unlockRequest, time.Second)
 				tx.wg.Done()
-			}()
+			}(c, unlockRequest)
 		}
 	}
 	tx.wg.Wait()
@@ -266,6 +270,7 @@ func ExecPrepare(cluster *Cluster, conn conn.Conn, clientRequest request.Request
 	return redisresponse.OKSimpleResponse
 }
 
+// 事务执行完毕，释放所有的锁
 func ExecTransactionUnlock(cluster *Cluster, conn conn.Conn, clientRequest request.Request) response.Response {
 	args := clientRequest.GetArgs()
 	txID := string(args[0])
