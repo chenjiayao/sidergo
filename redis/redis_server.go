@@ -14,8 +14,8 @@ import (
 	"github.com/chenjiayao/sidergo/lib/atomic"
 	"github.com/chenjiayao/sidergo/lib/list"
 	"github.com/chenjiayao/sidergo/parser"
-	req "github.com/chenjiayao/sidergo/redis/request"
-	"github.com/chenjiayao/sidergo/redis/resp"
+	"github.com/chenjiayao/sidergo/redis/redisrequest"
+	"github.com/chenjiayao/sidergo/redis/redisresponse"
 )
 
 var _ server.Server = &RedisServer{}
@@ -81,7 +81,7 @@ func (redisServer *RedisServer) activeExpireCycle() {
 							delKeyCount++
 
 							if config.Config.Appendonly {
-								deleteCmdRequest := &req.RedisRequet{
+								deleteCmdRequest := &redisrequest.RedisRequet{
 									CmdName: "del",
 									Args: [][]byte{
 										[]byte(key),
@@ -132,7 +132,7 @@ func (redisServer *RedisServer) checkTimeoutConn() {
 						// time.Until(blockAt) --> blockAt.Sub(time.Now()) --> blockAt - time.Now()
 						//  blockTime < time.Now() - blockAt
 						if time.Since(blockAt).Seconds() > float64(blockTime) {
-							conn.SetBlockingResponse(resp.NullMultiResponse)
+							conn.SetBlockingResponse(redisresponse.NullMultiResponse)
 							conn.SetBlockingExec("", nil)
 							l.RemoveNode(conn) //链接已经不再阻塞，从 list 中移除
 						}
@@ -168,7 +168,7 @@ func (redisServer *RedisServer) Handle(conn net.Conn) {
 				return
 			}
 
-			errResponse := resp.MakeErrorResponse(request.GetErr().Error())
+			errResponse := redisresponse.MakeErrorResponse(request.GetErr().Error())
 			err := redisClient.Write(errResponse.ToErrorByte()) //返回执行命令失败，close client
 			if err != nil {
 				redisServer.closeClient(redisClient)
@@ -195,7 +195,7 @@ func (redisServer *RedisServer) Exec(conn conn.Conn, request request.Request) re
 	cmdName := request.GetCmdName()
 
 	if cmdName != "auth" && !redisServer.isAuthenticated(conn) {
-		res = resp.MakeErrorResponse("NOAUTH Authentication required")
+		res = redisresponse.MakeErrorResponse("NOAUTH Authentication required")
 		return res
 	}
 
@@ -225,7 +225,7 @@ func (redisServer *RedisServer) isAuthenticated(conn conn.Conn) bool {
 
 func (redisServer *RedisServer) sendResponse(redisClient conn.Conn, res response.Response) error {
 	var err error
-	if _, ok := res.(resp.RedisErrorResponse); ok {
+	if _, ok := res.(redisresponse.RedisErrorResponse); ok {
 		err = redisClient.Write(res.ToErrorByte())
 	} else {
 		err = redisClient.Write(res.ToContentByte())

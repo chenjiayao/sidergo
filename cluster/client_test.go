@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/chenjiayao/sidergo/redis/request"
+	"github.com/chenjiayao/sidergo/redis/redisrequest"
 )
 
 func Test_client_parseMulti(t *testing.T) {
@@ -79,7 +79,7 @@ func Test_client_parseArray(t *testing.T) {
 func Test_client_SendRequestWithTimeout(t *testing.T) {
 	c := makeClient("localhost:3102")
 
-	req := &request.RedisRequet{
+	req := &redisrequest.RedisRequet{
 		CmdName: "ping",
 	}
 	want := "$4\r\nPONG\r\n"

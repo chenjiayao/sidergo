@@ -7,7 +7,7 @@ import (
 	"github.com/chenjiayao/sidergo/interface/conn"
 	"github.com/chenjiayao/sidergo/interface/response"
 	"github.com/chenjiayao/sidergo/redis"
-	"github.com/chenjiayao/sidergo/redis/resp"
+	"github.com/chenjiayao/sidergo/redis/redisresponse"
 	"github.com/chenjiayao/sidergo/redis/validate"
 )
 
@@ -29,7 +29,7 @@ func ExecRename(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 	newkey := string(args[1])
 	value, exist := db.Dataset.Get(key)
 	if !exist {
-		return resp.MakeErrorResponse("ERR no such key")
+		return redisresponse.MakeErrorResponse("ERR no such key")
 	}
 
 	//不管有没有，删除 newkey 的数据
@@ -46,7 +46,7 @@ func ExecRename(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 		db.TtlMap.Put(newkey, ttl)
 	}
 
-	return resp.MakeSimpleResponse("OK")
+	return redisresponse.MakeSimpleResponse("OK")
 }
 
 func ExecExpire(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
@@ -56,13 +56,13 @@ func ExecExpire(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 	ttl, _ := strconv.Atoi(ttls)
 
 	expire(db, key, int64(ttl*1000))
-	return resp.MakeNumberResponse(1)
+	return redisresponse.MakeNumberResponse(1)
 }
 
 // ttl = -2  key 不存在
 // ttl = -1 永久有效
 func ExecTTL(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
-	return resp.MakeNumberResponse(ttl(db, args))
+	return redisresponse.MakeNumberResponse(ttl(db, args))
 }
 
 func ttl(db *redis.RedisDB, args [][]byte) int64 {
@@ -107,5 +107,5 @@ func ExecDel(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response
 	key := string(args[0])
 	db.Dataset.Del(key)
 	db.TtlMap.Del(key)
-	return resp.MakeNumberResponse(0)
+	return redisresponse.MakeNumberResponse(0)
 }

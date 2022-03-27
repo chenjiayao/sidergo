@@ -9,7 +9,7 @@ import (
 	"github.com/chenjiayao/sidergo/interface/response"
 	"github.com/chenjiayao/sidergo/interface/server"
 	"github.com/chenjiayao/sidergo/lib/unboundedchan"
-	"github.com/chenjiayao/sidergo/redis/resp"
+	"github.com/chenjiayao/sidergo/redis/redisresponse"
 )
 
 // redis aof 属于写后日志，先写内存，再写日志
@@ -35,11 +35,11 @@ func (h *AofHandler) writeToAofFile(cmd [][]byte) {
 	multiResponses := make([]response.Response, len(cmd))
 
 	for i, v := range cmd {
-		multiResponse := resp.MakeMultiResponse(string(v))
+		multiResponse := redisresponse.MakeMultiResponse(string(v))
 		multiResponses[i] = multiResponse
 	}
 
-	arrayResponse := resp.MakeArrayResponse(multiResponses)
+	arrayResponse := redisresponse.MakeArrayResponse(multiResponses)
 
 	h.aofFile.Write(arrayResponse.ToContentByte())
 }

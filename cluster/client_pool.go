@@ -3,7 +3,7 @@ package cluster
 import (
 	"time"
 
-	req "github.com/chenjiayao/sidergo/redis/request"
+	"github.com/chenjiayao/sidergo/redis/redisrequest"
 )
 
 type clientPool struct {
@@ -55,7 +55,7 @@ func (pool *clientPool) heartbeat() {
 				if !client.isServerOnline() {
 					pool.clients[i] = makeClient(client.ipPortPair)
 				} else if client.IsIdle() {
-					pingReq := &req.RedisRequet{
+					pingReq := &redisrequest.RedisRequet{
 						CmdName: "ping",
 						Args:    make([][]byte, 0),
 					}

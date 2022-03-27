@@ -12,11 +12,11 @@ import (
 	"github.com/chenjiayao/sidergo/interface/response"
 	"github.com/chenjiayao/sidergo/interface/server"
 	"github.com/chenjiayao/sidergo/lib/hashring"
+	"github.com/chenjiayao/sidergo/redis/redisresponse"
 	"github.com/sirupsen/logrus"
 
 	"github.com/chenjiayao/sidergo/parser"
 	"github.com/chenjiayao/sidergo/redis"
-	"github.com/chenjiayao/sidergo/redis/resp"
 )
 
 /*
@@ -88,7 +88,7 @@ func (cluster *Cluster) Exec(conn conn.Conn, request request.Request) response.R
 
 	command, ok := clusterCommandRouter[cmdName]
 	if !ok {
-		errResp := resp.MakeErrorResponse(fmt.Sprintf("ERR unknown command `%s`, with args beginning with:", cmdName))
+		errResp := redisresponse.MakeErrorResponse(fmt.Sprintf("ERR unknown command `%s`, with args beginning with:", cmdName))
 		return errResp
 	}
 
@@ -97,7 +97,7 @@ func (cluster *Cluster) Exec(conn conn.Conn, request request.Request) response.R
 	if ok {
 		err := command.ValidateFunc(conn, args)
 		if err != nil {
-			errResp := resp.MakeErrorResponse(err.Error())
+			errResp := redisresponse.MakeErrorResponse(err.Error())
 			return errResp
 		}
 	}
@@ -124,7 +124,7 @@ func (cluster *Cluster) Handle(conn net.Conn) {
 				return
 			}
 
-			errResponse := resp.MakeErrorResponse(request.GetErr().Error())
+			errResponse := redisresponse.MakeErrorResponse(request.GetErr().Error())
 			err := redisClient.Write(errResponse.ToErrorByte()) //返回执行命令失败，close client
 			if err != nil {
 				cluster.closeClient(redisClient)
@@ -146,7 +146,7 @@ func (cluster *Cluster) Handle(conn net.Conn) {
 func (cluster *Cluster) sendResponse(redisClient conn.Conn, res response.Response) error {
 
 	var err error
-	if _, ok := res.(resp.RedisErrorResponse); ok {
+	if _, ok := res.(redisresponse.RedisErrorResponse); ok {
 		err = redisClient.Write(res.ToErrorByte())
 	} else {
 		err = redisClient.Write(res.ToContentByte())

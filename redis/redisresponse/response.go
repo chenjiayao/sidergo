@@ -1,4 +1,4 @@
-package resp
+package redisresponse
 
 import (
 	"errors"

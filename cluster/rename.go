@@ -7,7 +7,7 @@ import (
 	"github.com/chenjiayao/sidergo/interface/request"
 	"github.com/chenjiayao/sidergo/interface/response"
 	"github.com/chenjiayao/sidergo/redis"
-	"github.com/chenjiayao/sidergo/redis/resp"
+	"github.com/chenjiayao/sidergo/redis/redisresponse"
 	"github.com/chenjiayao/sidergo/redis/validate"
 )
 
@@ -25,7 +25,7 @@ func ExecRename(cluster *Cluster, conn conn.Conn, re request.Request) response.R
 	oldKeyNode := cluster.HashRing.Hit(oldKey)
 	newKeyNode := cluster.HashRing.Hit(newKey)
 	if oldKeyNode != newKeyNode {
-		return resp.MakeErrorResponse("ERR rename must within one slot in cluster mode")
+		return redisresponse.MakeErrorResponse("ERR rename must within one slot in cluster mode")
 	}
 
 	if cluster.Self.IsSelf(newKeyNode) {

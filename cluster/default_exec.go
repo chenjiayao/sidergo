@@ -8,8 +8,8 @@ import (
 	"github.com/chenjiayao/sidergo/interface/request"
 	"github.com/chenjiayao/sidergo/interface/response"
 	"github.com/chenjiayao/sidergo/redis"
-	req "github.com/chenjiayao/sidergo/redis/request"
-	"github.com/chenjiayao/sidergo/redis/resp"
+	"github.com/chenjiayao/sidergo/redis/redisrequest"
+	"github.com/chenjiayao/sidergo/redis/redisresponse"
 	"github.com/chenjiayao/sidergo/redis/validate"
 )
 
@@ -81,7 +81,7 @@ func ExecPing(cluster *Cluster, conn conn.Conn, re request.Request) response.Res
 	if len(args) > 0 {
 		message = string(args[0])
 	}
-	return resp.MakeMultiResponse(message)
+	return redisresponse.MakeMultiResponse(message)
 }
 
 /*
@@ -102,7 +102,7 @@ func defaultExec(cluster *Cluster, conn conn.Conn, re request.Request) response.
 		return cluster.Self.RedisServer.Exec(conn, re)
 	} else {
 		c := cluster.PeekIdleClient(ipPortPair)
-		selectRequest := &req.RedisRequet{
+		selectRequest := &redisrequest.RedisRequet{
 			CmdName: "select",
 			Args: [][]byte{
 				[]byte(fmt.Sprintf("%d", conn.GetSelectedDBIndex())),

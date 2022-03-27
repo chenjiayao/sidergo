@@ -10,7 +10,7 @@ import (
 	"github.com/chenjiayao/sidergo/interface/response"
 	"github.com/chenjiayao/sidergo/lib/list"
 	"github.com/chenjiayao/sidergo/redis"
-	"github.com/chenjiayao/sidergo/redis/resp"
+	"github.com/chenjiayao/sidergo/redis/redisresponse"
 	"github.com/chenjiayao/sidergo/redis/validate"
 )
 
@@ -50,10 +50,10 @@ func ExecLrem(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respons
 
 	l, err := getList(conn, db, args)
 	if err != nil {
-		return resp.MakeErrorResponse(err.Error())
+		return redisresponse.MakeErrorResponse(err.Error())
 	}
 	if l == nil {
-		return resp.MakeNumberResponse(0)
+		return redisresponse.MakeNumberResponse(0)
 	}
 
 	removeCount := 0
@@ -79,37 +79,37 @@ func ExecLrem(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respons
 			removeCount++
 		}
 	}
-	return resp.MakeNumberResponse(int64(removeCount))
+	return redisresponse.MakeNumberResponse(int64(removeCount))
 }
 
 func ExecLset(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 	l, err := getList(conn, db, args)
 	if err != nil {
-		return resp.MakeErrorResponse(err.Error())
+		return redisresponse.MakeErrorResponse(err.Error())
 	}
 	if l == nil {
-		return resp.MakeErrorResponse("ERR no such key")
+		return redisresponse.MakeErrorResponse("ERR no such key")
 	}
 
 	index, _ := strconv.ParseInt(string(args[1]), 10, 64)
 	if index > l.Len()-1 {
-		return resp.MakeErrorResponse("ERR index out of range")
+		return redisresponse.MakeErrorResponse("ERR index out of range")
 	}
 
 	val := string(args[2])
 
 	node := l.GetNodeByIndex(index)
 	node.SetElement(val)
-	return resp.MakeSimpleResponse("OK")
+	return redisresponse.MakeSimpleResponse("OK")
 }
 
 func ExecRPushx(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 	l, err := getList(conn, db, args)
 	if err != nil {
-		return resp.MakeErrorResponse(err.Error())
+		return redisresponse.MakeErrorResponse(err.Error())
 	}
 	if l == nil {
-		return resp.NullMultiResponse
+		return redisresponse.NullMultiResponse
 	}
 	return ExecRPush(conn, db, args)
 }
@@ -117,15 +117,15 @@ func ExecRPushx(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 func ExecRpop(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 	l, err := getListOrInitList(conn, db, args)
 	if err != nil {
-		return resp.MakeErrorResponse(err.Error())
+		return redisresponse.MakeErrorResponse(err.Error())
 	}
 	element := l.PopFromTail()
 	if element == nil {
-		return resp.NullMultiResponse
+		return redisresponse.NullMultiResponse
 	}
 
 	s, _ := element.(string)
-	return resp.MakeSimpleResponse(s)
+	return redisresponse.MakeSimpleResponse(s)
 }
 
 //先执行 pop，如果没有，阻塞
@@ -148,13 +148,13 @@ func ExecBlpop(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respon
 	for _, v := range args[:len(args)-1] {
 		l, err := getList(conn, db, [][]byte{v})
 		if err != nil {
-			return resp.MakeErrorResponse(err.Error())
+			return redisresponse.MakeErrorResponse(err.Error())
 		}
 		if l != nil {
 			v := l.PopFromHead()
 			if v != nil {
 				content := v.(string)
-				return resp.MakeSimpleResponse(content)
+				return redisresponse.MakeSimpleResponse(content)
 			}
 		}
 	}
@@ -181,13 +181,13 @@ func ExecBrpop(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respon
 	for _, v := range args[:len(args)-1] {
 		l, err := getList(conn, db, [][]byte{v})
 		if err != nil {
-			return resp.MakeErrorResponse(err.Error())
+			return redisresponse.MakeErrorResponse(err.Error())
 		}
 		if l != nil {
 			v := l.PopFromTail()
 			if v != nil {
 				content := v.(string)
-				return resp.MakeSimpleResponse(content)
+				return redisresponse.MakeSimpleResponse(content)
 			}
 		}
 	}
@@ -209,7 +209,7 @@ func ExecRPush(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respon
 	l, err := getListOrInitList(conn, db, args)
 
 	if err != nil {
-		return resp.MakeErrorResponse(err.Error())
+		return redisresponse.MakeErrorResponse(err.Error())
 	}
 
 	for _, v := range args[1:] {
@@ -219,7 +219,7 @@ func ExecRPush(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respon
 
 	db.Dataset.PutIfNotExist(string(args[0]), l)
 	db.AddReadyKey(args[0])
-	return resp.MakeNumberResponse(l.Len())
+	return redisresponse.MakeNumberResponse(l.Len())
 }
 
 //左到右的顺序依次插入到表头
@@ -229,7 +229,7 @@ func ExecLPush(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respon
 	l, err := getListOrInitList(conn, db, args)
 
 	if err != nil {
-		return resp.MakeErrorResponse(err.Error())
+		return redisresponse.MakeErrorResponse(err.Error())
 	}
 
 	for _, v := range args[1:] {
@@ -239,17 +239,17 @@ func ExecLPush(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respon
 
 	db.Dataset.PutIfNotExist(string(args[0]), l)
 	db.AddReadyKey(args[0])
-	return resp.MakeNumberResponse(l.Len())
+	return redisresponse.MakeNumberResponse(l.Len())
 
 }
 
 func ExecLinsert(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 	l, err := getList(conn, db, args)
 	if err != nil {
-		return resp.MakeErrorResponse(err.Error())
+		return redisresponse.MakeErrorResponse(err.Error())
 	}
 	if l == nil {
-		return resp.MakeNumberResponse(0)
+		return redisresponse.MakeNumberResponse(0)
 	}
 
 	pos := strings.ToUpper(string(args[1])) // before or after
@@ -262,16 +262,16 @@ func ExecLinsert(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Resp
 	} else if pos == "AFTER" {
 		size = l.InsertAfterPiovt(pivot, value)
 	}
-	return resp.MakeNumberResponse(size)
+	return redisresponse.MakeNumberResponse(size)
 }
 
 func ExecLrange(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 	l, err := getList(conn, db, args)
 	if err != nil {
-		return resp.MakeErrorResponse(err.Error())
+		return redisresponse.MakeErrorResponse(err.Error())
 	}
 	if l == nil {
-		return resp.EmptyArrayResponse
+		return redisresponse.EmptyArrayResponse
 	}
 	start, _ := strconv.Atoi(string(args[1]))
 	stop, _ := strconv.Atoi(string(args[2]))
@@ -280,9 +280,9 @@ func ExecLrange(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 
 	multiResponses := make([]response.Response, len(elements))
 	for i := 0; i < len(elements); i++ {
-		multiResponses[i] = resp.MakeMultiResponse(elements[i].(string))
+		multiResponses[i] = redisresponse.MakeMultiResponse(elements[i].(string))
 	}
-	return resp.MakeArrayResponse(multiResponses)
+	return redisresponse.MakeArrayResponse(multiResponses)
 }
 
 /**
@@ -301,25 +301,25 @@ func ExecLtrim(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respon
 
 	l, err := getList(conn, db, args)
 	if err != nil {
-		return resp.MakeErrorResponse(err.Error())
+		return redisresponse.MakeErrorResponse(err.Error())
 	}
 	if l == nil {
-		return resp.OKSimpleResponse
+		return redisresponse.OKSimpleResponse
 	}
 	start, _ := strconv.ParseInt(string(args[1]), 10, 64)
 	stop, _ := strconv.ParseInt(string(args[2]), 10, 64)
 	l.Trim(start, stop)
 
-	return resp.OKSimpleResponse
+	return redisresponse.OKSimpleResponse
 }
 
 func ExecLPushx(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 	l, err := getList(conn, db, args)
 	if err != nil {
-		return resp.MakeErrorResponse(err.Error())
+		return redisresponse.MakeErrorResponse(err.Error())
 	}
 	if l == nil {
-		return resp.NullMultiResponse
+		return redisresponse.NullMultiResponse
 	}
 	return ExecLPush(conn, db, args)
 }
@@ -327,31 +327,31 @@ func ExecLPushx(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 func ExecLIndex(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 	l, err := getListOrInitList(conn, db, args)
 	if err != nil {
-		return resp.MakeErrorResponse(err.Error())
+		return redisresponse.MakeErrorResponse(err.Error())
 	}
 	i, _ := strconv.ParseInt(string(args[1]), 10, 64)
 	val := l.GetElementByIndex(i)
 	if val == nil {
-		return resp.NullMultiResponse
+		return redisresponse.NullMultiResponse
 	}
 
 	content, _ := val.(string)
-	return resp.MakeSimpleResponse(content)
+	return redisresponse.MakeSimpleResponse(content)
 }
 
 //移除并返回列表 key 的头元素。
 func ExecLPop(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 	l, err := getListOrInitList(conn, db, args)
 	if err != nil {
-		return resp.MakeErrorResponse(err.Error())
+		return redisresponse.MakeErrorResponse(err.Error())
 	}
 	element := l.PopFromHead()
 	if element == nil {
-		return resp.NullMultiResponse
+		return redisresponse.NullMultiResponse
 	}
 
 	s, _ := element.(string)
-	return resp.MakeSimpleResponse(s)
+	return redisresponse.MakeSimpleResponse(s)
 }
 
 func getList(conn conn.Conn, db *redis.RedisDB, args [][]byte) (*list.List, error) {
@@ -379,7 +379,7 @@ func getListOrInitList(conn conn.Conn, db *redis.RedisDB, args [][]byte) (*list.
 func ExecLLen(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 	l, err := getListOrInitList(conn, db, args)
 	if err != nil {
-		return resp.MakeErrorResponse(err.Error())
+		return redisresponse.MakeErrorResponse(err.Error())
 	}
-	return resp.MakeNumberResponse(l.Len())
+	return redisresponse.MakeNumberResponse(l.Len())
 }

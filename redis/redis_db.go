@@ -12,7 +12,7 @@ import (
 	"github.com/chenjiayao/sidergo/lib/dict"
 	"github.com/chenjiayao/sidergo/lib/list"
 	"github.com/chenjiayao/sidergo/lib/unboundedchan"
-	"github.com/chenjiayao/sidergo/redis/resp"
+	"github.com/chenjiayao/sidergo/redis/redisresponse"
 )
 
 var _ db.DB = &RedisDB{}
@@ -75,7 +75,7 @@ func (rd *RedisDB) Exec(conn conn.Conn, cmdName string, args [][]byte) response.
 	//参数校验
 	command, exist := CommandTables[cmdName]
 	if !exist {
-		return resp.MakeErrorResponse(fmt.Sprintf("ERR unknown command `%s`, with args beginning with:", cmdName))
+		return redisresponse.MakeErrorResponse(fmt.Sprintf("ERR unknown command `%s`, with args beginning with:", cmdName))
 	}
 	validate := command.ValidateFunc
 	err := validate(conn, args)
@@ -84,14 +84,14 @@ func (rd *RedisDB) Exec(conn conn.Conn, cmdName string, args [][]byte) response.
 		if conn.IsInMultiState() {
 			conn.SetMultiState(int(InMultiStateButHaveError))
 		}
-		return resp.MakeErrorResponse(err.Error())
+		return redisresponse.MakeErrorResponse(err.Error())
 	}
 
 	//在事务状态下，有些命令不需要 push 到 queue 中s
 	if conn.IsInMultiState() && rd.canPushMultiQueues(cmdName) {
 		cmd := append([][]byte{[]byte(cmdName)}, args...)
 		conn.PushMultiCmd(cmd)
-		return resp.MakeSimpleResponse("QUEUED")
+		return redisresponse.MakeSimpleResponse("QUEUED")
 	}
 
 	//执行命令

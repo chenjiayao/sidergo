@@ -12,7 +12,7 @@ import (
 	"github.com/chenjiayao/sidergo/interface/response"
 	"github.com/chenjiayao/sidergo/lib/atomic"
 	"github.com/chenjiayao/sidergo/lib/waitgroup"
-	"github.com/chenjiayao/sidergo/redis/resp"
+	"github.com/chenjiayao/sidergo/redis/redisresponse"
 	"github.com/sirupsen/logrus"
 )
 
@@ -69,10 +69,10 @@ func (c *client) SendRequestWithTimeout(request request.Request, timeout time.Du
 	_, err := c.conn.Write(request.ToByte())
 	if err != nil {
 		if err == io.EOF {
-			r = resp.MakeErrorResponse("server closed conn")
+			r = redisresponse.MakeErrorResponse("server closed conn")
 			c.conn = nil //该节点关闭了， conn设置为 nil
 		} else {
-			r = resp.MakeErrorResponse(err.Error())
+			r = redisresponse.MakeErrorResponse(err.Error())
 		}
 		return r
 	}
@@ -81,11 +81,11 @@ func (c *client) SendRequestWithTimeout(request request.Request, timeout time.Du
 	if err != nil {
 		if err == io.EOF {
 			c.conn.Close()
-			return resp.MakeErrorResponse("server closed")
+			return redisresponse.MakeErrorResponse("server closed")
 		}
-		return resp.MakeErrorResponse(err.Error())
+		return redisresponse.MakeErrorResponse(err.Error())
 	}
-	r = resp.MakeReidsRawByteResponse(b)
+	r = redisresponse.MakeReidsRawByteResponse(b)
 	return r
 }
 

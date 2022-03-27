@@ -5,7 +5,7 @@ import (
 	"github.com/chenjiayao/sidergo/interface/response"
 	"github.com/chenjiayao/sidergo/lib/set"
 	"github.com/chenjiayao/sidergo/redis"
-	"github.com/chenjiayao/sidergo/redis/resp"
+	"github.com/chenjiayao/sidergo/redis/redisresponse"
 	"github.com/chenjiayao/sidergo/redis/validate"
 )
 
@@ -52,21 +52,21 @@ func ExecSismember(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Re
 	s := getSet(conn, db, key)
 
 	if s == nil {
-		return resp.MakeNumberResponse(0)
+		return redisresponse.MakeNumberResponse(0)
 	}
 
 	exist := s.Exist(key)
 	if exist {
-		return resp.MakeNumberResponse(1)
+		return redisresponse.MakeNumberResponse(1)
 	}
-	return resp.MakeNumberResponse(0)
+	return redisresponse.MakeNumberResponse(0)
 }
 
 func ExecSpop(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 	key := string(args[0])
 	s := getSet(conn, db, key)
 	if s == nil {
-		return resp.NullMultiResponse
+		return redisresponse.NullMultiResponse
 	}
 
 	return nil
@@ -82,29 +82,29 @@ func ExecSadd(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respons
 	}
 
 	db.Dataset.Put(string(args[0]), setValue)
-	return resp.MakeNumberResponse(1)
+	return redisresponse.MakeNumberResponse(1)
 }
 
 func ExecScard(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 
 	key := string(args[0])
 	s := getSetOrInitSet(conn, db, key)
-	return resp.MakeNumberResponse(int64(s.Len()))
+	return redisresponse.MakeNumberResponse(int64(s.Len()))
 }
 
 func ExecSmembers(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 
 	setValue := getSetOrInitSet(conn, db, string(args[0]))
 	if setValue.Len() == 0 {
-		return resp.MakeArrayResponse(nil)
+		return redisresponse.MakeArrayResponse(nil)
 	}
 
 	members := setValue.Members()
 	multiResponses := make([]response.Response, len(members))
 	for i := 0; i < len(members); i++ {
-		multiResponses[i] = resp.MakeMultiResponse(string(members[i]))
+		multiResponses[i] = redisresponse.MakeMultiResponse(string(members[i]))
 	}
-	return resp.MakeArrayResponse(multiResponses)
+	return redisresponse.MakeArrayResponse(multiResponses)
 }
 
 //如果 key 不存在，会新建一个 set

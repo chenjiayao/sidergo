@@ -7,8 +7,8 @@ import (
 	"github.com/chenjiayao/sidergo/interface/conn"
 	"github.com/chenjiayao/sidergo/interface/request"
 	"github.com/chenjiayao/sidergo/interface/response"
-	redisRequest "github.com/chenjiayao/sidergo/redis/request"
-	"github.com/chenjiayao/sidergo/redis/resp"
+	"github.com/chenjiayao/sidergo/redis/redisrequest"
+	"github.com/chenjiayao/sidergo/redis/redisresponse"
 	"github.com/rs/xid"
 	"github.com/sirupsen/logrus"
 )
@@ -44,7 +44,7 @@ func (tx *transaction) prepare() {
 		tx.wg.Add(1)
 
 		key := re.GetKey()
-		prepareRequest := &redisRequest.RedisRequet{
+		prepareRequest := &redisrequest.RedisRequet{
 			CmdName: "prepare",
 			Args: [][]byte{
 				[]byte(key),
@@ -95,7 +95,7 @@ func (tx *transaction) commit() {
 		commitCommandRequestArgs = append(commitCommandRequestArgs, []byte(commitRequest.GetCmdName()))
 		commitCommandRequestArgs = append(commitCommandRequestArgs, commitRequest.GetArgs()...)
 
-		commitCommandRequest := &redisRequest.RedisRequet{
+		commitCommandRequest := &redisrequest.RedisRequet{
 			CmdName: "commit",
 			Args:    commitCommandRequestArgs,
 		}
@@ -151,7 +151,7 @@ func (tx *transaction) rollbackCommit(successKeys map[string]string) {
 		undoCommitRequestArgs[0] = []byte(undoRequest.GetCmdName())
 		undoCommitRequestArgs = append(undoCommitRequestArgs, undoRequest.GetArgs()...)
 
-		undoCommandRequest := &redisRequest.RedisRequet{
+		undoCommandRequest := &redisrequest.RedisRequet{
 			CmdName: "undo",
 			Args:    undoCommitRequestArgs,
 		}
@@ -182,7 +182,7 @@ func (tx *transaction) unlockAllKey() {
 
 		k := undoRequest.GetKey()
 		ipPortPair := tx.cluster.HashRing.Hit(k)
-		unlockRequest := &redisRequest.RedisRequet{
+		unlockRequest := &redisrequest.RedisRequet{
 			CmdName: "transaction_unlock",
 			Args: [][]byte{
 				[]byte("transaction_unlock"),
@@ -229,7 +229,7 @@ func ExecCommit(cluster *Cluster, conn conn.Conn, clientRequest request.Request)
 	cmdName := string(args[0])
 
 	command := clusterCommandRouter[cmdName]
-	cmdRequest := &redisRequest.RedisRequet{
+	cmdRequest := &redisrequest.RedisRequet{
 		CmdName: cmdName,
 		Args:    args[1:],
 	}
@@ -243,7 +243,7 @@ func ExecUndo(cluster *Cluster, conn conn.Conn, clientRequest request.Request) r
 	undoCommandName := string(args[0])
 
 	undoCommand := clusterCommandRouter[undoCommandName]
-	cmdRequest := &redisRequest.RedisRequet{
+	cmdRequest := &redisrequest.RedisRequet{
 		CmdName: undoCommandName,
 		Args:    args[1:],
 	}
@@ -261,9 +261,9 @@ func ExecPrepare(cluster *Cluster, conn conn.Conn, clientRequest request.Request
 	//锁定key
 	err := cluster.Self.RedisServer.LockKey(selectedDBIndex, key, txID)
 	if err != nil {
-		return resp.MakeErrorResponse(err.Error())
+		return redisresponse.MakeErrorResponse(err.Error())
 	}
-	return resp.OKSimpleResponse
+	return redisresponse.OKSimpleResponse
 }
 
 func ExecTransactionUnlock(cluster *Cluster, conn conn.Conn, clientRequest request.Request) response.Response {
@@ -272,5 +272,5 @@ func ExecTransactionUnlock(cluster *Cluster, conn conn.Conn, clientRequest reque
 	key := string(args[1])
 	selectedDBIndex := conn.GetSelectedDBIndex()
 	cluster.Self.RedisServer.UnLockKey(selectedDBIndex, key, txID)
-	return resp.OKSimpleResponse
+	return redisresponse.OKSimpleResponse
 }

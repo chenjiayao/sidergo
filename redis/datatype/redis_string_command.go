@@ -11,7 +11,7 @@ import (
 	"github.com/chenjiayao/sidergo/interface/response"
 	"github.com/chenjiayao/sidergo/redis"
 	"github.com/chenjiayao/sidergo/redis/rediserr"
-	"github.com/chenjiayao/sidergo/redis/resp"
+	"github.com/chenjiayao/sidergo/redis/redisresponse"
 	"github.com/chenjiayao/sidergo/redis/validate"
 )
 
@@ -54,7 +54,7 @@ func ExecMSet(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respons
 			args[i+1],
 		})
 	}
-	return resp.OKSimpleResponse
+	return redisresponse.OKSimpleResponse
 }
 
 func ExecMGet(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
@@ -63,15 +63,15 @@ func ExecMGet(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respons
 	for i := 0; i < len(args); i++ {
 		r, err := getAsString(conn, db, args[i])
 		if err != nil {
-			multiResponses = append(multiResponses, resp.NullMultiResponse)
+			multiResponses = append(multiResponses, redisresponse.NullMultiResponse)
 		}
 		if r == "" {
-			multiResponses = append(multiResponses, resp.MakeMultiResponse(""))
+			multiResponses = append(multiResponses, redisresponse.MakeMultiResponse(""))
 		} else {
-			multiResponses = append(multiResponses, resp.MakeMultiResponse(r))
+			multiResponses = append(multiResponses, redisresponse.MakeMultiResponse(r))
 		}
 	}
-	return resp.MakeArrayResponse(multiResponses)
+	return redisresponse.MakeArrayResponse(multiResponses)
 }
 
 func ExecMSetNX(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
@@ -94,7 +94,7 @@ func ExecMSetNX(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 	for i := 0; i < len(args); i += 2 {
 		_, exist := db.Dataset.Get(string(args[i]))
 		if exist { //说明 db 中存在这个 key，不管这个 key 是不是 string 类型
-			return resp.MakeNumberResponse(0)
+			return redisresponse.MakeNumberResponse(0)
 		}
 	}
 
@@ -104,7 +104,7 @@ func ExecMSetNX(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 			args[i+1],
 		})
 	}
-	return resp.MakeNumberResponse(1)
+	return redisresponse.MakeNumberResponse(1)
 }
 
 func ExecGetset(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
@@ -116,16 +116,16 @@ func ExecGetset(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 	i, exists := db.Dataset.Get(key)
 
 	if !exists {
-		return resp.NullMultiResponse
+		return redisresponse.NullMultiResponse
 	}
 
 	res, ok := i.(string)
 	if !ok {
-		return resp.MakeErrorResponse("WRONGTYPE Operation against a key holding the wrong kind of value")
+		return redisresponse.MakeErrorResponse("WRONGTYPE Operation against a key holding the wrong kind of value")
 	}
 
 	db.Dataset.PutIfExist(key, string(args[1]))
-	return resp.MakeSimpleResponse(res)
+	return redisresponse.MakeSimpleResponse(res)
 }
 
 // key value [EX seconds] [PX milliseconds] [NX|XX]
@@ -157,7 +157,7 @@ func ExecSet(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response
 		if ok {
 			expire(db, key, ttl)
 		} else {
-			return resp.NullMultiResponse
+			return redisresponse.NullMultiResponse
 		}
 	}
 
@@ -166,9 +166,9 @@ func ExecSet(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response
 		ok := db.Dataset.PutIfExist(key, value)
 		if ok {
 			expire(db, key, ttl)
-			return resp.OKSimpleResponse
+			return redisresponse.OKSimpleResponse
 		} else {
-			return resp.NullMultiResponse
+			return redisresponse.NullMultiResponse
 		}
 	}
 
@@ -177,9 +177,9 @@ func ExecSet(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response
 	if ok {
 
 		expire(db, key, ttl)
-		return resp.OKSimpleResponse
+		return redisresponse.OKSimpleResponse
 	}
-	return resp.NullMultiResponse
+	return redisresponse.NullMultiResponse
 }
 
 // setnx key value ---> set key value nx
@@ -222,17 +222,17 @@ func ExecGet(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response
 	if ttl(db, [][]byte{args[0]}) < -1 {
 		db.Dataset.Del(string(args[0]))
 		db.TtlMap.Del(string(args[0]))
-		return resp.NullMultiResponse
+		return redisresponse.NullMultiResponse
 	}
 
 	s, err := getAsString(conn, db, args[0])
 	if err != nil {
-		return resp.MakeErrorResponse(err.Error())
+		return redisresponse.MakeErrorResponse(err.Error())
 	}
 	if s == "" {
-		return resp.NullMultiResponse
+		return redisresponse.NullMultiResponse
 	}
-	return resp.MakeSimpleResponse(s)
+	return redisresponse.MakeSimpleResponse(s)
 }
 
 func getAsString(conn conn.Conn, db *redis.RedisDB, key []byte) (string, error) {
@@ -264,7 +264,7 @@ func ExecIncrBy(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 	//get
 	s, err := getAsString(conn, db, args[0])
 	if err != nil {
-		return resp.MakeErrorResponse(err.Error())
+		return redisresponse.MakeErrorResponse(err.Error())
 	}
 
 	val := ""
@@ -274,7 +274,7 @@ func ExecIncrBy(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 	} else {
 		v, err := strconv.ParseInt(s, 10, 64)
 		if err != nil {
-			return resp.MakeErrorResponse(rediserr.NOT_INTEGER_ERROR.Error()) //试图incr 一个字符串
+			return redisresponse.MakeErrorResponse(rediserr.NOT_INTEGER_ERROR.Error()) //试图incr 一个字符串
 		}
 		v += step
 		val = fmt.Sprint(v)
@@ -283,7 +283,7 @@ func ExecIncrBy(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 	//set
 	db.Dataset.Put(key, val)
 
-	return resp.MakeSimpleResponse(val)
+	return redisresponse.MakeSimpleResponse(val)
 }
 
 func ExecIncrByFloat(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
@@ -297,7 +297,7 @@ func ExecIncrByFloat(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.
 	//get
 	s, err := getAsString(conn, db, args[0])
 	if err != nil {
-		return resp.MakeErrorResponse(err.Error())
+		return redisresponse.MakeErrorResponse(err.Error())
 	}
 
 	val := ""
@@ -307,7 +307,7 @@ func ExecIncrByFloat(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.
 	} else {
 		v, err := strconv.ParseFloat(s, 64)
 		if err != nil {
-			return resp.MakeErrorResponse(rediserr.NOT_INTEGER_ERROR.Error()) //试图incr 一个字符串
+			return redisresponse.MakeErrorResponse(rediserr.NOT_INTEGER_ERROR.Error()) //试图incr 一个字符串
 		}
 		v += step
 		val = fmt.Sprint(v)
@@ -316,7 +316,7 @@ func ExecIncrByFloat(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.
 	//set
 	db.Dataset.Put(key, val)
 
-	return resp.MakeSimpleResponse(val)
+	return redisresponse.MakeSimpleResponse(val)
 }
 
 func ExecDecr(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {

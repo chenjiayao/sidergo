@@ -6,7 +6,7 @@ import (
 
 	"github.com/chenjiayao/sidergo/lib/dict"
 	"github.com/chenjiayao/sidergo/redis"
-	"github.com/chenjiayao/sidergo/redis/resp"
+	"github.com/chenjiayao/sidergo/redis/redisresponse"
 )
 
 func TestExecSet(t *testing.T) {
@@ -17,7 +17,7 @@ func TestExecSet(t *testing.T) {
 		[]byte("value"),
 	}
 	got := ExecSet(nil, db, args)
-	want := resp.OKSimpleResponse
+	want := redisresponse.OKSimpleResponse
 	if got != want {
 		t.Errorf(" ExecSet(nil,db, args) = %v, want = %v", got, want)
 	}
@@ -48,7 +48,7 @@ func TestExecGet(t *testing.T) {
 		[]byte(key),
 	})
 
-	want := string(resp.MakeSimpleResponse("value").ToContentByte())
+	want := string(redisresponse.MakeSimpleResponse("value").ToContentByte())
 	if !bytes.Equal(res.ToContentByte(), []byte(want)) {
 		t.Errorf("ExecGet = %s, want %s", string(res.ToContentByte()), want)
 	}
@@ -87,7 +87,7 @@ func TestExecGetset(t *testing.T) {
 		[]byte("key"),
 		[]byte(newValue),
 	})
-	want := resp.MakeSimpleResponse(value)
+	want := redisresponse.MakeSimpleResponse(value)
 	if string(string(want.ToContentByte())) != string(res.ToContentByte()) {
 		t.Errorf("execgetSet = %s, want = %s", string(res.ToContentByte()), "+value")
 	}

@@ -5,8 +5,8 @@ import (
 	"github.com/chenjiayao/sidergo/interface/request"
 	"github.com/chenjiayao/sidergo/interface/response"
 	"github.com/chenjiayao/sidergo/redis"
-	req "github.com/chenjiayao/sidergo/redis/request"
-	"github.com/chenjiayao/sidergo/redis/resp"
+	"github.com/chenjiayao/sidergo/redis/redisrequest"
+	"github.com/chenjiayao/sidergo/redis/redisresponse"
 	"github.com/chenjiayao/sidergo/redis/validate"
 )
 
@@ -19,7 +19,7 @@ func ExecDel(cluster *Cluster, conn conn.Conn, re request.Request) response.Resp
 	resps := make([]response.Response, len(keys))
 
 	for i := 0; i < len(keys); i++ {
-		getCommandRequest := &req.RedisRequet{
+		getCommandRequest := &redisrequest.RedisRequet{
 			CmdName: redis.Get,
 			Args: [][]byte{
 				keys[i],
@@ -28,5 +28,5 @@ func ExecDel(cluster *Cluster, conn conn.Conn, re request.Request) response.Resp
 
 		resps[i] = defaultExec(cluster, conn, getCommandRequest)
 	}
-	return resp.MakeArrayResponse(resps)
+	return redisresponse.MakeArrayResponse(resps)
 }

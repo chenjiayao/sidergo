@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"github.com/chenjiayao/sidergo/interface/request"
-	req "github.com/chenjiayao/sidergo/redis/request"
+	"github.com/chenjiayao/sidergo/redis/redisrequest"
 )
 
 func ReadCommand(reader io.Reader) chan request.Request {
@@ -23,7 +23,7 @@ func ParseFromSocket(reader io.Reader, ch chan request.Request) {
 		header, err := buf.ReadBytes('\n')
 		if err != nil {
 
-			ch <- &req.RedisRequet{
+			ch <- &redisrequest.RedisRequet{
 				Err: err,
 			}
 			//如果是客户端关闭了，那么就不要读了，直接退出当前协程
@@ -34,12 +34,12 @@ func ParseFromSocket(reader io.Reader, ch chan request.Request) {
 		}
 
 		if header[0] != '*' {
-			ch <- req.PROTOCOL_ERROR_REQUEST
+			ch <- redisrequest.PROTOCOL_ERROR_REQUEST
 			continue
 		}
 		argsCount, err := parseCmdArgsCount(header)
 		if err != nil {
-			ch <- req.PROTOCOL_ERROR_REQUEST
+			ch <- redisrequest.PROTOCOL_ERROR_REQUEST
 			continue
 		}
 
@@ -49,7 +49,7 @@ func ParseFromSocket(reader io.Reader, ch chan request.Request) {
 		for i := 0; i < argsCount; i++ {
 			argsWithDelimiter, err := buf.ReadBytes('\n')
 			if err != nil {
-				ch <- &req.RedisRequet{
+				ch <- &redisrequest.RedisRequet{
 					Err: err,
 				}
 				//如果是客户端关闭了，那么就不要读了，直接退出当前协程
@@ -65,13 +65,13 @@ func ParseFromSocket(reader io.Reader, ch chan request.Request) {
 				argsWithDelimiter[len(argsWithDelimiter)-1] != '\n' ||
 				argsWithDelimiter[len(argsWithDelimiter)-2] != '\r' {
 
-				ch <- req.PROTOCOL_ERROR_REQUEST
+				ch <- redisrequest.PROTOCOL_ERROR_REQUEST
 				readArgsFail = true
 				break
 			}
 			cmdLen, err := parseOneCmdArgsLen(argsWithDelimiter)
 			if err != nil {
-				ch <- req.PROTOCOL_ERROR_REQUEST
+				ch <- redisrequest.PROTOCOL_ERROR_REQUEST
 				readArgsFail = true
 				break
 			}
@@ -79,7 +79,7 @@ func ParseFromSocket(reader io.Reader, ch chan request.Request) {
 			cmd := make([]byte, cmdLen+2)
 			_, err = io.ReadFull(buf, cmd)
 			if err != nil {
-				ch <- req.PROTOCOL_ERROR_REQUEST
+				ch <- redisrequest.PROTOCOL_ERROR_REQUEST
 				readArgsFail = true
 				break
 			}
@@ -90,7 +90,7 @@ func ParseFromSocket(reader io.Reader, ch chan request.Request) {
 			continue
 		}
 
-		ch <- &req.RedisRequet{
+		ch <- &redisrequest.RedisRequet{
 			Args:    cmds[1:],
 			CmdName: string(cmds[0]),
 		}

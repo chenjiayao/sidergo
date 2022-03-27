@@ -10,7 +10,7 @@ import (
 	"github.com/chenjiayao/sidergo/lib/border"
 	"github.com/chenjiayao/sidergo/lib/sortedset"
 	"github.com/chenjiayao/sidergo/redis"
-	"github.com/chenjiayao/sidergo/redis/resp"
+	"github.com/chenjiayao/sidergo/redis/redisresponse"
 	"github.com/chenjiayao/sidergo/redis/validate"
 )
 
@@ -31,10 +31,10 @@ func ExecZrevrange(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Re
 	key := string(args[0])
 	ss, err := getAsSortedSet(db, key)
 	if err != nil {
-		return resp.MakeErrorResponse(err.Error())
+		return redisresponse.MakeErrorResponse(err.Error())
 	}
 	if ss == nil {
-		return resp.EmptyArrayResponse
+		return redisresponse.EmptyArrayResponse
 	}
 
 	withScores := false
@@ -49,7 +49,7 @@ func ExecZrevrange(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Re
 
 	//将 start stop 的语义转换成 slice 的用法
 	if start > ss.Len() || start > stop {
-		return resp.EmptyArrayResponse
+		return redisresponse.EmptyArrayResponse
 	}
 
 	//收缩边界
@@ -82,16 +82,16 @@ func ExecZrevrange(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Re
 		responses = make([]response.Response, len(elements)*2)
 
 		for i := elen - 1; i >= 0; i-- {
-			responses[elen-i] = resp.MakeMultiResponse(elements[i].Member)
-			responses[elen-i+1] = resp.MakeMultiResponse(fmt.Sprintf("%f", elements[i].Score))
+			responses[elen-i] = redisresponse.MakeMultiResponse(elements[i].Member)
+			responses[elen-i+1] = redisresponse.MakeMultiResponse(fmt.Sprintf("%f", elements[i].Score))
 		}
 	} else {
 		responses = make([]response.Response, len(elements))
 		for i := 0; i < len(elements); i++ {
-			responses[i] = resp.MakeMultiResponse(elements[i].Member)
+			responses[i] = redisresponse.MakeMultiResponse(elements[i].Member)
 		}
 	}
-	return resp.MakeArrayResponse(responses)
+	return redisresponse.MakeArrayResponse(responses)
 }
 
 func ExecZrange(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
@@ -99,10 +99,10 @@ func ExecZrange(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 	key := string(args[0])
 	ss, err := getAsSortedSet(db, key)
 	if err != nil {
-		return resp.MakeErrorResponse(err.Error())
+		return redisresponse.MakeErrorResponse(err.Error())
 	}
 	if ss == nil {
-		return resp.EmptyArrayResponse
+		return redisresponse.EmptyArrayResponse
 	}
 
 	withScores := false
@@ -117,7 +117,7 @@ func ExecZrange(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 
 	//将 start stop 的语义转换成 slice 的用法
 	if start > ss.Len() || start > stop {
-		return resp.EmptyArrayResponse
+		return redisresponse.EmptyArrayResponse
 	}
 
 	//收缩边界
@@ -148,17 +148,17 @@ func ExecZrange(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 	if withScores {
 		responses = make([]response.Response, len(elements)*2)
 		for i := 0; i < len(elements); i++ {
-			responses[i] = resp.MakeMultiResponse(elements[i].Member)
-			responses[i+1] = resp.MakeMultiResponse(fmt.Sprintf("%f", elements[i].Score))
+			responses[i] = redisresponse.MakeMultiResponse(elements[i].Member)
+			responses[i+1] = redisresponse.MakeMultiResponse(fmt.Sprintf("%f", elements[i].Score))
 		}
 	} else {
 		responses = make([]response.Response, len(elements))
 		for i := 0; i < len(elements); i++ {
-			responses[i] = resp.MakeMultiResponse(elements[i].Member)
+			responses[i] = redisresponse.MakeMultiResponse(elements[i].Member)
 		}
 	}
 
-	return resp.MakeArrayResponse(responses)
+	return redisresponse.MakeArrayResponse(responses)
 }
 
 //返回有序集 key 中，成员 member 的 score 值。
@@ -166,18 +166,18 @@ func ExecZscore(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 	key := string(args[0])
 	ss, err := getAsSortedSet(db, key)
 	if err != nil {
-		return resp.MakeErrorResponse(err.Error())
+		return redisresponse.MakeErrorResponse(err.Error())
 	}
 	if ss == nil {
-		return resp.NullMultiResponse
+		return redisresponse.NullMultiResponse
 	}
 
 	member := string(args[1])
 	element, exist := ss.Get(member)
 	if !exist {
-		return resp.NullMultiResponse
+		return redisresponse.NullMultiResponse
 	}
-	return resp.MakeMultiResponse(fmt.Sprintf("%f", element.Score))
+	return redisresponse.MakeMultiResponse(fmt.Sprintf("%f", element.Score))
 }
 
 func ExecZrem(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
@@ -185,10 +185,10 @@ func ExecZrem(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respons
 	key := string(args[0])
 	ss, err := getAsSortedSet(db, key)
 	if err != nil {
-		return resp.MakeErrorResponse(err.Error())
+		return redisresponse.MakeErrorResponse(err.Error())
 	}
 	if ss == nil {
-		return resp.MakeNumberResponse(0)
+		return redisresponse.MakeNumberResponse(0)
 	}
 
 	for i := 0; i < len(args[1:]); i++ {
@@ -205,42 +205,42 @@ func ExecZrank(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respon
 	key := string(args[0])
 	ss, err := getAsSortedSet(db, key)
 	if err != nil {
-		return resp.MakeErrorResponse(err.Error())
+		return redisresponse.MakeErrorResponse(err.Error())
 	}
 
 	member := string(args[1])
 	element, exist := ss.Get(member)
 	if !exist {
-		return resp.NullMultiResponse
+		return redisresponse.NullMultiResponse
 	}
 	rank := ss.GetRank(element.Member, element.Score)
 
 	//正常情况下，不会返回 -1，因为前面已经做过 exist 判断了
 	if rank == -1 {
-		return resp.NullMultiResponse
+		return redisresponse.NullMultiResponse
 	}
-	return resp.MakeNumberResponse(rank)
+	return redisresponse.MakeNumberResponse(rank)
 }
 
 func ExecZRevrank(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 	key := string(args[0])
 	ss, err := getAsSortedSet(db, key)
 	if err != nil {
-		return resp.MakeErrorResponse(err.Error())
+		return redisresponse.MakeErrorResponse(err.Error())
 	}
 
 	member := string(args[1])
 	element, exist := ss.Get(member)
 	if !exist {
-		return resp.NullMultiResponse
+		return redisresponse.NullMultiResponse
 	}
 	rank := ss.GetRank(element.Member, element.Score)
 
 	//正常情况下，不会返回 -1，因为前面已经做过 exist 判断了
 	if rank == -1 {
-		return resp.NullMultiResponse
+		return redisresponse.NullMultiResponse
 	}
-	return resp.MakeNumberResponse(ss.Len() - rank - 1)
+	return redisresponse.MakeNumberResponse(ss.Len() - rank - 1)
 }
 
 func ExecZcard(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
@@ -248,12 +248,12 @@ func ExecZcard(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respon
 
 	ss, err := getAsSortedSet(db, key)
 	if err != nil {
-		return resp.MakeErrorResponse(err.Error())
+		return redisresponse.MakeErrorResponse(err.Error())
 	}
 	if ss == nil {
-		return resp.MakeNumberResponse(0)
+		return redisresponse.MakeNumberResponse(0)
 	}
-	return resp.MakeNumberResponse(ss.Len())
+	return redisresponse.MakeNumberResponse(ss.Len())
 }
 
 /*
@@ -265,17 +265,17 @@ func ExecZcount(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 	key := string(args[0])
 	ss, err := getAsSortedSet(db, key)
 	if err != nil {
-		return resp.MakeErrorResponse(err.Error())
+		return redisresponse.MakeErrorResponse(err.Error())
 	}
 	if ss == nil {
-		return resp.MakeNumberResponse(0)
+		return redisresponse.MakeNumberResponse(0)
 	}
 
 	minBorder, _ := border.ParserBorder(string(args[1]))
 	maxBorder, _ := border.ParserBorder(string(args[2]))
 
 	count := ss.Count(minBorder, maxBorder)
-	return resp.MakeNumberResponse(count)
+	return redisresponse.MakeNumberResponse(count)
 }
 
 /*
@@ -288,7 +288,7 @@ func ExecZincrby(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Resp
 	ss, err := getSortedSetOrInit(db, key)
 
 	if err != nil {
-		return resp.MakeErrorResponse(err.Error())
+		return redisresponse.MakeErrorResponse(err.Error())
 	}
 
 	incrementValue := string(args[1])
@@ -298,13 +298,13 @@ func ExecZincrby(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Resp
 	element, exist := ss.Get(member)
 	if !exist {
 		ss.Add(member, increment)
-		return resp.MakeMultiResponse(incrementValue)
+		return redisresponse.MakeMultiResponse(incrementValue)
 	}
 
 	newScore := element.Score + increment
 	ss.Remove(element.Member)
 	ss.Add(element.Member, newScore)
-	return resp.MakeMultiResponse(fmt.Sprintf("%f", newScore))
+	return redisresponse.MakeMultiResponse(fmt.Sprintf("%f", newScore))
 
 }
 
@@ -314,7 +314,7 @@ func ExecZadd(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respons
 
 	ss, err := getSortedSetOrInit(db, key)
 	if err != nil {
-		return resp.MakeErrorResponse(err.Error())
+		return redisresponse.MakeErrorResponse(err.Error())
 	}
 
 	for i := 0; i < len(args[1:]); i += 2 {
@@ -323,7 +323,7 @@ func ExecZadd(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respons
 		score, _ := strconv.ParseFloat(scoreValue, 64)
 		ss.Add(member, score)
 	}
-	return resp.MakeNumberResponse(int64(len(args[1:]) / 2))
+	return redisresponse.MakeNumberResponse(int64(len(args[1:]) / 2))
 }
 
 func getSortedSetOrInit(db *redis.RedisDB, key string) (*sortedset.SortedSet, error) {
