@@ -241,7 +241,7 @@ func (redisServer *RedisServer) LockKey(dbIndex int, key string, txID string) er
 	return nil
 }
 func (redisServer *RedisServer) UnLockKey(dbIndex int, key string, txID string) error {
-	redisServer.rds.DBs[dbIndex].LockKey(key, txID)
+	redisServer.rds.DBs[dbIndex].UnLockKey(key)
 	return nil
 }
 
