@@ -255,23 +255,22 @@ func ExecHget(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respons
 }
 
 func ExecHdel(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
-	key := string(args[0])
-	v, exist := db.Dataset.Get(key)
-	if !exist {
+	kvmap, err := getOrInitHash(db, string(args[0]))
+	if err != nil {
+		return redisresponse.MakeErrorResponse(err.Error())
+	}
+	if kvmap == nil {
 		return redisresponse.MakeNumberResponse(0)
 	}
 
-	kvmap := v.(map[string]string)
-
 	deletedCount := int64(0)
-	for _, v := range args {
+	for _, v := range args[1:] {
 		field := string(v)
 
-		_, exist = kvmap[field]
+		_, exist := kvmap[field]
 		if !exist {
 			continue
 		}
-
 		delete(kvmap, field)
 		deletedCount++
 	}
