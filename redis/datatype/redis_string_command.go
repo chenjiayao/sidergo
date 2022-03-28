@@ -127,7 +127,7 @@ func ExecGetset(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 	}
 
 	db.Dataset.PutIfExist(key, string(args[1]))
-	return redisresponse.MakeSimpleResponse(res)
+	return redisresponse.MakeMultiResponse(res)
 }
 
 // key value [EX seconds] [PX milliseconds] [NX|XX]
@@ -243,7 +243,7 @@ func ExecGet(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response
 	if s == "" {
 		return redisresponse.NullMultiResponse
 	}
-	return redisresponse.MakeSimpleResponse(s)
+	return redisresponse.MakeMultiResponse(s)
 }
 
 func getAsString(conn conn.Conn, db *redis.RedisDB, key []byte) (string, error) {
@@ -294,7 +294,7 @@ func ExecIncrBy(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 	//set
 	db.Dataset.Put(key, val)
 
-	return redisresponse.MakeSimpleResponse(val)
+	return redisresponse.MakeMultiResponse(val)
 }
 
 func ExecIncrByFloat(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
@@ -327,7 +327,7 @@ func ExecIncrByFloat(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.
 	//set
 	db.Dataset.Put(key, val)
 
-	return redisresponse.MakeSimpleResponse(val)
+	return redisresponse.MakeMultiResponse(val)
 }
 
 func ExecDecr(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
