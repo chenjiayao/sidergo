@@ -131,6 +131,10 @@ func ExecGetset(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 // key value [EX seconds] [PX milliseconds] [NX|XX]
 // NX -- Only set the key if it does not already exist.
 // XX -- Only set the key if it already exist.   --->同时覆盖新的 ttl
+/*
+ SET 在设置操作成功完成时，才返回 OK 。
+如果设置了 NX 或者 XX ，但因为条件没达到而造成设置操作未执行，那么命令返回空批量回复（NULL Bulk Reply）
+*/
 func ExecSet(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 
 	ttl := UnlimitTTL
@@ -156,12 +160,13 @@ func ExecSet(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response
 		ok := db.Dataset.PutIfNotExist(key, value)
 		if ok {
 			expire(db, key, ttl)
+			return redisresponse.OKSimpleResponse
 		} else {
 			return redisresponse.NullMultiResponse
 		}
 	}
 
-	//不存在key就 insert
+	//存在key就 insert
 	if helper.ContainWithoutCaseSensitive(ss, "XX") != -1 {
 		ok := db.Dataset.PutIfExist(key, value)
 		if ok {
@@ -173,9 +178,7 @@ func ExecSet(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response
 	}
 
 	ok := db.Dataset.Put(key, value)
-
 	if ok {
-
 		expire(db, key, ttl)
 		return redisresponse.OKSimpleResponse
 	}
@@ -183,9 +186,15 @@ func ExecSet(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response
 }
 
 // setnx key value ---> set key value nx
+// 成功返回 1 ，失败返回 0
 func ExecSetNX(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 	args = append(args, []byte("nx"))
-	return ExecSet(conn, db, args)
+	resp := ExecSet(conn, db, args)
+	_, is := resp.(redisresponse.RedisSimpleResponse)
+	if is {
+		return redisresponse.MakeNumberResponse(1)
+	}
+	return redisresponse.MakeNumberResponse(0)
 }
 
 // setex key seconds value ---> set key value ex second

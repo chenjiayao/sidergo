@@ -122,8 +122,9 @@ func (d *ConcurrentDict) PutIfNotExist(key string, val interface{}) bool {
 
 	if _, ok := fragment.data[key]; !ok {
 		fragment.data[key] = val
+		return true
 	}
-	return true
+	return false
 }
 
 func (d *ConcurrentDict) Del(key string) bool {
