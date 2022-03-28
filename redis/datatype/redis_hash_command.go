@@ -150,11 +150,13 @@ func ExecHkeys(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respon
 func ExecHgetall(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 	key := string(args[0])
 
-	v, exist := db.Dataset.Get(key)
-	if !exist {
+	kvmap, err := getOrInitHash(db, key)
+	if err != nil {
+		return redisresponse.MakeErrorResponse(err.Error())
+	}
+	if kvmap == nil {
 		return redisresponse.MakeArrayResponse(nil)
 	}
-	kvmap := v.(map[string]string)
 
 	multiResponses := make([]response.Response, len(kvmap)*2)
 
@@ -162,7 +164,6 @@ func ExecHgetall(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Resp
 	for k, v := range kvmap {
 		multiResponses[index] = redisresponse.MakeMultiResponse(k)
 		multiResponses[index+1] = redisresponse.MakeMultiResponse(v)
-
 		index += 2
 	}
 
