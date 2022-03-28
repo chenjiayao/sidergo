@@ -246,6 +246,7 @@ func (redisServer *RedisServer) UnLockKey(dbIndex int, key string, txID string) 
 
 // closeClient
 func (redisServer *RedisServer) closeClient(client conn.Conn) {
+	logrus.Info(client.RemoteAddress(), " close")
 	client.Close()
 }
 
