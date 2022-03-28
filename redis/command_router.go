@@ -96,6 +96,7 @@ const (
 	Discard = "discard"
 	Watch   = "watch"
 	Exec    = "exec"
+	Unwatch = "unwatch"
 	Auth    = "auth"
 	Select  = "select"
 	Ttl     = "ttl"

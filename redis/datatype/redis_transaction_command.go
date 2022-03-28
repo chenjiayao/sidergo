@@ -15,6 +15,7 @@ func init() {
 	redis.RegisterRedisCommand(redis.Discard, ExecDiscard, validate.ValidateDiscard)
 	redis.RegisterRedisCommand(redis.Watch, ExecWatch, validate.ValidateWatch)
 	redis.RegisterRedisCommand(redis.Exec, ExecExec, validate.ValidateExec)
+	redis.RegisterRedisCommand(redis.Unwatch, ExecUnwatch, validate.ValidateUnwatch)
 
 }
 
