@@ -238,12 +238,15 @@ func ExecHget(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respons
 	key := string(args[0])
 	field := string(args[1])
 
-	v, exist := db.Dataset.Get(key)
-	if !exist {
+	kvmap, err := getOrInitHash(db, key)
+	if err != nil {
+		return redisresponse.MakeErrorResponse(err.Error())
+	}
+
+	if kvmap == nil {
 		return redisresponse.NullMultiResponse
 	}
 
-	kvmap := v.(map[string]string)
 	value, exist := kvmap[field]
 	if !exist {
 		return redisresponse.NullMultiResponse
@@ -276,16 +279,29 @@ func ExecHdel(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respons
 	return redisresponse.MakeNumberResponse(deletedCount)
 }
 
+/**
+
+在 dataset 中查找 key，尝试转换成 map，如果失败，说明 key 不是 hash 类型，返回 nil,err
+如果可以转换 map，需要在 ttl 中查看是否 key 已经过期，如果过期就删除 key，返回 nil, nil
+*/
 func getOrInitHash(db *redis.RedisDB, key string) (map[string]string, error) {
 	v, exist := db.Dataset.Get(key)
 
 	var kvmap map[string]string
 	if !exist {
-		// kvmap = dict.NewDict(10)
 		kvmap = make(map[string]string)
 		db.Dataset.Put(key, kvmap)
 		return kvmap, nil
 	} else {
+
+		life := ttl(db, [][]byte{
+			[]byte(key),
+		})
+
+		if life == -2 {
+			db.Dataset.Del(key)
+			return nil, nil
+		}
 
 		kvmap, ok := v.(map[string]string)
 
