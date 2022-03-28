@@ -96,3 +96,18 @@ func TestExecGetset(t *testing.T) {
 		t.Errorf("execgetset store %s , but get %s", "newvalue", s)
 	}
 }
+
+func TestExecSetEX(t *testing.T) {
+	db := redis.NewDBInstance(nil, 0)
+
+	args := [][]byte{
+		[]byte("key"),
+		[]byte("value"),
+	}
+	db.Dataset.Put("key", "value")
+	resp := ExecSetNX(nil, db, args)
+	wantByte := []byte(":0\r\n")
+	if !bytes.Equal(resp.ToContentByte(), wantByte) {
+		t.Errorf("ExecSetNX = %s, want = %s", string(resp.ToContentByte()), string(wantByte))
+	}
+}
