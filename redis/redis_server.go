@@ -179,10 +179,6 @@ func (redisServer *RedisServer) Handle(conn net.Conn) {
 			}
 		}
 
-		if len(request.GetArgs()) == 0 {
-			continue
-		}
-
 		res := redisServer.Exec(redisClient, request)
 		err := redisServer.sendResponse(redisClient, res)
 		if err == io.EOF {
