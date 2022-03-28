@@ -43,10 +43,11 @@ func ListenAndServe(server server.Server) {
 
 	for {
 		conn, err := listener.Accept()
-		logrus.Info("accept new connection : ", conn.RemoteAddr())
 		if err != nil {
 			break
 		}
+		logrus.Info("accept new connection : ", conn.RemoteAddr())
+
 		waitGroup.Add(1)
 
 		go func() {
