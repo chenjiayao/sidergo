@@ -36,6 +36,8 @@ func init() {
 	redis.RegisterRedisCommand(redis.Mget, ExecMGet, validate.ValidateMGet)
 	redis.RegisterRedisCommand(redis.Get, ExecGet, validate.ValidateGet)
 	redis.RegisterRedisCommand(redis.Incr, ExecIncr, validate.ValidateIncr)
+	redis.RegisterRedisCommand(redis.Decr, ExecDecr, validate.ValidateDecr)
+	redis.RegisterRedisCommand(redis.Decrby, ExecDecrBy, validate.ValidateDecrBy)
 	redis.RegisterRedisCommand(redis.Incrby, ExecIncrBy, validate.ValidateIncrBy)
 	redis.RegisterRedisCommand(redis.Incrbyf, ExecIncrByFloat, validate.ValidateIncreByFloat)
 	redis.RegisterRedisCommand(redis.Getset, ExecGetset, validate.ValidateGetSet)
