@@ -198,14 +198,15 @@ func ExecHexists(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Resp
 	key := string(args[0])
 	field := string(args[1])
 
-	v, exist := db.Dataset.Get(key)
-	if !exist {
+	kvmap, err := getOrInitHash(db, key)
+	if err != nil {
+		return redisresponse.MakeErrorResponse(err.Error())
+	}
+	if kvmap == nil {
 		return redisresponse.MakeNumberResponse(0)
 	}
 
-	kvmap := v.(map[string]string)
-
-	_, exist = kvmap[field]
+	_, exist := kvmap[field]
 	if exist {
 		return redisresponse.MakeNumberResponse(1)
 	}
