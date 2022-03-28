@@ -104,8 +104,15 @@ func expire(db *redis.RedisDB, key string, ttl int64) {
 
 func ExecDel(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 
-	key := string(args[0])
-	db.Dataset.Del(key)
-	db.TtlMap.Del(key)
-	return redisresponse.MakeNumberResponse(0)
+	delCount := 0
+	for _, k := range args {
+		key := string(k)
+		_, exist := db.Dataset.Get(key)
+		if exist {
+			db.Dataset.Del(key)
+			db.TtlMap.Del(key)
+			delCount++
+		}
+	}
+	return redisresponse.MakeNumberResponse(int64(delCount))
 }
