@@ -59,7 +59,7 @@ func ExecExpire(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 	return redisresponse.MakeNumberResponse(1)
 }
 
-// ttl = -2  key 不存在
+// ttl = -2  key 不存在(已经过期)
 // ttl = -1 永久有效
 func ExecTTL(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 	return redisresponse.MakeNumberResponse(ttl(db, args))
