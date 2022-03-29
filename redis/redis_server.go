@@ -70,6 +70,7 @@ func (redisServer *RedisServer) activeExpireCycle() {
 	for {
 		select {
 		case <-ticker.C:
+			logrus.Info("开始扫描过期 key")
 			for _, db := range redisServer.rds.DBs {
 				for {
 					delKeyCount := 0
@@ -86,7 +87,7 @@ func (redisServer *RedisServer) activeExpireCycle() {
 							//删除这个key
 							db.Dataset.Del(key)
 							delKeyCount++
-
+							logrus.Info("删除过期 key:", key)
 							if config.Config.Appendonly {
 								deleteCmdRequest := &redisrequest.RedisRequet{
 									CmdName: "del",
