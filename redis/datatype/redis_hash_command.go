@@ -116,13 +116,15 @@ func ExecHmget(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respon
 func ExecHlen(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 	key := string(args[0])
 
-	v, exist := db.Dataset.Get(key)
+	kvmap, err := getOrInitHash(db, key)
+	if err != nil {
+		return redisresponse.MakeErrorResponse(err.Error())
+	}
 
-	if !exist {
+	if kvmap == nil {
 		return redisresponse.MakeNumberResponse(0)
 	}
 
-	kvmap := v.(map[string]string)
 	return redisresponse.MakeNumberResponse(int64(len(kvmap)))
 }
 
