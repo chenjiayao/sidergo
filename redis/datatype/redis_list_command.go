@@ -100,7 +100,7 @@ func ExecLset(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respons
 
 	node := l.GetNodeByIndex(index)
 	node.SetElement(val)
-	return redisresponse.MakeSimpleResponse("OK")
+	return redisresponse.OKSimpleResponse
 }
 
 func ExecRPushx(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
@@ -125,7 +125,7 @@ func ExecRpop(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respons
 	}
 
 	s, _ := element.(string)
-	return redisresponse.MakeSimpleResponse(s)
+	return redisresponse.MakeMultiResponse(s)
 }
 
 //先执行 pop，如果没有，阻塞
@@ -154,7 +154,7 @@ func ExecBlpop(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respon
 			v := l.PopFromHead()
 			if v != nil {
 				content := v.(string)
-				return redisresponse.MakeSimpleResponse(content)
+				return redisresponse.MakeMultiResponse(content)
 			}
 		}
 	}
@@ -187,7 +187,7 @@ func ExecBrpop(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respon
 			v := l.PopFromTail()
 			if v != nil {
 				content := v.(string)
-				return redisresponse.MakeSimpleResponse(content)
+				return redisresponse.MakeMultiResponse(content)
 			}
 		}
 	}
@@ -299,7 +299,7 @@ func ExecLrange(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 */
 func ExecLtrim(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 
-	l, err := getList(conn, db, args)
+	l, err := getListOrInitList(conn, db, args)
 	if err != nil {
 		return redisresponse.MakeErrorResponse(err.Error())
 	}
@@ -314,7 +314,7 @@ func ExecLtrim(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respon
 }
 
 func ExecLPushx(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
-	l, err := getList(conn, db, args)
+	l, err := getListOrInitList(conn, db, args)
 	if err != nil {
 		return redisresponse.MakeErrorResponse(err.Error())
 	}
@@ -325,10 +325,15 @@ func ExecLPushx(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 }
 
 func ExecLIndex(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
-	l, err := getListOrInitList(conn, db, args)
+	l, err := getList(conn, db, args)
 	if err != nil {
 		return redisresponse.MakeErrorResponse(err.Error())
 	}
+
+	if l == nil {
+		return redisresponse.NullMultiResponse
+	}
+
 	i, _ := strconv.ParseInt(string(args[1]), 10, 64)
 	val := l.GetElementByIndex(i)
 	if val == nil {
@@ -336,7 +341,7 @@ func ExecLIndex(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 	}
 
 	content, _ := val.(string)
-	return redisresponse.MakeSimpleResponse(content)
+	return redisresponse.MakeMultiResponse(content)
 }
 
 //移除并返回列表 key 的头元素。
@@ -351,9 +356,22 @@ func ExecLPop(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respons
 	}
 
 	s, _ := element.(string)
-	return redisresponse.MakeSimpleResponse(s)
+	return redisresponse.MakeMultiResponse(s)
 }
 
+func ExecLLen(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
+	l, err := getList(conn, db, args)
+	if err != nil {
+		return redisresponse.MakeErrorResponse(err.Error())
+	}
+	if l == nil {
+		return redisresponse.MakeNumberResponse(0)
+	}
+
+	return redisresponse.MakeNumberResponse(l.Len())
+}
+
+// get or delete 操作调用 getList
 func getList(conn conn.Conn, db *redis.RedisDB, args [][]byte) (*list.List, error) {
 	key := string(args[0])
 
@@ -365,21 +383,23 @@ func getList(conn conn.Conn, db *redis.RedisDB, args [][]byte) (*list.List, erro
 	if !ok {
 		return nil, errors.New(" WRONGTYPE Operation against a key holding the wrong kind of value")
 	}
+
+	life := ttl(db, [][]byte{
+		args[0],
+	})
+
+	if life == -2 {
+		return nil, nil
+	}
+
 	return l, nil
 }
 
+// add 操作调用 getListOrInitList
 func getListOrInitList(conn conn.Conn, db *redis.RedisDB, args [][]byte) (*list.List, error) {
 	l, err := getList(conn, db, args)
 	if l == nil && err == nil {
 		return list.MakeList(), nil
 	}
 	return l, err
-}
-
-func ExecLLen(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
-	l, err := getListOrInitList(conn, db, args)
-	if err != nil {
-		return redisresponse.MakeErrorResponse(err.Error())
-	}
-	return redisresponse.MakeNumberResponse(l.Len())
 }
