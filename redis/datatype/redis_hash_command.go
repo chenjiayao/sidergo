@@ -29,7 +29,7 @@ func init() {
 	redis.RegisterRedisCommand(redis.HKEYS, ExecHkeys, validate.ValidateHkeys)
 	redis.RegisterRedisCommand(redis.HLEN, ExecHlen, validate.ValidateHlen)
 	redis.RegisterRedisCommand(redis.HMGET, ExecHmget, validate.ValidateHmget)
-	redis.RegisterRedisCommand(redis.HMSET, ExecHmget, validate.ValidateHmset)
+	redis.RegisterRedisCommand(redis.HMSET, ExecHmset, validate.ValidateHmset)
 	redis.RegisterRedisCommand(redis.HSETNX, ExecHsetnx, validate.ValidateHsetnx)
 	redis.RegisterRedisCommand(redis.HVALS, ExecHvals, validate.ValidateHvals)
 
@@ -83,11 +83,16 @@ func ExecHmset(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respon
 		return redisresponse.MakeErrorResponse(err.Error())
 	}
 
-	for i := 1; i < len(args[:1]); i += 2 {
+	if kvmap == nil {
+		kvmap = make(map[string]string)
+	}
+
+	for i := 1; i < len(args[1:]); i += 2 {
 		field := string(args[i])
 		value := string(args[i+1])
 		kvmap[field] = value
 	}
+	db.Dataset.Put(key, kvmap)
 
 	return redisresponse.OKSimpleResponse
 }
@@ -231,14 +236,20 @@ func ExecHset(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respons
 	if err != nil {
 		return redisresponse.MakeErrorResponse(err.Error())
 	}
+	if kvmap == nil {
+		kvmap = make(map[string]string)
+	}
 
 	_, exist := kvmap[field]
 
 	kvmap[field] = value
 
+	db.Dataset.Put(key, kvmap)
+
 	if exist {
 		return redisresponse.MakeNumberResponse(0)
 	}
+
 	return redisresponse.MakeNumberResponse(1)
 }
 
