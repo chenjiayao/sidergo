@@ -100,6 +100,10 @@ func ExecHmget(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respon
 		return redisresponse.MakeErrorResponse(err.Error())
 	}
 
+	if kvmap == nil {
+		return redisresponse.EmptyArrayResponse
+	}
+
 	multiResponses := make([]response.Response, len(args[1:]))
 
 	for index, v := range args[1:] {
