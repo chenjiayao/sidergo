@@ -38,13 +38,14 @@ func init() {
 func ExecHvals(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 	key := string(args[0])
 
-	v, exist := db.Dataset.Get(key)
-
-	if !exist {
-		return redisresponse.MakeArrayResponse(nil)
+	kvmap, err := getOrInitHash(db, key)
+	if err != nil {
+		return redisresponse.MakeErrorResponse(err.Error())
 	}
 
-	kvmap := v.(map[string]string)
+	if kvmap == nil {
+		return redisresponse.EmptyArrayResponse
+	}
 
 	multiResponses := make([]response.Response, len(kvmap))
 	index := 0
