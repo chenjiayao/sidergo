@@ -48,7 +48,7 @@ func TestExecGet(t *testing.T) {
 		[]byte(key),
 	})
 
-	want := string(redisresponse.MakeSimpleResponse("value").ToContentByte())
+	want := string(redisresponse.MakeMultiResponse("value").ToContentByte())
 	if !bytes.Equal(res.ToContentByte(), []byte(want)) {
 		t.Errorf("ExecGet = %s, want %s", string(res.ToContentByte()), want)
 	}
