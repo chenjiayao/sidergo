@@ -23,11 +23,12 @@ var _ server.Server = &RedisServer{}
 
 // handler 实例只会有一个
 type RedisServer struct {
-	closed     atomic.Boolean
-	rds        *RedisDBs
-	aofHandler *AofHandler
-	ctx        context.Context
-	cancel     context.CancelFunc
+	closed           atomic.Boolean
+	rds              *RedisDBs
+	aofHandler       *AofHandler
+	ctx              context.Context
+	cancel           context.CancelFunc
+	connectedClients map[string]conn.Conn
 }
 
 ///////////启动 redis 服务，
@@ -35,9 +36,10 @@ type RedisServer struct {
 func MakeRedisServer() *RedisServer {
 	ctx, cancel := context.WithCancel(context.TODO())
 	redisServer := &RedisServer{
-		closed: atomic.Boolean(0),
-		ctx:    ctx,
-		cancel: cancel,
+		closed:           atomic.Boolean(0),
+		ctx:              ctx,
+		cancel:           cancel,
+		connectedClients: make(map[string]conn.Conn),
 	}
 
 	redisServer.rds = NewDBs(redisServer)
@@ -158,15 +160,18 @@ func (redisServer *RedisServer) Handle(conn net.Conn) {
 
 	if redisServer.closed.Get() {
 		conn.Close()
+		return
 	}
 
 	redisClient := MakeRedisConn(conn)
+	redisServer.connectedClients[conn.RemoteAddr().String()] = redisClient
 
 	ch := parser.ReadCommand(conn)
 	//chan close 掉之后， range 直接退出
 	for request := range ch {
 		if request.GetErr() != nil {
 			if request.GetErr() == io.EOF {
+				delete(redisServer.connectedClients, redisClient.RemoteAddress())
 				redisServer.closeClient(redisClient)
 				return
 			}
@@ -254,13 +259,18 @@ func (redisServer *RedisServer) Close() error {
 	if redisServer.closed.Get() {
 		return nil
 	}
-
 	redisServer.closed.Set(true)
+
+	for _, client := range redisServer.connectedClients {
+		client.Close()
+	}
+
 	redisServer.cancel()
 	if redisServer.aofHandler != nil {
 		redisServer.aofHandler.EndAof()
 	}
 	redisServer.rds.CloseAllDB()
 
+	time.Sleep(time.Second)
 	return nil
 }
