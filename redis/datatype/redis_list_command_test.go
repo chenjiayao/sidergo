@@ -146,3 +146,53 @@ func TestExecLIndex(t *testing.T) {
 		t.Errorf("got %s, want %s", gotStr, wantStr)
 	}
 }
+
+func TestExecLPop(t *testing.T) {
+	db := redis.NewDBInstance(nil, 1)
+
+	list := list.MakeList()
+	list.InsertHead("A")
+	list.InsertHead("B")
+	list.InsertHead("C")
+	list.InsertHead("D") //DCBA
+
+	db.Dataset.Put("list", list)
+	resp := ExecLPop(nil, db, [][]byte{
+		[]byte("list"),
+	})
+	gotStr := string(resp.ToContentByte())
+	wantStr := "$1\r\nD\r\n"
+	if wantStr != gotStr {
+		t.Errorf("got %s, want %s", gotStr, wantStr)
+	}
+
+	resp = ExecLPop(nil, db, [][]byte{
+		[]byte("list"),
+	})
+	gotStr = string(resp.ToContentByte())
+	wantStr = "$1\r\nC\r\n"
+	if wantStr != gotStr {
+		t.Errorf("got %s, want %s", gotStr, wantStr)
+	}
+
+}
+
+func TestExecLLen(t *testing.T) {
+	db := redis.NewDBInstance(nil, 1)
+
+	args := [][]byte{
+		[]byte("list"),
+		[]byte("A"),
+		[]byte("B"),
+	}
+	ExecLPush(nil, db, args)
+
+	resp := ExecLLen(nil, db, [][]byte{
+		[]byte("list"),
+	})
+	gotStr := string(resp.ToContentByte())
+	wantStr := ":2\r\n"
+	if condition := wantStr != gotStr; condition {
+		t.Errorf("got %s, want %s", gotStr, wantStr)
+	}
+}
