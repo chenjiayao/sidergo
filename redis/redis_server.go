@@ -50,6 +50,10 @@ func MakeRedisServer() *RedisServer {
 	go redisServer.checkTimeoutConn()  //检查阻塞的链接是否超时返回 null
 	go redisServer.activeExpireCycle() //定时删除过期的 key
 
+	if config.Config.Appendonly {
+		redisServer.Log()
+	}
+
 	return redisServer
 }
 

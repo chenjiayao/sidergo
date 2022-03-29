@@ -21,10 +21,6 @@ func ListenAndServe(server server.Server) {
 		logrus.Fatal("start server failed ", err)
 	}
 
-	if config.Config.Appendonly {
-		server.Log()
-	}
-
 	sigCh := make(chan os.Signal)
 	signal.Notify(sigCh, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT)
 	go func() {
