@@ -127,14 +127,14 @@ func ExecHlen(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respons
 }
 
 func ExecHkeys(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
-	key := string(args[0])
+	kvmap, err := getOrInitHash(db, string(args[0]))
+	if err != nil {
+		return redisresponse.MakeErrorResponse(err.Error())
+	}
 
-	v, exist := db.Dataset.Get(key)
-
-	if !exist {
+	if kvmap == nil {
 		return redisresponse.MakeArrayResponse(nil)
 	}
-	kvmap := v.(map[string]string)
 
 	multiResponses := make([]response.Response, len(kvmap))
 	index := 0
