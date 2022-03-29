@@ -49,6 +49,7 @@ func TestExecGet(t *testing.T) {
 	})
 
 	want := string(redisresponse.MakeMultiResponse("value").ToContentByte())
+
 	if !bytes.Equal(res.ToContentByte(), []byte(want)) {
 		t.Errorf("ExecGet = %s, want %s", string(res.ToContentByte()), want)
 	}
@@ -87,7 +88,7 @@ func TestExecGetset(t *testing.T) {
 		[]byte("key"),
 		[]byte(newValue),
 	})
-	want := redisresponse.MakeSimpleResponse(value)
+	want := redisresponse.MakeMultiResponse(value)
 	if string(string(want.ToContentByte())) != string(res.ToContentByte()) {
 		t.Errorf("execgetSet = %s, want = %s", string(res.ToContentByte()), "+value")
 	}
