@@ -64,13 +64,16 @@ func ExecHsetnx(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 	if err != nil {
 		return redisresponse.MakeErrorResponse(err.Error())
 	}
+	if kvmap == nil {
+		kvmap = make(map[string]string)
+	}
 
 	_, ok := kvmap[field]
 	if ok {
 		return redisresponse.MakeNumberResponse(0)
 	}
-
 	kvmap[field] = value
+	db.Dataset.Put(key, kvmap)
 	return redisresponse.MakeNumberResponse(1)
 
 }
