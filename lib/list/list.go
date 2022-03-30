@@ -176,6 +176,14 @@ func (l *List) RemoveNode(val interface{}) {
 	}
 
 	l.size--
+
+	//说明只有一个节点
+	if l.head == l.tail && l.head != nil {
+		l.head = nil
+		l.tail = nil
+		return
+	}
+
 	if l.head == removeNode {
 		l.head = removeNode.Next()
 		removeNode.Next().prev = nil
