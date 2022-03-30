@@ -35,7 +35,17 @@ func ValidateLPop(conn conn.Conn, args [][]byte) error {
 }
 
 func ValidateRPop(conn conn.Conn, args [][]byte) error {
-	return ValidateLPop(conn, args)
+	if len(args) != 1 {
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Rpop)
+	}
+	return nil
+}
+
+func ValidateRPoplpush(conn conn.Conn, args [][]byte) error {
+	if len(args) != 2 {
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Rpoplpush)
+	}
+	return nil
 }
 
 func ValidateLIndex(conn conn.Conn, args [][]byte) error {

@@ -2,6 +2,7 @@ package datatype
 
 import (
 	"errors"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -38,6 +39,49 @@ func init() {
 	redis.RegisterRedisCommand(redis.Rpushx, ExecRPushx, validate.ValidateRPushx)
 	redis.RegisterRedisCommand(redis.Lpushx, ExecLPushx, validate.ValidateLPushx)
 
+	redis.RegisterRedisCommand(redis.Rpoplpush, ExecRpoplpush, validate.ValidateRPoplpush)
+
+}
+
+func ExecRpoplpush(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
+
+	source := string(args[0])
+	destination := string(args[1])
+
+	sourceList, err := getList(conn, db, [][]byte{args[0]})
+	if err != nil {
+		return redisresponse.MakeErrorResponse(err.Error())
+	}
+
+	if sourceList == nil {
+		return redisresponse.NullMultiResponse
+	}
+
+	destinationList, err := getListOrInitList(conn, db, [][]byte{args[1]})
+	if err != nil {
+		return redisresponse.MakeErrorResponse(err.Error())
+	}
+
+	//顺序加锁，保证不产生死锁
+	allKeys := []string{
+		source, destination,
+	}
+	sort.Slice(allKeys, func(i, j int) bool { return i < j })
+	for i := 0; i < len(allKeys); i++ {
+		key := allKeys[i]
+		db.LockKey(key, "1")
+		defer db.UnLockKey(key)
+	}
+
+	sourceElement := sourceList.PopFromTail()
+	if sourceElement == nil { //source 为空
+		return redisresponse.NullMultiResponse
+	}
+
+	destinationList.InsertHead(sourceElement)
+
+	val := sourceElement.(string)
+	return redisresponse.MakeMultiResponse(val)
 }
 
 /**
@@ -399,7 +443,10 @@ func getList(conn conn.Conn, db *redis.RedisDB, args [][]byte) (*list.List, erro
 func getListOrInitList(conn conn.Conn, db *redis.RedisDB, args [][]byte) (*list.List, error) {
 	l, err := getList(conn, db, args)
 	if l == nil && err == nil {
-		return list.MakeList(), nil
+		key := string(args[0])
+		l := list.MakeList()
+		db.Dataset.Put(key, l)
+		return l, nil
 	}
 	return l, err
 }
