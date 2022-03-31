@@ -93,7 +93,7 @@ func (rd *RedisDB) Exec(conn conn.Conn, cmdName string, args [][]byte) response.
 	if conn.IsInMultiState() && rd.canPushMultiQueues(cmdName) {
 		cmd := append([][]byte{[]byte(cmdName)}, args...)
 		conn.PushMultiCmd(cmd)
-		return redisresponse.MakeSimpleResponse("QUEUED")
+		return redisresponse.MakeMultiResponse("QUEUED")
 	}
 
 	//执行命令
