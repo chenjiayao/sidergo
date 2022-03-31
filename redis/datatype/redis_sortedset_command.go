@@ -333,6 +333,7 @@ func getSortedSetOrInit(db *redis.RedisDB, key string) (*sortedset.SortedSet, er
 	}
 	if ss == nil {
 		ss = sortedset.MakeSortedSet()
+		db.Dataset.Put(key, ss)
 	}
 	return ss, nil
 }
@@ -345,7 +346,7 @@ func getAsSortedSet(db *redis.RedisDB, key string) (*sortedset.SortedSet, error)
 
 	sortedSet, ok := entity.(*sortedset.SortedSet)
 	if !ok {
-		return nil, errors.New("-WRONGTYPE Operation against a key holding the wrong kind of value")
+		return nil, errors.New("Operation against a key holding the wrong kind of value")
 	}
 
 	return sortedSet, nil
