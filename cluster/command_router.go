@@ -53,8 +53,8 @@ var (
 
 	//需要直接在当前 node 做 validate 的命令
 	directValidateCommands = map[string]string{
-		redis.Mget: "",
-		redis.Ping: "",
+		redis.MGET: "",
+		redis.PING: "",
 	}
 )
 

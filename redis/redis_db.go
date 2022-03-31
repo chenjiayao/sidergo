@@ -63,10 +63,10 @@ func (rd *RedisDB) CloseDB() {
 
 func (rd *RedisDB) canPushMultiQueues(cmdName string) bool {
 	canNotPushMultiQueues := map[string]string{
-		Exec:    Exec,
-		Watch:   Watch,
-		Discard: Discard,
-		Multi:   Multi,
+		EXEC:    EXEC,
+		WATCH:   WATCH,
+		DISCARD: DISCARD,
+		MULTI:   MULTI,
 	}
 	_, can := canNotPushMultiQueues[cmdName]
 	return !can

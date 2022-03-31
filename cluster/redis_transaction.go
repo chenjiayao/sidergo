@@ -10,10 +10,10 @@ import (
 )
 
 func init() {
-	RegisterClusterExecCommand(redis.Watch, ExecWatch, validate.ValidateWatch)
-	RegisterClusterExecCommand(redis.Multi, ExecMulti, validate.ValidateMulti)
-	RegisterClusterExecCommand(redis.Exec, ExecExec, validate.ValidateExec)
-	RegisterClusterExecCommand(redis.Discard, ExecDiscard, validate.ValidateDiscard)
+	RegisterClusterExecCommand(redis.WATCH, ExecWatch, validate.ValidateWatch)
+	RegisterClusterExecCommand(redis.MULTI, ExecMulti, validate.ValidateMulti)
+	RegisterClusterExecCommand(redis.EXEC, ExecExec, validate.ValidateExec)
+	RegisterClusterExecCommand(redis.DISCARD, ExecDiscard, validate.ValidateDiscard)
 }
 
 //集群模式下不支持事务，

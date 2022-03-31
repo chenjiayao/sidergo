@@ -27,7 +27,7 @@ func ValidateAuth(con conn.Conn, args [][]byte) error {
 
 func ValidateSelect(conn conn.Conn, args [][]byte) error {
 	if len(args) != 1 {
-		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Select)
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.SELECT)
 	}
 	dbIndexStr := string(args[0])
 	_, err := strconv.Atoi(dbIndexStr)
@@ -39,21 +39,21 @@ func ValidateSelect(conn conn.Conn, args [][]byte) error {
 
 func ValidatePersist(conn conn.Conn, args [][]byte) error {
 	if len(args) != 1 {
-		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Persist)
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.PERSIST)
 	}
 	return nil
 }
 
 func ValidateExist(conn conn.Conn, args [][]byte) error {
 	if len(args) != 1 {
-		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Exist)
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.EXIST)
 	}
 	return nil
 }
 
 func ValidatePing(conn conn.Conn, args [][]byte) error {
 	if len(args) > 1 {
-		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Ping)
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.PING)
 	}
 	return nil
 }

@@ -14,9 +14,9 @@ import (
 )
 
 func init() {
-	RegisterClusterExecCommand(redis.Mget, ExecMget, validate.ValidateMGet)
-	RegisterClusterExecCommand(redis.Mset, ExecMset, validate.ValidateMSet)
-	RegisterClusterExecCommand(redis.Msetnx, ExecMSetNX, validate.ValidateMSetNX)
+	RegisterClusterExecCommand(redis.MGET, ExecMget, validate.ValidateMGet)
+	RegisterClusterExecCommand(redis.MSET, ExecMset, validate.ValidateMSet)
+	RegisterClusterExecCommand(redis.MSETNX, ExecMSetNX, validate.ValidateMSetNX)
 
 }
 
@@ -28,7 +28,7 @@ func ExecMget(cluster *Cluster, conn conn.Conn, re request.Request) response.Res
 
 	for i := 0; i < len(keys); i++ {
 		getCommandRequest := &redisrequest.RedisRequet{
-			CmdName: redis.Get,
+			CmdName: redis.GET,
 			Args: [][]byte{
 				keys[i],
 			},
@@ -48,13 +48,13 @@ func ExecMset(cluster *Cluster, conn conn.Conn, clientRequest request.Request) r
 
 	for i := 0; i < len(args); i += 2 {
 		undoRequests[i/2] = &redisrequest.RedisRequet{
-			CmdName: redis.Del,
+			CmdName: redis.DEL,
 			Args: [][]byte{
 				args[i],
 			},
 		}
 		commitRequests[i/2] = &redisrequest.RedisRequet{
-			CmdName: redis.Set,
+			CmdName: redis.SET,
 			Args: [][]byte{
 				args[i],
 				args[i+1],

@@ -17,29 +17,29 @@ import (
 
 func init() {
 
-	redis.RegisterRedisCommand(redis.Llen, ExecLLen, validate.ValidateLLen)
-	redis.RegisterRedisCommand(redis.Lindex, ExecLIndex, validate.ValidateLIndex)
-	redis.RegisterRedisCommand(redis.Ltrim, ExecLtrim, validate.ValidateLTrim)
+	redis.RegisterRedisCommand(redis.LLEN, ExecLLen, validate.ValidateLLen)
+	redis.RegisterRedisCommand(redis.LINDEX, ExecLIndex, validate.ValidateLIndex)
+	redis.RegisterRedisCommand(redis.LTRIM, ExecLtrim, validate.ValidateLTrim)
 
-	redis.RegisterRedisCommand(redis.Lrange, ExecLrange, validate.ValidateLrange)
-	redis.RegisterRedisCommand(redis.Linsert, ExecLinsert, validate.ValidateLInsert)
+	redis.RegisterRedisCommand(redis.LRANGE, ExecLrange, validate.ValidateLrange)
+	redis.RegisterRedisCommand(redis.LINSERT, ExecLinsert, validate.ValidateLInsert)
 
-	redis.RegisterRedisCommand(redis.Lset, ExecLset, validate.ValidateLset)
-	redis.RegisterRedisCommand(redis.Lrem, ExecLrem, validate.ValidateLrem)
+	redis.RegisterRedisCommand(redis.LSET, ExecLset, validate.ValidateLset)
+	redis.RegisterRedisCommand(redis.LREM, ExecLrem, validate.ValidateLrem)
 
-	redis.RegisterRedisCommand(redis.Lpush, ExecLPush, validate.ValidateLPush)
-	redis.RegisterRedisCommand(redis.Rpush, ExecRPush, validate.ValidateRPush)
+	redis.RegisterRedisCommand(redis.LPUSH, ExecLPush, validate.ValidateLPush)
+	redis.RegisterRedisCommand(redis.RPUSH, ExecRPush, validate.ValidateRPush)
 
-	redis.RegisterRedisCommand(redis.Lpop, ExecLPop, validate.ValidateLPop)
-	redis.RegisterRedisCommand(redis.Rpop, ExecRpop, validate.ValidateRPop)
+	redis.RegisterRedisCommand(redis.LPOP, ExecLPop, validate.ValidateLPop)
+	redis.RegisterRedisCommand(redis.RPOP, ExecRpop, validate.ValidateRPop)
 
-	redis.RegisterRedisCommand(redis.Blpop, ExecBlpop, validate.ValidateBlpop)
-	redis.RegisterRedisCommand(redis.Brpop, ExecBrpop, validate.ValidateBrpop)
+	redis.RegisterRedisCommand(redis.BLPOP, ExecBlpop, validate.ValidateBlpop)
+	redis.RegisterRedisCommand(redis.BRPOP, ExecBrpop, validate.ValidateBrpop)
 
-	redis.RegisterRedisCommand(redis.Rpushx, ExecRPushx, validate.ValidateRPushx)
-	redis.RegisterRedisCommand(redis.Lpushx, ExecLPushx, validate.ValidateLPushx)
+	redis.RegisterRedisCommand(redis.RPUSHX, ExecRPushx, validate.ValidateRPushx)
+	redis.RegisterRedisCommand(redis.LPUSHX, ExecLPushx, validate.ValidateLPushx)
 
-	redis.RegisterRedisCommand(redis.Rpoplpush, ExecRpoplpush, validate.ValidateRPoplpush)
+	redis.RegisterRedisCommand(redis.RPOPLPUSH, ExecRpoplpush, validate.ValidateRPoplpush)
 
 }
 
@@ -200,7 +200,7 @@ func ExecBlpop(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respon
 	//keys 都不存在
 	conn.SetBlockAt(time.Now())
 	conn.SetMaxBlockTime(int64(timeout))
-	conn.SetBlockingExec(redis.Blpop, args)
+	conn.SetBlockingExec(redis.BLPOP, args)
 
 	for _, v := range args[:len(args)-1] {
 		db.AddBlockingConn(string(v), conn)
@@ -233,7 +233,7 @@ func ExecBrpop(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respon
 	//keys 都不存在
 	conn.SetBlockAt(time.Now())
 	conn.SetMaxBlockTime(int64(timeout))
-	conn.SetBlockingExec(redis.Blpop, args)
+	conn.SetBlockingExec(redis.BLPOP, args)
 
 	for _, v := range args[:len(args)-1] {
 		db.AddBlockingConn(string(v), conn)

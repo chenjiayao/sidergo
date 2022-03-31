@@ -14,24 +14,24 @@ import (
 )
 
 func init() {
-	RegisterClusterExecCommand(redis.Get, defaultExec, nil)
-	RegisterClusterExecCommand(redis.Getset, defaultExec, nil)
-	RegisterClusterExecCommand(redis.Set, defaultExec, nil)
-	RegisterClusterExecCommand(redis.Incr, defaultExec, nil)
-	RegisterClusterExecCommand(redis.Incrbyf, defaultExec, nil)
-	RegisterClusterExecCommand(redis.Incrby, defaultExec, nil)
+	RegisterClusterExecCommand(redis.GET, defaultExec, nil)
+	RegisterClusterExecCommand(redis.GETSET, defaultExec, nil)
+	RegisterClusterExecCommand(redis.SET, defaultExec, nil)
+	RegisterClusterExecCommand(redis.INCR, defaultExec, nil)
+	RegisterClusterExecCommand(redis.INCRBYF, defaultExec, nil)
+	RegisterClusterExecCommand(redis.INCRBY, defaultExec, nil)
 
-	RegisterClusterExecCommand(redis.Lpush, defaultExec, nil)
-	RegisterClusterExecCommand(redis.Lpushx, defaultExec, nil)
-	RegisterClusterExecCommand(redis.Rpush, defaultExec, nil)
-	RegisterClusterExecCommand(redis.Rpushx, defaultExec, nil)
-	RegisterClusterExecCommand(redis.Lpop, defaultExec, nil)
-	RegisterClusterExecCommand(redis.Rpop, defaultExec, nil)
-	RegisterClusterExecCommand(redis.Lrem, defaultExec, nil)
-	RegisterClusterExecCommand(redis.Llen, defaultExec, nil)
-	RegisterClusterExecCommand(redis.Lindex, defaultExec, nil)
-	RegisterClusterExecCommand(redis.Lset, defaultExec, nil)
-	RegisterClusterExecCommand(redis.Lrange, defaultExec, nil)
+	RegisterClusterExecCommand(redis.LPUSH, defaultExec, nil)
+	RegisterClusterExecCommand(redis.LPUSHX, defaultExec, nil)
+	RegisterClusterExecCommand(redis.RPUSH, defaultExec, nil)
+	RegisterClusterExecCommand(redis.RPUSHX, defaultExec, nil)
+	RegisterClusterExecCommand(redis.LPOP, defaultExec, nil)
+	RegisterClusterExecCommand(redis.RPOP, defaultExec, nil)
+	RegisterClusterExecCommand(redis.LREM, defaultExec, nil)
+	RegisterClusterExecCommand(redis.LLEN, defaultExec, nil)
+	RegisterClusterExecCommand(redis.LINDEX, defaultExec, nil)
+	RegisterClusterExecCommand(redis.LSET, defaultExec, nil)
+	RegisterClusterExecCommand(redis.LRANGE, defaultExec, nil)
 
 	RegisterClusterExecCommand(redis.HSET, defaultExec, nil)
 	RegisterClusterExecCommand(redis.HSETNX, defaultExec, nil)
@@ -47,7 +47,7 @@ func init() {
 	RegisterClusterExecCommand(redis.HINCRBY, defaultExec, nil)
 	RegisterClusterExecCommand(redis.HINCRBYFLOAT, defaultExec, nil)
 
-	RegisterClusterExecCommand(redis.Auth, defaultExec, nil)
+	RegisterClusterExecCommand(redis.AUTH, defaultExec, nil)
 	RegisterClusterExecCommand(redis.ZREMRANGEBYRANK, defaultExec, nil)
 	RegisterClusterExecCommand(redis.ZREMRANGEBYSCORE, defaultExec, nil)
 	RegisterClusterExecCommand(redis.ZREM, defaultExec, nil)
@@ -63,14 +63,14 @@ func init() {
 	RegisterClusterExecCommand(redis.ZSCORE, defaultExec, nil)
 	RegisterClusterExecCommand(redis.ZADD, defaultExec, nil)
 
-	RegisterClusterExecCommand(redis.Sadd, defaultExec, nil)
-	RegisterClusterExecCommand(redis.Sismember, defaultExec, nil)
-	RegisterClusterExecCommand(redis.Scard, defaultExec, nil)
-	RegisterClusterExecCommand(redis.Smembers, defaultExec, nil)
+	RegisterClusterExecCommand(redis.SADD, defaultExec, nil)
+	RegisterClusterExecCommand(redis.SISMEMBER, defaultExec, nil)
+	RegisterClusterExecCommand(redis.SCARD, defaultExec, nil)
+	RegisterClusterExecCommand(redis.SMEMBERS, defaultExec, nil)
 
-	RegisterClusterExecCommand(redis.Select, ExecSelect, validate.ValidateSelect)
+	RegisterClusterExecCommand(redis.SELECT, ExecSelect, validate.ValidateSelect)
 
-	RegisterClusterExecCommand(redis.Ping, ExecPing, validate.ValidatePing)
+	RegisterClusterExecCommand(redis.PING, ExecPing, validate.ValidatePing)
 
 }
 

@@ -20,7 +20,7 @@ func ValidateExec(conn conn.Conn, args [][]byte) error {
 		return errors.New("ERR EXEC without MULTI")
 	}
 	if len(args) > 0 {
-		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Exec)
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.EXEC)
 	}
 	return nil
 }

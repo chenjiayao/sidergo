@@ -10,7 +10,7 @@ import (
 func ValidateSadd(conn conn.Conn, args [][]byte) error {
 
 	if len(args) < 2 {
-		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Set)
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.SET)
 	}
 
 	return nil
@@ -19,42 +19,42 @@ func ValidateSadd(conn conn.Conn, args [][]byte) error {
 func ValidateSmembers(conn conn.Conn, args [][]byte) error {
 
 	if len(args) > 2 {
-		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Smembers)
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.SMEMBERS)
 	}
 	return nil
 }
 
 func ValidateScard(conn conn.Conn, args [][]byte) error {
 	if len(args) > 2 {
-		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Scard)
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.SCARD)
 	}
 	return nil
 }
 
 func ValidateSpop(conn conn.Conn, args [][]byte) error {
 	if len(args) > 2 {
-		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Spop)
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.SPOP)
 	}
 	return nil
 }
 
 func ValidateSismember(conn conn.Conn, args [][]byte) error {
 	if len(args) != 2 {
-		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Sismember)
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.SISMEMBER)
 	}
 	return nil
 }
 
 func ValidateSmove(conn conn.Conn, args [][]byte) error {
 	if len(args) != 2 {
-		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Smove)
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.SMOVE)
 	}
 	return nil
 }
 
 func ValidateSdiff(conn conn.Conn, args [][]byte) error {
 	if len(args) < 1 {
-		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Sdiff)
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.SDIFF)
 	}
 	return nil
 }

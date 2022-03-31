@@ -11,7 +11,7 @@ import (
 )
 
 func init() {
-	RegisterClusterExecCommand(redis.Del, ExecDel, validate.ValidateDel)
+	RegisterClusterExecCommand(redis.DEL, ExecDel, validate.ValidateDel)
 }
 
 func ExecDel(cluster *Cluster, conn conn.Conn, re request.Request) response.Response {
@@ -20,7 +20,7 @@ func ExecDel(cluster *Cluster, conn conn.Conn, re request.Request) response.Resp
 
 	for i := 0; i < len(keys); i++ {
 		getCommandRequest := &redisrequest.RedisRequet{
-			CmdName: redis.Get,
+			CmdName: redis.GET,
 			Args: [][]byte{
 				keys[i],
 			},

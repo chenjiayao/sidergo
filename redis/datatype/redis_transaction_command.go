@@ -11,11 +11,11 @@ import (
 
 func init() {
 
-	redis.RegisterRedisCommand(redis.Multi, ExecMulti, validate.ValidateMulti)
-	redis.RegisterRedisCommand(redis.Discard, ExecDiscard, validate.ValidateDiscard)
-	redis.RegisterRedisCommand(redis.Watch, ExecWatch, validate.ValidateWatch)
-	redis.RegisterRedisCommand(redis.Exec, ExecExec, validate.ValidateExec)
-	redis.RegisterRedisCommand(redis.Unwatch, ExecUnwatch, validate.ValidateUnwatch)
+	redis.RegisterRedisCommand(redis.MULTI, ExecMulti, validate.ValidateMulti)
+	redis.RegisterRedisCommand(redis.DISCARD, ExecDiscard, validate.ValidateDiscard)
+	redis.RegisterRedisCommand(redis.WATCH, ExecWatch, validate.ValidateWatch)
+	redis.RegisterRedisCommand(redis.EXEC, ExecExec, validate.ValidateExec)
+	redis.RegisterRedisCommand(redis.UNWATCH, ExecUnwatch, validate.ValidateUnwatch)
 
 }
 

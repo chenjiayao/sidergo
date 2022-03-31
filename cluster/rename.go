@@ -13,7 +13,7 @@ import (
 
 func init() {
 
-	RegisterClusterExecCommand(redis.Rename, ExecRename, validate.ValidateRename)
+	RegisterClusterExecCommand(redis.RENAME, ExecRename, validate.ValidateRename)
 }
 
 //rename oldkey newkey

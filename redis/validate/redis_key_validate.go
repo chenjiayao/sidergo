@@ -12,14 +12,14 @@ import (
 func ValidateTtl(conn conn.Conn, args [][]byte) error {
 
 	if len(args) != 1 {
-		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Ttl)
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.TTL)
 	}
 	return nil
 }
 
 func ValidateExpire(conn conn.Conn, args [][]byte) error {
 	if len(args) != 2 {
-		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Expire)
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.EXPIRE)
 	}
 	_, err := strconv.Atoi(string(args[1]))
 	if err != nil {
@@ -31,14 +31,14 @@ func ValidateExpire(conn conn.Conn, args [][]byte) error {
 
 func ValidateDel(conn conn.Conn, args [][]byte) error {
 	if len(args) < 1 {
-		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Del)
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.DEL)
 	}
 	return nil
 }
 
 func ValidateRename(conn conn.Conn, args [][]byte) error {
 	if len(args) != 2 {
-		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Rename)
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.RENAME)
 	}
 	return nil
 }

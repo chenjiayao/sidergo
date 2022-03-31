@@ -13,7 +13,7 @@ import (
 func ValidateLPush(conn conn.Conn, args [][]byte) error {
 
 	if len(args) < 1 {
-		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Lpush)
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.LPUSH)
 	}
 	return nil
 }
@@ -21,7 +21,7 @@ func ValidateLPush(conn conn.Conn, args [][]byte) error {
 func ValidateRPush(conn conn.Conn, args [][]byte) error {
 
 	if len(args) < 1 {
-		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Lpush)
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.LPUSH)
 	}
 	return nil
 }
@@ -29,28 +29,28 @@ func ValidateRPush(conn conn.Conn, args [][]byte) error {
 func ValidateLPop(conn conn.Conn, args [][]byte) error {
 
 	if len(args) != 1 {
-		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Lpop)
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.LPOP)
 	}
 	return nil
 }
 
 func ValidateRPop(conn conn.Conn, args [][]byte) error {
 	if len(args) != 1 {
-		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Rpop)
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.RPOP)
 	}
 	return nil
 }
 
 func ValidateRPoplpush(conn conn.Conn, args [][]byte) error {
 	if len(args) != 2 {
-		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Rpoplpush)
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.RPOPLPUSH)
 	}
 	return nil
 }
 
 func ValidateLIndex(conn conn.Conn, args [][]byte) error {
 	if len(args) != 2 {
-		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Lindex)
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.LINDEX)
 	}
 	indexs := args[1]
 	_, err := strconv.Atoi(string(indexs))
@@ -62,28 +62,28 @@ func ValidateLIndex(conn conn.Conn, args [][]byte) error {
 
 func ValidateLLen(conn conn.Conn, args [][]byte) error {
 	if len(args) != 1 {
-		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Llen)
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.LLEN)
 	}
 	return nil
 }
 
 func ValidateLPushx(conn conn.Conn, args [][]byte) error {
 	if len(args) != 2 {
-		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Lpush)
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.LPUSH)
 	}
 	return nil
 }
 
 func ValidateRPushx(conn conn.Conn, args [][]byte) error {
 	if len(args) != 2 {
-		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Rpushx)
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.RPUSHX)
 	}
 	return nil
 }
 
 func ValidateLTrim(conn conn.Conn, args [][]byte) error {
 	if len(args) != 3 {
-		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Ltrim)
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.LTRIM)
 	}
 	_, err := strconv.Atoi(string(args[1]))
 	if err != nil {
@@ -103,7 +103,7 @@ func ValidateLrange(conn conn.Conn, args [][]byte) error {
 
 func ValidateLInsert(conn conn.Conn, args [][]byte) error {
 	if len(args) != 4 {
-		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Ltrim)
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.LTRIM)
 	}
 	pos := strings.ToUpper(string(args[1]))
 	if pos != "BEFORE" && pos != "AFTER" {
@@ -114,7 +114,7 @@ func ValidateLInsert(conn conn.Conn, args [][]byte) error {
 
 func ValidateLset(conn conn.Conn, args [][]byte) error {
 	if len(args) != 3 {
-		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Lset)
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.LSET)
 	}
 
 	_, err := strconv.Atoi(string(args[1]))
@@ -126,7 +126,7 @@ func ValidateLset(conn conn.Conn, args [][]byte) error {
 
 func ValidateBlpop(conn conn.Conn, args [][]byte) error {
 	if len(args) < 2 {
-		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Blpop)
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.BLPOP)
 	}
 	_, err := strconv.Atoi(string(args[len(args)-1]))
 	if err != nil {
@@ -137,7 +137,7 @@ func ValidateBlpop(conn conn.Conn, args [][]byte) error {
 
 func ValidateBrpop(conn conn.Conn, args [][]byte) error {
 	if len(args) < 2 {
-		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Brpop)
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.BRPOP)
 	}
 	_, err := strconv.Atoi(string(args[len(args)-1]))
 	if err != nil {
@@ -148,7 +148,7 @@ func ValidateBrpop(conn conn.Conn, args [][]byte) error {
 
 func ValidateLrem(conn conn.Conn, args [][]byte) error {
 	if len(args) < 3 {
-		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Lrem)
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.LREM)
 	}
 	_, err := strconv.Atoi(string(args[1]))
 	if err != nil {
