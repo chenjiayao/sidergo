@@ -62,10 +62,18 @@ func ExecRpoplpush(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Re
 		return redisresponse.MakeErrorResponse(err.Error())
 	}
 
-	//顺序加锁，保证不产生死锁
-	allKeys := []string{
-		source, destination,
+	var allKeys []string
+	if source == destination {
+		allKeys = []string{
+			source,
+		}
+	} else {
+		allKeys = []string{
+			source, destination,
+		}
 	}
+
+	//顺序加锁，保证不产生死锁
 	sort.Slice(allKeys, func(i, j int) bool { return i < j })
 	for i := 0; i < len(allKeys); i++ {
 		key := allKeys[i]
@@ -156,20 +164,6 @@ func ExecRPushx(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 		return redisresponse.NullMultiResponse
 	}
 	return ExecRPush(conn, db, args)
-}
-
-func ExecRpop(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
-	l, err := getListOrInitList(conn, db, args)
-	if err != nil {
-		return redisresponse.MakeErrorResponse(err.Error())
-	}
-	element := l.PopFromTail()
-	if element == nil {
-		return redisresponse.NullMultiResponse
-	}
-
-	s, _ := element.(string)
-	return redisresponse.MakeMultiResponse(s)
 }
 
 //先执行 pop，如果没有，阻塞
@@ -386,6 +380,20 @@ func ExecLIndex(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 
 	content, _ := val.(string)
 	return redisresponse.MakeMultiResponse(content)
+}
+
+func ExecRpop(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
+	l, err := getListOrInitList(conn, db, args)
+	if err != nil {
+		return redisresponse.MakeErrorResponse(err.Error())
+	}
+	element := l.PopFromTail()
+	if element == nil {
+		return redisresponse.NullMultiResponse
+	}
+
+	s, _ := element.(string)
+	return redisresponse.MakeMultiResponse(s)
 }
 
 //移除并返回列表 key 的头元素。
