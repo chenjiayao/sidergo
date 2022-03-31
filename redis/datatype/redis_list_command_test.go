@@ -196,3 +196,25 @@ func TestExecLLen(t *testing.T) {
 		t.Errorf("got %s, want %s", gotStr, wantStr)
 	}
 }
+
+func TestExecRpop(t *testing.T) {
+	db := redis.NewDBInstance(nil, 1)
+
+	list := list.MakeList()
+	list.InsertHead("A")
+	list.InsertHead("B")
+	list.InsertHead("C")
+	list.InsertHead("D") //DCBA
+	db.Dataset.Put("list", list)
+
+	resp := ExecRpop(nil, db, [][]byte{[]byte("list")})
+	gotStr := string(resp.ToContentByte())
+	wantStr := "$1\r\nA\r\n"
+
+	if wantStr != gotStr {
+		t.Errorf("got %s, want %s", gotStr, wantStr)
+	}
+	if list.Len() != 3 {
+		t.Errorf("got %d, want %d", list.Len(), 3)
+	}
+}
