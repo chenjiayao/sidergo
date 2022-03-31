@@ -80,9 +80,21 @@ func ExecMSetNX(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 
 	//  这里加锁之前应该对 args 按照字母顺序排序， 保证每个goroutine 的 keys 加锁顺序一致，不然会导致死锁
 	allKeys := make([]string, 0)
+
+	keyValues := make(map[string]string)
+
 	for i := 0; i < len(args); i += 2 {
+
+		key := string(args[i])
+		_, exist := keyValues[key]
+		if exist { //防止对一个 key 重复加锁
+			continue
+		}
+
 		allKeys = append(allKeys, string(args[i]))
+		keyValues[key] = key
 	}
+
 	sort.Slice(allKeys, func(i, j int) bool { return i < j })
 
 	//对所有的 key 加锁
@@ -100,7 +112,7 @@ func ExecMSetNX(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 		}
 	}
 
-	for i := 0; i < len(args); i++ {
+	for i := 0; i < len(args); i += 2 {
 		ExecSet(conn, db, [][]byte{
 			args[i],
 			args[i+1],
