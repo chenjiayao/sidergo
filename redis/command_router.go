@@ -27,52 +27,52 @@ const (
 	HVALS        = "hvals"
 
 	//string
-	Set     = "set"
-	Setnx   = "setnx"
-	Setex   = "setex"
-	Psetex  = "psetex"
-	Mset    = "mset"
-	Mget    = "mget"
-	Msetnx  = "msetnx"
-	Get     = "get"
-	Getset  = "getset"
-	Incr    = "incr"
-	Incrby  = "incrby"
-	Incrbyf = "incrbyfloat"
-	Decr    = "decr"
-	Decrby  = "decrby"
+	SET     = "set"
+	SETNX   = "setnx"
+	SETEX   = "setex"
+	PSETEX  = "psetex"
+	MSET    = "mset"
+	MGET    = "mget"
+	MSETNX  = "msetnx"
+	GET     = "get"
+	GETSET  = "getset"
+	INCR    = "incr"
+	INCRBY  = "incrby"
+	INCRBYF = "incrbyfloat"
+	DECR    = "decr"
+	DECRBY  = "decrby"
 
 	//list
-	Lpush     = "lpush"
-	Lpushx    = "lpushx"
-	Rpush     = "rpush"
-	Rpushx    = "rpushx"
-	Lpop      = "lpop"
-	Rpop      = "rpop"
-	Ltrim     = "ltrim"
-	Rpoplpush = "rpoplpush"
-	Lrem      = "lrem"
-	Llen      = "llen"
-	Lindex    = "lindex"
-	Lset      = "lset"
-	Linsert   = "linsert"
-	Lrange    = "lrange"
-	Blpop     = "blpop"
-	Brpop     = "brpop"
+	LPUSH     = "lpush"
+	LPUSHX    = "lpushx"
+	RPUSH     = "rpush"
+	RPUSHX    = "rpushx"
+	LPOP      = "lpop"
+	RPOP      = "rpop"
+	LTRIM     = "ltrim"
+	RPOPLPUSH = "rpoplpush"
+	LREM      = "lrem"
+	LLEN      = "llen"
+	LINDEX    = "lindex"
+	LSET      = "lset"
+	LINSERT   = "linsert"
+	LRANGE    = "lrange"
+	BLPOP     = "blpop"
+	BRPOP     = "brpop"
 
 	//common
-	Expire = "expire"
-	Del    = "del"
-	Rename = "rename"
+	EXPIRE = "expire"
+	DEL    = "del"
+	RENAME = "rename"
 
 	//set
-	Sadd      = "sadd"
-	Smembers  = "smembers"
-	Scard     = "scard"
-	Spop      = "spop"
-	Sismember = "sismember"
-	Sdiff     = "sdiff"
-	Smove     = "smove"
+	SADD      = "sadd"
+	SMEMBERS  = "smembers"
+	SCARD     = "scard"
+	SPOP      = "spop"
+	SISMEMBER = "sismember"
+	SDIFF     = "sdiff"
+	SMOVE     = "smove"
 
 	//sorted set
 	ZADD             = "zadd"
@@ -93,18 +93,18 @@ const (
 	ZINTERSTORE      = "zinterstore"
 	ZSCAN            = "zscan"
 
-	Multi   = "multi"
-	Discard = "discard"
-	Watch   = "watch"
-	Exec    = "exec"
-	Unwatch = "unwatch"
-	Auth    = "auth"
-	Select  = "select"
-	Ttl     = "ttl"
-	Persist = "Persist"
-	Exist   = "Exist"
+	MULTI   = "multi"
+	DISCARD = "discard"
+	WATCH   = "watch"
+	EXEC    = "exec"
+	UNWATCH = "unwatch"
+	AUTH    = "auth"
+	SELECT  = "select"
+	TTL     = "ttl"
+	PERSIST = "Persist"
+	EXIST   = "Exist"
 
-	Ping = "ping"
+	PING = "ping"
 )
 
 var (
@@ -112,39 +112,39 @@ var (
 
 	//写命令，用来判断 aof log
 	WriteCommands = map[string]string{
-		Set:       "",
-		Setnx:     "",
-		Setex:     "",
-		Persist:   "",
-		Psetex:    "",
-		Expire:    "",
-		Del:       "",
-		Lpush:     "",
-		Lpushx:    "",
-		Rpush:     "",
-		Rpushx:    "",
-		Lpop:      "",
-		Rpop:      "",
-		Ltrim:     "",
-		Rpoplpush: "",
-		Lrem:      "",
-		Lindex:    "",
-		Lset:      "",
-		Linsert:   "",
-		Blpop:     "",
-		Brpop:     "",
+		SET:       "",
+		SETNX:     "",
+		SETEX:     "",
+		PERSIST:   "",
+		PSETEX:    "",
+		EXPIRE:    "",
+		DEL:       "",
+		LPUSH:     "",
+		LPUSHX:    "",
+		RPUSH:     "",
+		RPUSHX:    "",
+		LPOP:      "",
+		RPOP:      "",
+		LTRIM:     "",
+		RPOPLPUSH: "",
+		LREM:      "",
+		LINDEX:    "",
+		LSET:      "",
+		LINSERT:   "",
+		BLPOP:     "",
+		BRPOP:     "",
 
-		Mset:    "",
-		Msetnx:  "",
-		Getset:  "",
-		Incr:    "",
-		Incrby:  "",
-		Incrbyf: "",
-		Decr:    "",
-		Spop:    "",
-		Sadd:    "",
-		Decrby:  "",
-		Rename:  "",
+		MSET:    "",
+		MSETNX:  "",
+		GETSET:  "",
+		INCR:    "",
+		INCRBY:  "",
+		INCRBYF: "",
+		DECR:    "",
+		SPOP:    "",
+		SADD:    "",
+		DECRBY:  "",
+		RENAME:  "",
 	}
 )
 
