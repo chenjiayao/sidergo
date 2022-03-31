@@ -53,6 +53,11 @@ func (l *List) PopFromHead() interface{} {
 
 	headNode := l.head
 	l.head = l.head.next
+
+	if l.head != nil {
+		l.head.prev = nil
+	}
+
 	l.size--
 	return headNode.Element()
 }
@@ -61,10 +66,15 @@ func (l *List) PopFromTail() interface{} {
 	if l.tail == nil {
 		return nil
 	}
-
+	l.size--
 	node := l.tail
 	l.tail = l.tail.prev
-	l.size--
+
+	//说明 list 只有一个元素
+	if l.tail != nil {
+		l.tail.next = nil
+	}
+
 	return node.Element()
 }
 
