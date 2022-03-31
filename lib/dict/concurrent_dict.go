@@ -22,30 +22,23 @@ type Fragment struct {
 	lock sync.RWMutex
 }
 
-// TODO 这里有问题：randFragmentIndex 定位到的 randFrament 可能是空的，那么返回 nil，如果一直 rand 到空 fragment，永远得不到 key
 func (d *ConcurrentDict) RandomKey() interface{} {
-	rand.Seed(time.Now().Unix())
 
 	if d.fragmentCount <= 0 {
 		return nil
 	}
-	randFragmentIndex := rand.Intn(d.fragmentCount)
-	randFragment := d.fragments[randFragmentIndex]
 
-	l := len(randFragment.data)
-	if l <= 0 {
-		return nil
-	}
-	dataRandIndex := rand.Intn(l)
-
-	index := 0
-	for key, _ := range randFragment.data {
-		if index == dataRandIndex {
-			return key
+	allKeys := []string{}
+	for i := 0; i < d.fragmentCount; i++ {
+		fragment := d.getFragment(i)
+		for key := range fragment.data {
+			allKeys = append(allKeys, key)
 		}
-		index++
 	}
-	return nil
+
+	rand.Seed(int64(time.Now().UnixNano()))
+	randomIndex := rand.Intn(len(allKeys))
+	return allKeys[randomIndex]
 }
 
 func (d *ConcurrentDict) Get(key string) (interface{}, bool) {
