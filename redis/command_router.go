@@ -72,6 +72,7 @@ const (
 	Spop      = "spop"
 	Sismember = "sismember"
 	Sdiff     = "sdiff"
+	Smove     = "smove"
 
 	//sorted set
 	ZADD             = "zadd"

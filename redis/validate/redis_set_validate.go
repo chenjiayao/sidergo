@@ -45,6 +45,13 @@ func ValidateSismember(conn conn.Conn, args [][]byte) error {
 	return nil
 }
 
+func ValidateSmove(conn conn.Conn, args [][]byte) error {
+	if len(args) != 2 {
+		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Smove)
+	}
+	return nil
+}
+
 func ValidateSdiff(conn conn.Conn, args [][]byte) error {
 	if len(args) < 1 {
 		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.Sdiff)
