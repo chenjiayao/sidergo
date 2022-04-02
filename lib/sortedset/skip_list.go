@@ -166,16 +166,16 @@ func (skipList *SkipList) RandomLevel() int {
 //如果没有找到，那么返回 -1
 func (skipList *SkipList) GetRank(member string, score float64) int64 {
 	span := int64(0)
-	node := skipList.header
+	currentNode := skipList.header
 
 	for i := skipList.level - 1; i >= 0; i-- {
-		for node.levels[i].forward != nil && (node.levels[i].forward.Score < score || (node.levels[i].forward.Score == score && node.levels[i].forward.Member < member)) {
-			span += node.levels[i].span
-			node = node.levels[i].forward
+		for currentNode.levels[i].forward != nil && (currentNode.levels[i].forward.Score < score || (currentNode.levels[i].forward.Score == score && currentNode.levels[i].forward.Member < member)) {
+			span += currentNode.levels[i].span
+			currentNode = currentNode.levels[i].forward
 		}
 
-		if node.levels[i].forward.Member == member {
-			span += node.levels[i].span
+		if currentNode.levels[i].forward.Member == member {
+			span += currentNode.levels[i].span
 			return span
 		}
 	}
