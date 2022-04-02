@@ -208,6 +208,10 @@ func ExecZrank(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respon
 		return redisresponse.MakeErrorResponse(err.Error())
 	}
 
+	if ss == nil {
+		return redisresponse.NullMultiResponse
+	}
+
 	member := string(args[1])
 	element, exist := ss.Get(member)
 	if !exist {
@@ -317,10 +321,13 @@ func ExecZadd(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respons
 		return redisresponse.MakeErrorResponse(err.Error())
 	}
 
-	for i := 0; i < len(args[1:]); i += 2 {
-		scoreValue := string(args[i])
-		member := string(args[i+1])
+	scoreMemberPairs := args[1:]
+	for i := 0; i < len(scoreMemberPairs); i += 2 {
+		scoreValue := string(scoreMemberPairs[i])
 		score, _ := strconv.ParseFloat(scoreValue, 64)
+
+		member := string(scoreMemberPairs[i+1])
+
 		ss.Add(member, score)
 	}
 	return redisresponse.MakeNumberResponse(int64(len(args[1:]) / 2))
