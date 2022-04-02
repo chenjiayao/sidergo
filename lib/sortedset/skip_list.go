@@ -2,12 +2,14 @@ package sortedset
 
 import (
 	"math/rand"
+	"os"
 	"time"
+
+	"github.com/jedib0t/go-pretty/v6/table"
 )
 
 const (
-	MAX_LEVEL = 3
-	P         = 0.25
+	MAX_LEVEL = 4
 )
 
 //跳跃表， sorted set 底层实现
@@ -41,7 +43,7 @@ func (skipList *SkipList) insert(score float64, member string) *Node {
 
 	node := skipList.header //node节点最终会定位到「被插入位置之前」
 
-	for i := skipList.level - 1; i >= 0; i-- {
+	for i := MAX_LEVEL - 1; i >= 0; i-- {
 		for node.levels[i].forward != nil && (node.levels[i].forward.Score < score || (node.levels[i].forward.Score == score && node.levels[i].forward.Member < member)) {
 			node = node.levels[i].forward
 		}
@@ -55,18 +57,19 @@ func (skipList *SkipList) insert(score float64, member string) *Node {
 	1. levelForNewNode > node.level 那么 node.levels 的每个forward 都指向 newNode，剩余的由更早的 node来指向
 	2. levelForNewNode <= node.level 那么 node.levels 从0 到 levelForNewNode 的 level 需要指向newNode
 	*/
-	if len(newNode.levels) <= len(node.levels) {
-		for i := len(newNode.levels) - 1; i >= 0; i-- {
+	if levelForNewNode <= len(node.levels) {
+		for i := levelForNewNode - 1; i >= 0; i-- {
 			newNode.levels[i].forward = node.levels[i].forward
 			node.levels[i].forward = newNode
 		}
 	} else {
-		for i := len(newNode.levels) - 1; i >= 0; i-- {
+		for i := 0; i < len(node.levels); i++ {
 			newNode.levels[i].forward = node.levels[i].forward
 			node.levels[i].forward = newNode
 		}
+
 		//剩余的由更早的 node 来指向，所以需要一个 updateNodes 来保存更早的 node,但是那些更早的 node 只需要更新部分 level
-		for i := skipList.level - 1; i <= len(node.levels); i-- {
+		for i := len(node.levels); i < levelForNewNode; i++ {
 			newNode.levels[i].forward = updateForwardNodes[i].levels[i].forward
 			updateForwardNodes[i].levels[i].forward = newNode
 		}
@@ -92,13 +95,13 @@ func (skipList *SkipList) insert(score float64, member string) *Node {
 	1. skipList.levels ~ newNode.levels 这部分只要自增就行
 	2. newNode.levels ~ 1 这部分执行「原来的 span」 - 「newNodes 到下一个节点的 span」+ 1
 	*/
-	for i := skipList.level - 1; i >= len(newNode.levels); i-- {
-		updateForwardNodes[i].levels[i].span++
-	}
+	// for i := skipList.level - 1; i >= len(newNode.levels); i-- {
+	// 	updateForwardNodes[i].levels[i].span++
+	// }
 
-	for i := len(newNode.levels) - 1; i > 0; i++ {
-		updateForwardNodes[i].levels[i].span = updateForwardNodes[i].levels[i].span - newNode.levels[i].span + 1
-	}
+	// for i := len(newNode.levels) - 1; i > 0; i++ {
+	// 	updateForwardNodes[i].levels[i].span = updateForwardNodes[i].levels[i].span - newNode.levels[i].span + 1
+	// }
 
 	skipList.length++
 	skipList.reCalculateMaxLevel()
@@ -108,9 +111,11 @@ func (skipList *SkipList) insert(score float64, member string) *Node {
 
 //重新计算 skipList 的最大 level
 func (skipList *SkipList) reCalculateMaxLevel() {
-	for skipList.header.levels[skipList.level-1].forward == nil && skipList.level > 1 {
+	skipList.level = MAX_LEVEL - 1
+	for skipList.header.levels[skipList.level].forward == nil && skipList.level > 1 {
 		skipList.level--
 	}
+	skipList.level++
 }
 
 func (skipList *SkipList) remove(score float64, member string) *Node {
@@ -118,6 +123,7 @@ func (skipList *SkipList) remove(score float64, member string) *Node {
 	updateNodes := make([]*Node, MAX_LEVEL)
 
 	backwardDelNode := skipList.header // node 的下一个节点就是要被删除的节点
+
 	for i := skipList.level - 1; i >= 0; i-- {
 		for backwardDelNode.levels[i].forward != nil && (backwardDelNode.levels[i].forward.Score < score || (backwardDelNode.levels[i].forward.Score == score && backwardDelNode.levels[i].forward.Member < member)) {
 			backwardDelNode = backwardDelNode.levels[i].forward
@@ -155,12 +161,9 @@ func (skipList *SkipList) remove(score float64, member string) *Node {
 }
 
 func (skipList *SkipList) RandomLevel() int {
-	level := 1
 	rand.Seed(time.Now().UnixNano())
-	for rand.Float32() < P && level < MAX_LEVEL {
-		level = level + 1
-	}
-	return level
+	r := rand.Intn(MAX_LEVEL)
+	return r + 1
 }
 
 //如果没有找到，那么返回 -1
@@ -182,20 +185,6 @@ func (skipList *SkipList) GetRank(member string, score float64) int64 {
 	return -1
 }
 
-func (skipList *SkipList) Find(member string) (float64, bool) {
-	node := skipList.header
-	for i := skipList.level - 1; i >= 0; i-- {
-		for node.levels[i] != nil && node.Member < member {
-			node = node.levels[i].forward
-		}
-
-		if node.Member == member {
-			return node.Score, true
-		}
-	}
-	return 0, false
-}
-
 func (skipList *SkipList) ForEach(start, stop int64, fun func(*Element) bool) {
 
 	node := skipList.header
@@ -213,6 +202,54 @@ func (skipList *SkipList) ForEach(start, stop int64, fun func(*Element) bool) {
 			break
 		}
 	}
+}
+
+//打印出 skipList 的结构
+func (skiplist *SkipList) Print() {
+	t := table.NewWriter()
+	t.SetOutputMirror(os.Stdout)
+
+	/*
+		   c0  c1  c2  c3
+		-------------------
+			n	n   n   n
+			0	0   0   36
+			0	0   0   36
+			0	3  12	36
+	*/
+	columns := make([][]*Element, skiplist.length+1)
+
+	node := skiplist.header
+	for i := 0; i <= int(skiplist.length); i++ {
+
+		column := make([]*Element, MAX_LEVEL)
+		levelLen := len(node.levels)
+		for j := 0; j < MAX_LEVEL; j++ {
+			if j < levelLen {
+				column[j] = &node.Element
+			} else {
+				column[j] = nil
+			}
+		}
+		columns[i] = column
+		node = node.levels[0].forward
+	}
+
+	rows := []table.Row{}
+	for i := MAX_LEVEL - 1; i >= 0; i-- {
+		row := table.Row{}
+		for j := 0; j <= int(skiplist.length); j++ {
+			if columns[j][i] == nil {
+				row = append(row, "nil")
+			} else {
+				row = append(row, columns[j][i].Score)
+			}
+		}
+		rows = append(rows, row)
+	}
+
+	t.AppendRows(rows)
+	t.Render()
 }
 
 func MakeSkipList() *SkipList {
