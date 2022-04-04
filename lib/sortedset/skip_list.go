@@ -138,18 +138,41 @@ func (skipList *SkipList) remove(score float64, member string) *Node {
 		removeNode.backward = backwardDelNode
 	}
 
+	//更新 forward 指针
 	if len(backwardDelNode.levels) >= len(removeNode.levels) {
-		for i := 0; i < len(backwardDelNode.levels); i++ {
+		for i := 0; i < len(removeNode.levels); i++ {
 			backwardDelNode.levels[i].forward = removeNode.levels[i].forward
 		}
 	} else {
-
+		//被删除节点的 level > 前一个节点的 level
 		for i := 0; i < len(backwardDelNode.levels); i++ {
 			backwardDelNode.levels[i].forward = removeNode.levels[i].forward
 		}
 
 		for i := len(backwardDelNode.levels); i < len(removeNode.levels)-1; i++ {
 			updateNodes[i].levels[i].forward = removeNode.levels[i].forward
+		}
+	}
+
+	//更新 span 值
+	if len(backwardDelNode.levels) >= len(removeNode.levels) {
+		//被删除节点的 level <= 前一个节点的 level
+		for i := 1; i < len(removeNode.levels); i++ {
+			backwardDelNode.levels[i].span = backwardDelNode.levels[i].span + removeNode.levels[i].span - 1
+		}
+
+		for i := len(removeNode.levels); i < len(backwardDelNode.levels); i++ {
+			backwardDelNode.levels[i].span--
+		}
+
+	} else {
+		//被删除节点的 level > 前一个节点的 level
+		for i := 1; i < len(removeNode.levels); i++ {
+			updateNodes[i].levels[i].span = updateNodes[i].levels[i].span + removeNode.levels[i].span - 1
+		}
+
+		for i := len(removeNode.levels); i < len(updateNodes); i++ {
+			updateNodes[i].levels[i].span = updateNodes[i].levels[i].span - 1
 		}
 	}
 
