@@ -54,7 +54,6 @@ func (ss *SortedSet) Get(member string) (*Element, bool) {
 
 func (ss *SortedSet) Count(minBorder, maxBorder *border.Border) int64 {
 	i := int64(0)
-
 	return i
 }
 
@@ -62,21 +61,21 @@ func (ss *SortedSet) GetRank(member string, score float64) int64 {
 	return ss.skipList.GetRank(member, score)
 }
 
-func (ss *SortedSet) Remove(member string) {
-	element := ss.dict[member]
-	ss.skipList.remove(element.Score, element.Member)
+func (ss *SortedSet) Remove(member string) bool {
+	element, exist := ss.dict[member]
+	if exist {
+		ss.skipList.remove(element.Score, element.Member)
+		delete(ss.dict, member)
+		return true
+	}
 
-	delete(ss.dict, member)
+	return false
 }
 
 func (ss *SortedSet) Range(start, stop int64) []*Element {
-	elements := make([]*Element, stop-start+1)
-	i := 0
+	elements := make([]*Element, 0)
 	ss.skipList.ForEach(start, stop, func(e *Element) bool {
-
-		elements[i] = e
-		i++
-
+		elements = append(elements, e)
 		return true
 	})
 	return elements

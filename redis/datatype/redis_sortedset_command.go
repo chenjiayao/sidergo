@@ -195,12 +195,17 @@ func ExecZrem(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respons
 		return redisresponse.MakeNumberResponse(0)
 	}
 
-	for i := 0; i < len(args[1:]); i++ {
-		member := string(args[i])
-		ss.Remove(member)
+	removeCount := 0
+	members := args[1:]
+	for i := 0; i < len(members); i++ {
+		member := string(members[i])
+		ok := ss.Remove(member)
+		if ok {
+			removeCount++
+		}
 	}
 
-	return nil
+	return redisresponse.MakeNumberResponse(int64(removeCount))
 }
 
 //获取 member 的排名，按照从小到大的顺序
