@@ -95,13 +95,14 @@ func (skipList *SkipList) insert(score float64, member string) *Node {
 	1. skipList.levels ~ newNode.levels 这部分只要自增就行
 	2. newNode.levels ~ 1 这部分执行「原来的 span」 - 「newNodes 到下一个节点的 span」+ 1
 	*/
-	// for i := skipList.level - 1; i >= len(newNode.levels); i-- {
-	// 	updateForwardNodes[i].levels[i].span++
-	// }
 
-	// for i := len(newNode.levels) - 1; i > 0; i++ {
-	// 	updateForwardNodes[i].levels[i].span = updateForwardNodes[i].levels[i].span - newNode.levels[i].span + 1
-	// }
+	for i := skipList.level - 1; i >= len(newNode.levels); i-- {
+		updateForwardNodes[i].levels[i].span++
+	}
+
+	for i := len(newNode.levels) - 1; i > 0; i-- {
+		updateForwardNodes[i].levels[i].span = updateForwardNodes[i].levels[i].span - newNode.levels[i].span + 1
+	}
 
 	skipList.length++
 	skipList.reCalculateMaxLevel()
