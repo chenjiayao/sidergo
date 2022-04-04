@@ -94,6 +94,10 @@ func ExecZrevrange(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Re
 	return redisresponse.MakeArrayResponse(responses)
 }
 
+/**
+
+zrange key start stop : [start, stop]
+*/
 func ExecZrange(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 
 	key := string(args[0])
@@ -148,8 +152,8 @@ func ExecZrange(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 	if withScores {
 		responses = make([]response.Response, len(elements)*2)
 		for i := 0; i < len(elements); i++ {
-			responses[i] = redisresponse.MakeMultiResponse(elements[i].Member)
-			responses[i+1] = redisresponse.MakeMultiResponse(fmt.Sprintf("%f", elements[i].Score))
+			responses[i*2] = redisresponse.MakeMultiResponse(elements[i].Member)
+			responses[i*2+1] = redisresponse.MakeMultiResponse(fmt.Sprintf("%f", elements[i].Score))
 		}
 	} else {
 		responses = make([]response.Response, len(elements))
