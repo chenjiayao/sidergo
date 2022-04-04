@@ -218,10 +218,11 @@ func (skipList *SkipList) ForEach(start, stop int64, fun func(*Element) bool) {
 
 	for node.levels[0].forward != nil {
 		node = node.levels[0].forward
-		index++
 		if index >= start && index <= stop {
 			fun(&node.Element)
 		}
+
+		index++
 
 		if index > stop {
 			break
