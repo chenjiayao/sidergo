@@ -1,6 +1,7 @@
 package sortedset
 
 import (
+	"fmt"
 	"math/rand"
 	"os"
 	"time"
@@ -233,41 +234,31 @@ func (skiplist *SkipList) Print() {
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
 
-	/*
-		   c0  c1  c2  c3
-		-------------------
-			n	n   n   n
-			0	0   0   36
-			0	0   0   36
-			0	3  12	36
-	*/
-	columns := make([][]*Element, skiplist.length+1)
+	rows := make([]table.Row, 0)
 
-	node := skiplist.header
-	for i := 0; i <= int(skiplist.length); i++ {
+	cols := make([][]string, 0)
 
-		column := make([]*Element, MAX_LEVEL)
-		levelLen := len(node.levels)
+	current := skiplist.header
+	for i := 0; i < int(skiplist.length)+1; i++ {
+
+		col := make([]string, 0)
 		for j := 0; j < MAX_LEVEL; j++ {
-			if j < levelLen {
-				column[j] = &node.Element
+			if j < len(current.levels) {
+				val := fmt.Sprintf("%0.1f : %d", current.Element.Score, current.levels[j].span)
+				col = append(col, val)
 			} else {
-				column[j] = nil
+				val := "nil"
+				col = append(col, val)
 			}
 		}
-		columns[i] = column
-		node = node.levels[0].forward
+		cols = append(cols, col)
+		current = current.levels[0].forward
 	}
 
-	rows := []table.Row{}
 	for i := MAX_LEVEL - 1; i >= 0; i-- {
 		row := table.Row{}
-		for j := 0; j <= int(skiplist.length); j++ {
-			if columns[j][i] == nil {
-				row = append(row, "nil")
-			} else {
-				row = append(row, columns[j][i].Score)
-			}
+		for j := 0; j < len(cols); j++ {
+			row = append(row, cols[j][i])
 		}
 		rows = append(rows, row)
 	}
@@ -297,7 +288,7 @@ func MakeNode(level int, score float64, member string) *Node {
 	for i := 0; i < len(node.levels); i++ {
 		node.levels[i] = &Level{
 			forward: nil,
-			span:    0,
+			span:    1,
 		}
 	}
 	return node
