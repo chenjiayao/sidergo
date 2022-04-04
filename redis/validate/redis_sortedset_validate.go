@@ -126,7 +126,7 @@ func ValidateZincrby(conn conn.Conn, args [][]byte) error {
 }
 
 func ValidateZrange(conn conn.Conn, args [][]byte) error {
-	if len(args) != 3 || len(args) != 4 {
+	if len(args) != 3 && len(args) != 4 {
 		return errors.New("ERR wrong number of arguments for 'zrange' command")
 	}
 
@@ -151,7 +151,7 @@ func ValidateZrange(conn conn.Conn, args [][]byte) error {
 }
 
 func ValidateZrevrange(conn conn.Conn, args [][]byte) error {
-	if len(args) != 3 || len(args) != 4 {
+	if len(args) != 3 && len(args) != 4 {
 		return errors.New("ERR wrong number of arguments for 'zrevrange' command")
 	}
 
