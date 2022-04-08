@@ -92,7 +92,7 @@ func ExecMSetNX(cluster *Cluster, conn conn.Conn, clientRequest request.Request)
 	}
 
 	client := cluster.PeekIdleClient(hitNodeIPPortPair)
-	return client.SendRequestWithTimeout(clientRequest, time.Second)
+	return client.SendRequest(clientRequest, time.Second)
 }
 
 /**

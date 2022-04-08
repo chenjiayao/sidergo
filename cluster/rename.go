@@ -32,6 +32,6 @@ func ExecRename(cluster *Cluster, conn conn.Conn, re request.Request) response.R
 		return cluster.Self.RedisServer.Exec(conn, re)
 	} else {
 		client := cluster.PeekIdleClient(newKeyNode)
-		return client.SendRequestWithTimeout(re, time.Second)
+		return client.SendRequest(re, time.Second)
 	}
 }

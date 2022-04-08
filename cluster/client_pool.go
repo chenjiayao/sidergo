@@ -54,7 +54,7 @@ func (pool *clientPool) heartbeat() {
 						CmdName: "ping",
 						Args:    make([][]byte, 0),
 					}
-					client.SendRequestWithTimeout(pingReq, 15*time.Second)
+					client.SendRequest(pingReq, 15*time.Second)
 				}
 			}
 		case <-pool.stopChan:

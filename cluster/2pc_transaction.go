@@ -61,7 +61,7 @@ func (tx *transaction) prepare() {
 		} else {
 			c := tx.cluster.PeekIdleClient(ipPortPair)
 			go func(c *client, request request.Request) {
-				prepareResponses = append(prepareResponses, c.SendRequestWithTimeout(prepareRequest, time.Second))
+				prepareResponses = append(prepareResponses, c.SendRequest(prepareRequest, time.Second))
 				tx.wg.Done()
 			}(c, prepareRequest)
 		}
@@ -108,7 +108,7 @@ func (tx *transaction) commit() {
 
 			go func(c *client, commitCommandRequest request.Request) {
 				key := commitCommandRequest.GetKey()
-				commitResponses[key] = c.SendRequestWithTimeout(commitCommandRequest, time.Second)
+				commitResponses[key] = c.SendRequest(commitCommandRequest, time.Second)
 				tx.wg.Done()
 			}(c, commitCommandRequest)
 		}
@@ -165,7 +165,7 @@ func (tx *transaction) rollbackCommit(successKeys map[string]string) {
 
 			c := tx.cluster.PeekIdleClient(ipPortPair)
 			go func(c *client, undoCommandRequest request.Request) {
-				c.SendRequestWithTimeout(undoCommandRequest, time.Second)
+				c.SendRequest(undoCommandRequest, time.Second)
 				tx.wg.Done()
 			}(c, undoCommandRequest)
 		}
@@ -200,7 +200,7 @@ func (tx *transaction) unlockAllKey() {
 
 			c := tx.cluster.PeekIdleClient(ipPortPair)
 			go func(c *client, unlockRequest request.Request) {
-				c.SendRequestWithTimeout(unlockRequest, time.Second)
+				c.SendRequest(unlockRequest, time.Second)
 				tx.wg.Done()
 			}(c, unlockRequest)
 		}

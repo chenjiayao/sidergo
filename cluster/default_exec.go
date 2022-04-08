@@ -109,9 +109,9 @@ func defaultExec(cluster *Cluster, conn conn.Conn, re request.Request) response.
 			},
 		}
 
-		c.SendRequestWithTimeout(selectRequest, 10*time.Second)
+		c.SendRequest(selectRequest, 10*time.Second)
 
-		return c.SendRequestWithTimeout(re, 10*time.Second)
+		return c.SendRequest(re, 10*time.Second)
 	}
 }
 

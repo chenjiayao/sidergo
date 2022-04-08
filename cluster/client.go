@@ -56,7 +56,7 @@ func makeClient(ipPortPair string) *client {
 	return c
 }
 
-func (c *client) SendRequestWithTimeout(request request.Request, timeout time.Duration) response.Response {
+func (c *client) SendRequest(request request.Request, timeout time.Duration) response.Response {
 
 	c.isIdle.Set(false)
 	defer c.isIdle.Set(true)
