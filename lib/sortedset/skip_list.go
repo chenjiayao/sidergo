@@ -133,7 +133,7 @@ func (skipList *SkipList) remove(score float64, member string) *Node {
 
 	backwardDelNode := skipList.header // node 的下一个节点就是要被删除的节点
 
-	for i := skipList.level - 1; i >= 0; i-- {
+	for i := MAX_LEVEL - 1; i >= 0; i-- {
 		for backwardDelNode.levels[i].forward != nil && (backwardDelNode.levels[i].forward.Score < score || (backwardDelNode.levels[i].forward.Score == score && backwardDelNode.levels[i].forward.Member < member)) {
 			backwardDelNode = backwardDelNode.levels[i].forward
 		}
