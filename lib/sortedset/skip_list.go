@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	MAX_LEVEL = 4
+	MAX_LEVEL = 6
 )
 
 //跳跃表， sorted set 底层实现
@@ -90,7 +90,15 @@ func (skipList *SkipList) insert(score float64, member string) *Node {
 		newNode.backward = node
 	}
 
-	///////更新 span
+	//更新本身的 span
+	for i := 0; i < len(newNode.levels); i++ {
+		temp := newNode.levels[0].forward
+
+		for temp != nil && temp != newNode.levels[i].forward {
+			newNode.levels[i].span += 1
+			temp = temp.levels[0].forward
+		}
+	}
 	/**
 	要更新的 span 分成两个部分
 	1. skipList.levels ~ newNode.levels 这部分只要自增就行
@@ -100,7 +108,6 @@ func (skipList *SkipList) insert(score float64, member string) *Node {
 	for i := skipList.level - 1; i >= len(newNode.levels); i-- {
 		updateForwardNodes[i].levels[i].span++
 	}
-
 	for i := len(newNode.levels) - 1; i > 0; i-- {
 		updateForwardNodes[i].levels[i].span = updateForwardNodes[i].levels[i].span - newNode.levels[i].span + 1
 	}
@@ -193,7 +200,7 @@ func (skipList *SkipList) RandomLevel() int {
 
 //如果没有找到，那么返回 -1
 func (skipList *SkipList) GetRank(member string, score float64) int64 {
-	span := int64(0)
+	span := int64(-1)
 	currentNode := skipList.header
 
 	for i := skipList.level - 1; i >= 0; i-- {
@@ -207,7 +214,7 @@ func (skipList *SkipList) GetRank(member string, score float64) int64 {
 			return span
 		}
 	}
-	return -1
+	return span
 }
 
 func (skipList *SkipList) ForEach(start, stop int64, fun func(*Element) bool) {
