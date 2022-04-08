@@ -202,7 +202,7 @@ func (skipList *SkipList) GetRank(member string, score float64) int64 {
 			currentNode = currentNode.levels[i].forward
 		}
 
-		if currentNode.levels[i].forward.Member == member {
+		if currentNode.levels[i].forward != nil && currentNode.levels[i].forward.Member == member {
 			span += currentNode.levels[i].span
 			return span
 		}
