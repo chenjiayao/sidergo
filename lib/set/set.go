@@ -1,8 +1,6 @@
 package set
 
 type Set struct {
-
-	//TODO 是否直接使用  []byte 当作 key 会不会更高效，这个需要进行压测试试
 	vals map[string]struct{}
 }
 

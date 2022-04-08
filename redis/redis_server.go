@@ -57,7 +57,6 @@ func MakeRedisServer() *RedisServer {
 	return redisServer
 }
 
-//TODO 要处理协程退出
 func (redisServer *RedisServer) activeExpireCycle() {
 
 	/**
@@ -112,7 +111,6 @@ func (redisServer *RedisServer) activeExpireCycle() {
 	}
 }
 
-//TODO 这里要做协程退出处理，不然会导致协程泄漏
 func (redisServer *RedisServer) checkTimeoutConn() {
 	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
