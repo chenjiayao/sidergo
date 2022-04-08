@@ -203,7 +203,7 @@ func (skipList *SkipList) GetRank(member string, score float64) int64 {
 	span := int64(-1)
 	currentNode := skipList.header
 
-	for i := skipList.level - 1; i >= 0; i-- {
+	for i := MAX_LEVEL - 1; i >= 0; i-- {
 		for currentNode.levels[i].forward != nil && (currentNode.levels[i].forward.Score < score || (currentNode.levels[i].forward.Score == score && currentNode.levels[i].forward.Member < member)) {
 			span += currentNode.levels[i].span
 			currentNode = currentNode.levels[i].forward
