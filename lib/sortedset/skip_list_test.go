@@ -6,11 +6,23 @@ import (
 
 func TestSkipList_insert(t *testing.T) {
 	skipList := MakeSkipList()
+	skipList.Print()
+
 	skipList.insert(36, "6")
+	skipList.Print()
+
 	skipList.insert(3, "1")
+	skipList.Print()
+
 	skipList.insert(12, "3")
+	skipList.Print()
+
 	skipList.insert(19, "4")
+	skipList.Print()
+
 	skipList.insert(8, "2")
+	skipList.Print()
+
 	skipList.insert(23, "5")
 	skipList.Print()
 
@@ -23,7 +35,7 @@ func TestSkipList_GetRank(t *testing.T) {
 	skipList.insert(12, "2")
 	skipList.insert(19, "3")
 	skipList.insert(8, "1")
-	skipList.insert(23, "4")
+	skipList.insert(23, "3")
 	skipList.Print()
 	got1 := skipList.GetRank("5", 36)
 	want1 := 5
