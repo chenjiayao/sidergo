@@ -23,7 +23,7 @@ type Element struct {
 
 type Level struct {
 	forward *Node // 同层的下一个节点
-	span    int64 // 跳过多少个元素，如果两个元素相邻，那么前一个节点的 span 为 1
+	span    int64 // 跳过多少个元素，如果两个元素相邻，那么前一个节点的 span 为 0
 }
 type Node struct {
 	Element
@@ -105,11 +105,11 @@ func (skipList *SkipList) insert(score float64, member string) *Node {
 	2. newNode.levels ~ 1 这部分执行「原来的 span」 - 「newNodes 到下一个节点的 span」+ 1
 	*/
 
-	for i := skipList.level - 1; i >= len(newNode.levels); i-- {
+	for i := MAX_LEVEL - 1; i >= len(newNode.levels); i-- {
 		updateForwardNodes[i].levels[i].span++
 	}
-	for i := len(newNode.levels) - 1; i > 0; i-- {
-		updateForwardNodes[i].levels[i].span = updateForwardNodes[i].levels[i].span - newNode.levels[i].span + 1
+	for i := len(newNode.levels) - 1; i >= 0; i-- {
+		updateForwardNodes[i].levels[i].span = updateForwardNodes[i].levels[i].span - newNode.levels[i].span
 	}
 
 	skipList.length++
@@ -200,12 +200,12 @@ func (skipList *SkipList) RandomLevel() int {
 
 //如果没有找到，那么返回 -1
 func (skipList *SkipList) GetRank(member string, score float64) int64 {
-	span := int64(-1)
+	span := int64(0)
 	currentNode := skipList.header
 
 	for i := MAX_LEVEL - 1; i >= 0; i-- {
 		for currentNode.levels[i].forward != nil && (currentNode.levels[i].forward.Score < score || (currentNode.levels[i].forward.Score == score && currentNode.levels[i].forward.Member < member)) {
-			span += currentNode.levels[i].span
+			span += currentNode.levels[i].span + 1
 			currentNode = currentNode.levels[i].forward
 		}
 
@@ -296,7 +296,7 @@ func MakeNode(level int, score float64, member string) *Node {
 	for i := 0; i < len(node.levels); i++ {
 		node.levels[i] = &Level{
 			forward: nil,
-			span:    1,
+			span:    0,
 		}
 	}
 	return node
