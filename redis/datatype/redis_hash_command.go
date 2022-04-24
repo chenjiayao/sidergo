@@ -6,6 +6,7 @@ import (
 
 	"github.com/chenjiayao/sidergo/interface/conn"
 	"github.com/chenjiayao/sidergo/interface/response"
+	"github.com/chenjiayao/sidergo/lib/dict"
 	"github.com/chenjiayao/sidergo/redis"
 	"github.com/chenjiayao/sidergo/redis/redisresponse"
 	"github.com/chenjiayao/sidergo/redis/validate"
@@ -47,12 +48,14 @@ func ExecHvals(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respon
 		return redisresponse.EmptyArrayResponse
 	}
 
-	multiResponses := make([]response.Response, len(kvmap))
+	multiResponses := make([]response.Response, kvmap.Len())
 	index := 0
-	for _, v := range kvmap {
-		multiResponses[index] = redisresponse.MakeMultiResponse(v)
+
+	kvmap.Range(func(key string, val interface{}) {
+		multiResponses[index] = redisresponse.MakeMultiResponse(val.(string))
 		index++
-	}
+	})
+
 	return redisresponse.MakeArrayResponse(multiResponses)
 }
 
@@ -66,16 +69,15 @@ func ExecHsetnx(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respo
 		return redisresponse.MakeErrorResponse(err.Error())
 	}
 	if kvmap == nil {
-		kvmap = make(map[string]string)
+		kvmap = dict.NewDict(6)
 	}
 
-	_, ok := kvmap[field]
+	ok := kvmap.PutIfNotExist(field, value)
 	if ok {
+		return redisresponse.MakeNumberResponse(1)
+	} else {
 		return redisresponse.MakeNumberResponse(0)
 	}
-	kvmap[field] = value
-	db.Dataset.Put(key, kvmap)
-	return redisresponse.MakeNumberResponse(1)
 
 }
 func ExecHmset(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
@@ -88,13 +90,14 @@ func ExecHmset(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respon
 	}
 
 	if kvmap == nil {
-		kvmap = make(map[string]string)
+		kvmap = dict.NewDict(6)
 	}
 
 	for i := 1; i < len(args[1:]); i += 2 {
+
 		field := string(args[i])
 		value := string(args[i+1])
-		kvmap[field] = value
+		kvmap.Put(field, value)
 	}
 	db.Dataset.Put(key, kvmap)
 
@@ -116,11 +119,11 @@ func ExecHmget(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respon
 	multiResponses := make([]response.Response, len(args[1:]))
 
 	for index, v := range args[1:] {
-		value, exist := kvmap[string(v)]
+		value, exist := kvmap.Get(string(v))
 		if !exist {
 			multiResponses[index] = redisresponse.NullMultiResponse
 		} else {
-			multiResponses[index] = redisresponse.MakeMultiResponse(value)
+			multiResponses[index] = redisresponse.MakeMultiResponse(value.(string))
 		}
 	}
 	return redisresponse.MakeArrayResponse(multiResponses)
@@ -138,7 +141,7 @@ func ExecHlen(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respons
 		return redisresponse.MakeNumberResponse(0)
 	}
 
-	return redisresponse.MakeNumberResponse(int64(len(kvmap)))
+	return redisresponse.MakeNumberResponse(int64(kvmap.Len()))
 }
 
 func ExecHkeys(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
@@ -151,14 +154,13 @@ func ExecHkeys(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respon
 		return redisresponse.MakeArrayResponse(nil)
 	}
 
-	multiResponses := make([]response.Response, len(kvmap))
+	multiResponses := make([]response.Response, int64(kvmap.Len()))
 	index := 0
 
-	for k := range kvmap {
-		multiResponses[index] = redisresponse.MakeMultiResponse(k)
+	kvmap.Range(func(key string, val interface{}) {
+		multiResponses[index] = redisresponse.MakeMultiResponse(key)
 		index++
-	}
-
+	})
 	return redisresponse.MakeArrayResponse(multiResponses)
 }
 
@@ -173,14 +175,14 @@ func ExecHgetall(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Resp
 		return redisresponse.MakeArrayResponse(nil)
 	}
 
-	multiResponses := make([]response.Response, len(kvmap)*2)
+	multiResponses := make([]response.Response, int64(kvmap.Len())*2)
 
 	index := 0
-	for k, v := range kvmap {
-		multiResponses[index] = redisresponse.MakeMultiResponse(k)
-		multiResponses[index+1] = redisresponse.MakeMultiResponse(v)
+	kvmap.Range(func(key string, val interface{}) {
+		multiResponses[index] = redisresponse.MakeMultiResponse(key)
+		multiResponses[index+1] = redisresponse.MakeMultiResponse(val.(string))
 		index += 2
-	}
+	})
 
 	return redisresponse.MakeArrayResponse(multiResponses)
 
@@ -195,17 +197,17 @@ func ExecHincrby(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Resp
 		return redisresponse.MakeErrorResponse(err.Error())
 	}
 
-	value, exist := kvmap[field]
+	value, exist := kvmap.Get(field)
 	if !exist {
 		value = "0"
 	}
-	valueAsNumber, err := strconv.ParseInt(value, 10, 64)
+	valueAsNumber, err := strconv.ParseInt(value.(string), 10, 64)
 	if err != nil {
 		return redisresponse.MakeErrorResponse("ERR hash value is not an integer")
 	}
 
 	valueAsNumber += increment
-	kvmap[field] = strconv.FormatInt(valueAsNumber, 10)
+	kvmap.Put(field, strconv.FormatInt(valueAsNumber, 10))
 
 	return redisresponse.MakeNumberResponse(valueAsNumber)
 }
@@ -222,7 +224,7 @@ func ExecHexists(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Resp
 		return redisresponse.MakeNumberResponse(0)
 	}
 
-	_, exist := kvmap[field]
+	_, exist := kvmap.Get(field)
 	if exist {
 		return redisresponse.MakeNumberResponse(1)
 	}
@@ -241,12 +243,12 @@ func ExecHset(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respons
 		return redisresponse.MakeErrorResponse(err.Error())
 	}
 	if kvmap == nil {
-		kvmap = make(map[string]string)
+		kvmap = dict.NewDict(6)
 	}
 
-	_, exist := kvmap[field]
+	_, exist := kvmap.Get(field)
 
-	kvmap[field] = value
+	kvmap.Put(field, value)
 
 	db.Dataset.Put(key, kvmap)
 
@@ -270,11 +272,11 @@ func ExecHget(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respons
 		return redisresponse.NullMultiResponse
 	}
 
-	value, exist := kvmap[field]
+	value, exist := kvmap.Get(field)
 	if !exist {
 		return redisresponse.NullMultiResponse
 	}
-	return redisresponse.MakeMultiResponse(value)
+	return redisresponse.MakeMultiResponse(value.(string))
 }
 
 func ExecHdel(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
@@ -290,11 +292,11 @@ func ExecHdel(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respons
 	for _, v := range args[1:] {
 		field := string(v)
 
-		_, exist := kvmap[field]
+		_, exist := kvmap.Get(field)
 		if !exist {
 			continue
 		}
-		delete(kvmap, field)
+		kvmap.Del(field)
 		deletedCount++
 	}
 
@@ -306,12 +308,12 @@ func ExecHdel(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respons
 在 dataset 中查找 key，尝试转换成 map，如果失败，说明 key 不是 hash 类型，返回 nil,err
 如果可以转换 map，需要在 ttl 中查看是否 key 已经过期，如果过期就删除 key，返回 nil, nil
 */
-func getOrInitHash(db *redis.RedisDB, key string) (map[string]string, error) {
+func getOrInitHash(db *redis.RedisDB, key string) (*dict.ConcurrentDict, error) {
 	v, exist := db.Dataset.Get(key)
 
-	var kvmap map[string]string
+	var kvmap *dict.ConcurrentDict
 	if !exist {
-		kvmap = make(map[string]string)
+		kvmap = dict.NewDict(6)
 		db.Dataset.Put(key, kvmap)
 		return kvmap, nil
 	} else {
@@ -325,7 +327,7 @@ func getOrInitHash(db *redis.RedisDB, key string) (map[string]string, error) {
 			return nil, nil
 		}
 
-		kvmap, ok := v.(map[string]string)
+		kvmap, ok := v.(*dict.ConcurrentDict)
 
 		if !ok {
 			return nil, errors.New(" WRONGTYPE Operation against a key holding the wrong kind of value")

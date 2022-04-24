@@ -12,6 +12,7 @@ import (
 	"github.com/chenjiayao/sidergo/interface/response"
 	"github.com/chenjiayao/sidergo/interface/server"
 	"github.com/chenjiayao/sidergo/lib/atomic"
+	"github.com/chenjiayao/sidergo/lib/dict"
 	"github.com/chenjiayao/sidergo/lib/list"
 	"github.com/chenjiayao/sidergo/parser"
 	"github.com/chenjiayao/sidergo/redis/redisrequest"
@@ -28,7 +29,7 @@ type RedisServer struct {
 	aofHandler       *AofHandler
 	ctx              context.Context
 	cancel           context.CancelFunc
-	connectedClients map[string]conn.Conn
+	connectedClients *dict.ConcurrentDict
 }
 
 ///////////启动 redis 服务，
@@ -39,7 +40,7 @@ func MakeRedisServer() *RedisServer {
 		closed:           atomic.Boolean(0),
 		ctx:              ctx,
 		cancel:           cancel,
-		connectedClients: make(map[string]conn.Conn),
+		connectedClients: dict.NewDict(6),
 	}
 
 	redisServer.rds = NewDBs(redisServer)
@@ -165,14 +166,14 @@ func (redisServer *RedisServer) Handle(conn net.Conn) {
 	}
 
 	redisClient := MakeRedisConn(conn)
-	redisServer.connectedClients[conn.RemoteAddr().String()] = redisClient
+	redisServer.connectedClients.Put(conn.RemoteAddr().String(), redisClient)
 
 	ch := parser.ReadCommand(conn)
 	//chan close 掉之后， range 直接退出
 	for request := range ch {
 		if request.GetErr() != nil {
 			if request.GetErr() == io.EOF {
-				delete(redisServer.connectedClients, redisClient.RemoteAddress())
+				redisServer.connectedClients.Del(redisClient.RemoteAddress())
 				redisServer.closeClient(redisClient)
 				return
 			}
@@ -262,9 +263,10 @@ func (redisServer *RedisServer) Close() error {
 	}
 	redisServer.closed.Set(true)
 
-	for _, client := range redisServer.connectedClients {
+	redisServer.connectedClients.Range(func(key string, val interface{}) {
+		client := val.(conn.Conn)
 		client.Close()
-	}
+	})
 
 	redisServer.cancel()
 	if redisServer.aofHandler != nil {
