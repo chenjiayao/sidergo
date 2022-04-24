@@ -2,7 +2,9 @@ package datatype
 
 import (
 	"errors"
+	"math/rand"
 	"sort"
+	"time"
 
 	"github.com/chenjiayao/sidergo/interface/conn"
 	"github.com/chenjiayao/sidergo/interface/response"
@@ -107,6 +109,7 @@ func ExecSismember(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Re
 	return redisresponse.MakeNumberResponse(0)
 }
 
+// bad code ,need to be optimized
 func ExecSpop(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Response {
 	key := string(args[0])
 	s, err := getAsSet(conn, db, key)
@@ -118,7 +121,10 @@ func ExecSpop(conn conn.Conn, db *redis.RedisDB, args [][]byte) response.Respons
 		return redisresponse.NullMultiResponse
 	}
 
-	return nil
+	rand.Seed(time.Now().UnixNano())
+	i := rand.Intn(s.Len())
+	e := s.Members()[i]
+	return redisresponse.MakeMultiResponse(string(e))
 }
 
 //SADD runoobkey redis
