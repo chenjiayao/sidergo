@@ -50,7 +50,6 @@ func (d *ConcurrentDict) Get(key string) (interface{}, bool) {
 	index := d.spread(hashKey)
 	fragment := d.getFragment(int(index))
 
-	// 后续考虑如何优化
 	fragment.lock.Lock()
 	defer fragment.lock.Unlock()
 
@@ -117,6 +116,17 @@ func (d *ConcurrentDict) PutIfNotExist(key string, val interface{}) bool {
 		return true
 	}
 	return false
+}
+
+func (d *ConcurrentDict) Range(f func(key string, val interface{})) {
+	for i := 0; i < d.fragmentCount; i++ {
+		fragment := d.getFragment(i)
+		fragment.lock.RLock()
+		for key, val := range fragment.data {
+			f(key, val)
+		}
+		fragment.lock.RUnlock()
+	}
 }
 
 func (d *ConcurrentDict) Del(key string) bool {
