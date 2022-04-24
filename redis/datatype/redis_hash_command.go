@@ -12,13 +12,6 @@ import (
 	"github.com/chenjiayao/sidergo/redis/validate"
 )
 
-/*
-
-hash 的数据结构保存为
-	map[key]map[field]value
-
-	因为 key get 到的 map 已经加锁了，不会有其他协程可以 get 到这个 key 对应的 map
-*/
 func init() {
 
 	redis.RegisterRedisCommand(redis.HSET, ExecHset, validate.ValidateHset)
