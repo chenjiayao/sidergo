@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/chenjiayao/sidergo"
@@ -15,8 +16,25 @@ import (
 
 func main() {
 
+	banner := `
+      _      _
+     (_)    | |
+ ___  _   __| |  ___  _ __   __ _   ___
+/ __|| | / _ | / _ \|| __| / _ | | / _ \
+\__ \| || (_| ||  __/| |   | (_| || (_) |
+|___/|_| \__,_| \___||_|    \__, | \___/
+                            __/ |
+                           |___/
+
+	`
+	fmt.Println(banner)
+
+	customFormatter := new(logrus.TextFormatter)
+	customFormatter.FullTimestamp = true                    // 显示完整时间
+	customFormatter.TimestampFormat = "2006-01-02 15:04:05" // 时间格式
+	customFormatter.DisableTimestamp = false                // 禁止显示时间
 	logrus.SetLevel(logrus.TraceLevel)
-	logrus.SetReportCaller(true)
+	logrus.SetFormatter(customFormatter)
 
 	configFile := os.Getenv("REDIS_CONFIG")
 	if configFile == "" {
