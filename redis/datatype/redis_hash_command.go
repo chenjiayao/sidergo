@@ -26,7 +26,7 @@ func init() {
 	redis.RegisterRedisCommand(redis.HDEL, ExecHdel, validate.ValidateHdel)
 	redis.RegisterRedisCommand(redis.HEXISTS, ExecHexists, validate.ValidateHexists)
 	redis.RegisterRedisCommand(redis.HGETALL, ExecHgetall, validate.ValidateHgetall)
-	redis.RegisterRedisCommand(redis.HINCRBY, ExecIncrBy, validate.ValidateIncrBy)
+	redis.RegisterRedisCommand(redis.HINCRBY, ExecHincrby, validate.ValidateHincrby)
 	redis.RegisterRedisCommand(redis.HKEYS, ExecHkeys, validate.ValidateHkeys)
 	redis.RegisterRedisCommand(redis.HLEN, ExecHlen, validate.ValidateHlen)
 	redis.RegisterRedisCommand(redis.HMGET, ExecHmget, validate.ValidateHmget)
