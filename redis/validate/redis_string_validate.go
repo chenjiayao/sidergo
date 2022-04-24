@@ -133,7 +133,7 @@ func ValidateIncrBy(conn conn.Conn, args [][]byte) error {
 		return fmt.Errorf("ERR wrong number of arguments for '%s' command", redis.INCRBY)
 	}
 
-	increment := string(args[1])
+	increment := string(args[2])
 
 	_, err := strconv.Atoi(increment)
 	if err != nil {
