@@ -16,21 +16,53 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-brightgreen.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Go Reference](https://pkg.go.dev/badge/github.com/chenjiayao/sidergo.svg)](https://pkg.go.dev/github.com/chenjiayao/sidergo)
 
-使用 golang 实现 redis 
-
-1. go run cmd/main.go，默认监听 3101 端口
-2. redis-cli -p 3101
+使用 Go 实现 redis-server 部分功能，**该项目不是一个用于生产环境的产品**，旨在通过该项目学习 Go 开发。sidergo 配有系列教程可以作为参考：[sidergo 系列教程](https://sidergo.jaychen.fun/)
 
 
-已经实现的功能：
-1. TCP 层解析 redis 通信协议。
-2. 数据结构 skipList 实现，用作 redis zset 数据结构的底层存储。
-3. multi 事务支持，支持 watch 和 discard 等操作。
-4. 使用 sync.Map 实现自旋锁保证 msetnx, incr 等命令的原子操作。
-5. 实现并发安全 map 提高并发量。
-6. string，set，hash，list，zset 等命令实现，兼容 redis server。
-7. 实现 unboundChan 用于 AOF 写入。
-8. 实现 list 的 blpush，blpop 等阻塞命令。
+## 🔜 快速开始
 
-更多文档正在完善中。。。
+1. 执行 `go run cmd/main.go`
+![](https://raw.githubusercontent.com/chenjiayao/sidergo-posts/master/docs/images/20220424173207.png)
 
+1. 使用 redis-cli 连接到服务端：`redis-cli -p 3101`
+![](https://raw.githubusercontent.com/chenjiayao/sidergo-posts/master/docs/images/20220424173309.png)
+
+
+## 🧑‍💻 已实现功能
+
+- [x] string、set、list、hash、zset 等数据结构
+- [x] multi 事务，支持 watch、discard 等操作
+- [x] 实现并发安全的 map 作为 redis db 存储数据
+- [x] 实现 list 中 blpush、lpop 等阻塞命令
+- [x] AOF 持久化
+- [x] 支持 key 自动过期
+- [x] 实现 unboundChan 用于 AOF channel
+- [x] msetnx、incr 等命令原子操作实现
+- [x] 核心逻辑的单元测试
+- [x] skipList 数据结构实现，用于 redis zset 数据结构的底层存储
+- [x] 集群模式
+
+
+## 🤯 Benchmark
+
+```
+SET: 121951.22 requests per second, p50=0.047 msec
+GET: 178571.42 requests per second, p50=0.039 msec
+INCR: 169491.53 requests per second, p50=0.039 msec
+LPUSH: 169491.53 requests per second, p50=0.039 msec
+RPUSH: 169491.53 requests per second, p50=0.039 msec
+LPOP: 172413.80 requests per second, p50=0.039 msec
+RPOP: 175438.59 requests per second, p50=0.039 msec
+SADD: 172413.80 requests per second, p50=0.039 msec
+HSET: 175438.59 requests per second, p50=0.039 msec
+SPOP: 58823.53 requests per second, p50=0.047 msec
+LPUSH (needed to benchmark LRANGE): 169491.53 requests per second, p50=0.039 msec
+LRANGE_100 (first 100 elements): 56497.18 requests per second, p50=0.079 msec
+LRANGE_300 (first 300 elements): 23094.69 requests per second, p50=0.175 msec
+LRANGE_500 (first 500 elements): 14992.50 requests per second, p50=0.295 msec
+LRANGE_600 (first 600 elements): 9643.20 requests per second, p50=0.911 msec
+```
+
+## License
+
+This project is licensed under the [GPL license](https://github.com/chenjiayao/sidergo/blob/master/LICENSE).
