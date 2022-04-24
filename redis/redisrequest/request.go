@@ -65,7 +65,7 @@ func (rr *RedisRequet) ToByte() []byte {
 }
 
 func (rr *RedisRequet) GetCmdName() string {
-	return rr.CmdName
+	return strings.ToLower(rr.CmdName)
 }
 
 //返回参数，不包括命令

@@ -2,6 +2,7 @@ package redis
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/chenjiayao/sidergo/config"
@@ -75,7 +76,7 @@ func (rd *RedisDB) canPushMultiQueues(cmdName string) bool {
 func (rd *RedisDB) Exec(conn conn.Conn, cmdName string, args [][]byte) response.Response {
 
 	//参数校验
-	command, exist := CommandTables[cmdName]
+	command, exist := CommandTables[strings.ToLower(cmdName)]
 	if !exist {
 		return redisresponse.MakeErrorResponse(fmt.Sprintf("ERR unknown command `%s`, with args beginning with:", cmdName))
 	}
