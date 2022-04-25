@@ -16,7 +16,7 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-brightgreen.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Go Reference](https://pkg.go.dev/badge/github.com/chenjiayao/sidergo.svg)](https://pkg.go.dev/github.com/chenjiayao/sidergo)
 
-使用 Go 实现 redis-server 部分功能，**该项目不是一个用于生产环境的产品**，旨在通过该项目学习 Go 开发。sidergo 配有系列教程可以作为参考：[sidergo 系列教程](https://sidergo.jaychen.fun/)
+sidergo，sider 的回文为 redis。使用 Go 实现 redis-server 部分功能，**该项目不是一个用于生产环境的产品**，旨在通过该项目学习 Go 开发。sidergo 配有系列教程可以作为参考：[sidergo 系列教程](https://sidergo.jaychen.fun/)
 
 
 ## 🔜 快速开始
