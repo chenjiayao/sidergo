@@ -26,11 +26,10 @@
 ## 🔜 快速开始
 
 1. 执行 `go run cmd/main.go`
-![](https://raw.githubusercontent.com/chenjiayao/sidergo-posts/master/docs/images/20220424173207.png)
+![](https://raw.githubusercontent.com/chenjiayao/sidergo-posts/master/docs/images/20220425094551.png)
 
 1. 使用 redis-cli 连接到服务端：`redis-cli -p 3101`
-![](https://raw.githubusercontent.com/chenjiayao/sidergo-posts/master/docs/images/20220424173309.png)
-
+![](https://raw.githubusercontent.com/chenjiayao/sidergo-posts/master/docs/images/20220425094715.png)
 
 ## 🧑‍💻 已实现功能
 
